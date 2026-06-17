@@ -1,39 +1,11 @@
-"use client";
 import "./globals.css";
-import { useState } from "react";
-import Sidebar from "@/components/layout/Sidebar";
-import Navbar from "@/components/layout/Navbar";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { usePathname } from "next/navigation";
+import { AuthProvider } from "@/contexts/AuthContext";
+import AppShell from "@/components/layout/AppShell";
 
-function AppShell({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isStudent, isCoordinator, isLoggedIn } = useAuth();
-  const pathname = usePathname();
-
-  const isLoginPage = pathname === "/login";
-
-  if (isLoginPage) {
-    return <>{children}</>;
-  }
-
-  return (
-    <>
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        studentMode={isStudent && isLoggedIn}
-        coordinatorMode={isCoordinator && isLoggedIn}
-      />
-      <div className="main-content flex flex-col min-h-screen">
-        <Navbar onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 p-4 md:p-6">
-          {children}
-        </main>
-      </div>
-    </>
-  );
-}
+export const metadata = {
+  title: "مركز المعرفة والابتكار STEAM بمدارس الأرقم",
+  description: "نظام الإدارة المعرفية والتعليمية لوحدة الموهبة والابتكار والذكاء الاصطناعي",
+};
 
 export default function RootLayout({
   children,
@@ -43,8 +15,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <head>
-        <title>مركز المعرفة والابتكار STEAM بمدارس الأرقم</title>
-        <meta name="description" content="نظام الإدارة المعرفية والتعليمية لوحدة الموهبة والابتكار والذكاء الاصطناعي" />
+        <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
         <AuthProvider>

@@ -35,30 +35,31 @@ interface Message {
   content: string;
 }
 
-async function callGemini(history: Message[], apiKey: string): Promise<string> {
-  const contents = history.map(m => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }],
-  }));
+async function callGroq(history: Message[], apiKey: string): Promise<string> {
+  const messages = [
+    { role: "system", content: SYSTEM_PROMPT },
+    ...history.map(m => ({ role: m.role, content: m.content })),
+  ];
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents,
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        generationConfig: { temperature: 0.7, maxOutputTokens: 1500 },
-      }),
-    }
-  );
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages,
+      max_tokens: 1500,
+      temperature: 0.7,
+    }),
+  });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message || `خطأ ${res.status}`);
   }
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "لم أتلقَّ ردًّا، حاول مجدداً.";
+  return data.choices?.[0]?.message?.content || "لم أتلقَّ ردًّا، حاول مجدداً.";
 }
 
 function formatContent(text: string) {
@@ -105,7 +106,7 @@ export default function AIAssistantPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const k = localStorage.getItem("kc_gemini_key") || "";
+    const k = localStorage.getItem("kc_groq_key") || "";
     setApiKey(k);
   }, []);
 
@@ -123,13 +124,13 @@ export default function AIAssistantPage() {
     setLoading(true);
 
     if (!apiKey) {
-      setMessages(prev => [...prev, { role: "assistant", content: "⚠️ لم يتم إعداد مفتاح المساعد الذكي بعد.\n\nيرجى مراجعة الأدمن لإدخال مفتاح Gemini في لوحة الإدارة ← رموز التسجيل." }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "⚠️ لم يتم إعداد مفتاح المساعد الذكي بعد.\n\nيرجى مراجعة الأدمن لإدخال مفتاح **Groq** في لوحة الإدارة ← رموز التسجيل.\n\nللحصول على مفتاح مجاني: console.groq.com" }]);
       setLoading(false);
       return;
     }
 
     try {
-      const reply = await callGemini(newHistory, apiKey);
+      const reply = await callGroq(newHistory, apiKey);
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "خطأ غير معروف";
@@ -153,7 +154,7 @@ export default function AIAssistantPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">المساعد الذكي</h1>
-              <p className="text-purple-200 text-sm">مدعوم بـ Google Gemini — مجاني ويدعم العربية</p>
+              <p className="text-purple-200 text-sm">مدعوم بـ Groq + Llama 3.3 — مجاني وسريع جداً</p>
             </div>
           </div>
           {!apiKey && (

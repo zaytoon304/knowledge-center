@@ -1,49 +1,166 @@
 "use client";
-import { useState } from "react";
-import { BookOpen, Download, Eye, Search, FileText, Shield, Calendar, ClipboardList, Filter } from "lucide-react";
-import { guides, forms, policies, procedures } from "@/data/knowledge";
-import Badge from "@/components/ui/Badge";
+import { useState, useEffect } from "react";
+import { BookOpen, Download, Eye, Search, FileText, Shield, Calendar, ClipboardList, Filter, X, Link } from "lucide-react";
+import { type KnowledgeItem } from "@/components/admin/KnowledgeAdmin";
 
-const tabs = [
-  { id: "guides", label: "الأدلة", icon: BookOpen, count: 8 },
-  { id: "forms", label: "النماذج", icon: FileText, count: 8 },
-  { id: "policies", label: "السياسات", icon: Shield, count: 6 },
-  { id: "procedures", label: "الإجراءات", icon: ClipboardList, count: 6 },
-  { id: "plans", label: "الخطط", icon: Calendar, count: 6 },
+const KEYS: Record<string, string> = {
+  guides: "kc_knowledge_guides",
+  forms: "kc_knowledge_forms",
+  policies: "kc_knowledge_policies",
+  procedures: "kc_knowledge_procedures",
+  plans: "kc_knowledge_plans",
+};
+
+const TABS = [
+  { id: "guides", label: "الأدلة", icon: BookOpen, color: "blue" },
+  { id: "forms", label: "النماذج", icon: FileText, color: "green" },
+  { id: "policies", label: "السياسات", icon: Shield, color: "red" },
+  { id: "procedures", label: "الإجراءات", icon: ClipboardList, color: "orange" },
+  { id: "plans", label: "الخطط", icon: Calendar, color: "purple" },
 ];
 
-const plans = [
-  { title: "الخطة السنوية للوحدة", date: "2024-09-01", desc: "الخطة الشاملة لجميع أنشطة وبرامج الوحدة للعام الدراسي", status: "معتمدة" },
-  { title: "خطة المسابقات", date: "2024-09-15", desc: "جدول المسابقات المحلية والوطنية والدولية وخطط التجهيز لها", status: "معتمدة" },
-  { title: "خطة التدريب", date: "2024-10-01", desc: "خطة الدورات والورش التدريبية للطلاب والمعلمين", status: "معتمدة" },
-  { title: "خطة البرامج", date: "2024-10-10", desc: "جدول تنفيذ البرامج الستة للوحدة", status: "معتمدة" },
-  { title: "خطة المشاريع", date: "2024-11-01", desc: "خطة متابعة وتوثيق مشاريع الطلاب والمعلمين", status: "قيد التنفيذ" },
-  { title: "خطة التطوير المهني", date: "2024-11-15", desc: "خطة تطوير كفاءات المنسقين والمعلمين", status: "معتمدة" },
-];
+function loadItems(key: string): KnowledgeItem[] {
+  try { const d = localStorage.getItem(key); return d ? JSON.parse(d) : []; } catch { return []; }
+}
+
+function ItemCard({ item, accentColor }: { item: KnowledgeItem; accentColor: string }) {
+  const [open, setOpen] = useState(false);
+  const [viewImg, setViewImg] = useState<string | null>(null);
+
+  const bgMap: Record<string, string> = {
+    blue: "bg-blue-100", green: "bg-green-100", red: "bg-red-100",
+    orange: "bg-orange-100", purple: "bg-purple-100",
+  };
+  const iconMap: Record<string, string> = {
+    blue: "text-blue-700", green: "text-green-700", red: "text-red-700",
+    orange: "text-orange-700", purple: "text-purple-700",
+  };
+  const btnMap: Record<string, string> = {
+    blue: "bg-blue-800 hover:bg-blue-700", green: "bg-green-700 hover:bg-green-600",
+    red: "bg-red-700 hover:bg-red-600", orange: "bg-orange-600 hover:bg-orange-500",
+    purple: "bg-purple-700 hover:bg-purple-600",
+  };
+
+  const Icon = TABS.find(t => t.color === accentColor)?.icon ?? BookOpen;
+
+  return (
+    <>
+      <div className="card p-5">
+        <div className="flex items-start gap-3">
+          <div className={`w-10 h-10 ${bgMap[accentColor]} rounded-xl flex items-center justify-center flex-shrink-0`}>
+            <Icon className={`w-5 h-5 ${iconMap[accentColor]}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-gray-800 text-sm mb-1">{item.title}</h3>
+            <p className="text-xs text-gray-500 leading-relaxed mb-2">{item.description}</p>
+            <div className="flex flex-wrap gap-2 mb-3 text-xs text-gray-400">
+              {item.department && <span className={`${bgMap[accentColor]} ${iconMap[accentColor]} px-2 py-0.5 rounded-full font-medium`}>{item.department}</span>}
+              {item.version && <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">v{item.version}</span>}
+              {item.status && <span className={`px-2 py-0.5 rounded-full ${item.status === "معتمدة" ? "bg-green-100 text-green-700" : item.status === "قيد التنفيذ" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-500"}`}>{item.status}</span>}
+              {item.date && <span>{item.date}</span>}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {item.pdfBase64 && (
+                <a href={item.pdfBase64} download={item.pdfName}
+                  className={`flex items-center gap-1.5 ${btnMap[accentColor]} text-white text-xs px-3 py-1.5 rounded-lg transition-colors`}>
+                  <Download className="w-3 h-3" /> تحميل PDF
+                </a>
+              )}
+              {((item.images?.length ?? 0) > 0 || item.videoUrl || item.steps?.length) && (
+                <button onClick={() => setOpen(!open)}
+                  className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors">
+                  <Eye className="w-3 h-3" /> {open ? "إخفاء" : "عرض التفاصيل"}
+                </button>
+              )}
+              {item.videoUrl && (
+                <a href={item.videoUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 bg-purple-700 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-purple-600 transition-colors">
+                  🎬 مشاهدة
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {open && (
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+            {item.steps && item.steps.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-2">خطوات الإجراء:</p>
+                <ol className="space-y-1">
+                  {item.steps.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                      <span className={`w-5 h-5 ${bgMap[accentColor]} ${iconMap[accentColor]} rounded-full text-xs flex items-center justify-center flex-shrink-0 font-bold mt-0.5`}>{i + 1}</span>
+                      {s}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+            {item.images && item.images.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-2">الصور ({item.images.length}):</p>
+                <div className="flex gap-2 flex-wrap">
+                  {item.images.map((img, i) => (
+                    <img key={i} src={img} alt="" onClick={() => setViewImg(img)}
+                      className="w-24 h-20 object-cover rounded-xl border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity" />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {viewImg && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setViewImg(null)}>
+          <img src={viewImg} alt="" className="max-w-full max-h-full rounded-2xl object-contain" />
+          <button onClick={() => setViewImg(null)} className="absolute top-4 left-4 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
 
 export default function KnowledgePage() {
   const [activeTab, setActiveTab] = useState("guides");
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("الكل");
+  const [allData, setAllData] = useState<Record<string, KnowledgeItem[]>>({});
+
+  useEffect(() => {
+    const data: Record<string, KnowledgeItem[]> = {};
+    Object.entries(KEYS).forEach(([key, storageKey]) => {
+      data[key] = loadItems(storageKey);
+    });
+    setAllData(data);
+  }, []);
+
+  const currentTab = TABS.find(t => t.id === activeTab)!;
+  const items = (allData[activeTab] ?? []).filter(i =>
+    !search || i.title.toLowerCase().includes(search.toLowerCase()) || i.description.toLowerCase().includes(search.toLowerCase())
+  );
+  const totalCount = Object.values(allData).reduce((sum, arr) => sum + arr.length, 0);
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="card p-6 bg-gradient-to-l from-blue-800 to-blue-600 text-white">
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
             <BookOpen className="w-7 h-7 text-white" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">مركز المعرفة</h1>
-            <p className="text-blue-200 text-sm">مستودع المعرفة المؤسسية للوحدة</p>
+            <p className="text-blue-200 text-sm">مستودع المعرفة المؤسسية لوحدة الموهبة والابتكار</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          {[{ n: 8, l: "دليل" }, { n: 8, l: "نموذج" }, { n: 6, l: "سياسة" }, { n: 6, l: "إجراء" }].map(i => (
-            <div key={i.l} className="bg-white/10 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-yellow-300">{i.n}</div>
-              <div className="text-blue-100 text-sm">{i.l}</div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {TABS.map(t => (
+            <div key={t.id} className="bg-white/10 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-yellow-300">{allData[t.id]?.length ?? 0}</div>
+              <div className="text-blue-100 text-xs mt-1">{t.label}</div>
             </div>
           ))}
         </div>
@@ -51,50 +168,28 @@ export default function KnowledgePage() {
 
       {/* Search */}
       <div className="card p-4">
-        <div className="flex gap-3">
-          <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
-            <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="ابحث في مركز المعرفة..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="bg-transparent outline-none text-sm flex-1 text-right"
-            />
-          </div>
-          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <select
-              value={filter}
-              onChange={e => setFilter(e.target.value)}
-              className="bg-transparent text-sm outline-none text-gray-600"
-            >
-              <option>الكل</option>
-              <option>حديث</option>
-              <option>معتمد</option>
-            </select>
-          </div>
+        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+          <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input type="text" placeholder="ابحث في مركز المعرفة..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            className="bg-transparent outline-none text-sm flex-1 text-right" />
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-2 flex-wrap">
-        {tabs.map(tab => {
+        {TABS.map(tab => {
           const Icon = tab.icon;
+          const count = allData[tab.id]?.length ?? 0;
           return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === tab.id
-                  ? "bg-blue-800 text-white shadow-md"
-                  : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
-              }`}
-            >
+                activeTab === tab.id ? "bg-blue-800 text-white shadow-md" : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+              }`}>
               <Icon className="w-4 h-4" />
               {tab.label}
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === tab.id ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>
-                {tab.count}
+                {count}
               </span>
             </button>
           );
@@ -102,148 +197,18 @@ export default function KnowledgePage() {
       </div>
 
       {/* Content */}
-      {activeTab === "guides" && (
-        <div className="grid md:grid-cols-2 gap-4">
-          {guides
-            .filter(g => !search || g.title.includes(search))
-            .map(guide => (
-              <div key={guide.id} className="card p-5">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <BookOpen className="w-5 h-5 text-blue-700" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-gray-800 text-sm mb-1">{guide.title}</h3>
-                    <p className="text-xs text-gray-500 leading-relaxed mb-3">{guide.description}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
-                      <span>{guide.department}</span>
-                      <span>•</span>
-                      <span>الإصدار {guide.version}</span>
-                      <span>•</span>
-                      <span>{guide.date}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <button className="flex items-center gap-1.5 bg-blue-800 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors">
-                        <Download className="w-3 h-3" /> تحميل PDF
-                      </button>
-                      <button className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors">
-                        <Eye className="w-3 h-3" /> عرض
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+      {items.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <currentTab.icon className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p className="font-medium text-gray-500">{search ? "لا نتائج مطابقة" : "لا يوجد محتوى بعد"}</p>
+          <p className="text-sm mt-1">
+            {!search && "يمكن للأدمن إضافة المحتوى من لوحة الإدارة ← مركز المعرفة"}
+          </p>
         </div>
-      )}
-
-      {activeTab === "forms" && (
+      ) : (
         <div className="grid md:grid-cols-2 gap-4">
-          {forms.filter(f => !search || f.title.includes(search)).map(form => (
-            <div key={form.id} className="card p-5 flex items-start gap-3">
-              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <FileText className="w-5 h-5 text-green-700" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-1">
-                  <h3 className="font-bold text-gray-800 text-sm">{form.title}</h3>
-                  <Badge variant={form.type === "Excel" ? "green" : form.type === "Word" ? "blue" : "red"}>
-                    {form.type}
-                  </Badge>
-                </div>
-                <p className="text-xs text-gray-500 mb-2">{form.description}</p>
-                <Badge variant="gray">{form.category}</Badge>
-                <div className="flex gap-2 mt-3">
-                  <button className="flex items-center gap-1.5 bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors">
-                    <Download className="w-3 h-3" /> تحميل
-                  </button>
-                  <button className="flex items-center gap-1.5 bg-blue-100 text-blue-700 text-xs px-3 py-1.5 rounded-lg hover:bg-blue-200 transition-colors">
-                    <Eye className="w-3 h-3" /> تعبئة إلكترونية
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {activeTab === "policies" && (
-        <div className="grid md:grid-cols-2 gap-4">
-          {policies.filter(p => !search || p.title.includes(search)).map(policy => (
-            <div key={policy.id} className="card p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-5 h-5 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-gray-800 text-sm mb-1">{policy.title}</h3>
-                  <p className="text-xs text-gray-500 mb-3">{policy.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">تاريخ الإصدار: {policy.date}</span>
-                    <div className="flex gap-2">
-                      <button className="flex items-center gap-1 bg-red-50 text-red-600 text-xs px-3 py-1.5 rounded-lg hover:bg-red-100">
-                        <Download className="w-3 h-3" /> تحميل
-                      </button>
-                      <button className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg hover:bg-gray-200">
-                        <Eye className="w-3 h-3" /> عرض
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {activeTab === "procedures" && (
-        <div className="grid md:grid-cols-2 gap-4">
-          {procedures.filter(p => !search || p.title.includes(search)).map(proc => (
-            <div key={proc.id} className="card p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <ClipboardList className="w-4 h-4 text-purple-700" />
-                </div>
-                <h3 className="font-bold text-gray-800 text-sm">{proc.title}</h3>
-              </div>
-              <div className="space-y-2">
-                {proc.steps.map((step, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-blue-800 text-white text-xs rounded-full flex items-center justify-center font-bold flex-shrink-0">
-                      {idx + 1}
-                    </div>
-                    <span className="text-sm text-gray-700">{step}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {activeTab === "plans" && (
-        <div className="grid md:grid-cols-2 gap-4">
-          {plans.filter(p => !search || p.title.includes(search)).map((plan, idx) => (
-            <div key={idx} className="card p-5">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-4 h-4 text-orange-600" />
-                  </div>
-                  <h3 className="font-bold text-gray-800 text-sm">{plan.title}</h3>
-                </div>
-                <Badge>{plan.status}</Badge>
-              </div>
-              <p className="text-xs text-gray-500 mb-3 pr-10">{plan.desc}</p>
-              <div className="flex items-center justify-between pr-10">
-                <span className="text-xs text-gray-400">{plan.date}</span>
-                <div className="flex gap-2">
-                  <button className="text-xs bg-orange-50 text-orange-600 px-3 py-1.5 rounded-lg hover:bg-orange-100">
-                    <Download className="w-3 h-3 inline ml-1" /> تحميل
-                  </button>
-                </div>
-              </div>
-            </div>
+          {items.map(item => (
+            <ItemCard key={item.id} item={item} accentColor={currentTab.color} />
           ))}
         </div>
       )}

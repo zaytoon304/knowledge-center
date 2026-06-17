@@ -5,6 +5,8 @@ import {
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon
 } from "lucide-react";
+import dynamic from "next/dynamic";
+const KnowledgeAdmin = dynamic(() => import("@/components/admin/KnowledgeAdmin"), { ssr: false });
 import { useAuth, StudentProfile, CoordinatorProfile, ChatGroup, CourseItem, VideoItem, ProjectItem, ShopItem, PlatformAchievement, DailyLogEntry } from "@/contexts/AuthContext";
 
 const ADMIN_PASSWORD = "arqam2025";
@@ -143,6 +145,7 @@ export default function AdminPage() {
     { id: "achievements", label: "الإنجازات", icon: Star },
     { id: "codes", label: "رموز التسجيل", icon: Key },
     { id: "daily", label: "يوميات المركز", icon: CalendarDays, badge: dailyLog.length || undefined },
+    { id: "knowledge", label: "مركز المعرفة", icon: BookOpen },
     { id: "permissions", label: "الصلاحيات", icon: Shield },
   ];
 
@@ -712,48 +715,48 @@ export default function AdminPage() {
       {tab === "codes" && (
         <div className="space-y-5 max-w-lg">
 
-        {/* مفتاح Gemini */}
+        {/* مفتاح Groq */}
         <div className="card p-6 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center text-xl">🤖</div>
             <div>
-              <h2 className="font-bold text-gray-800">مفتاح المساعد الذكي (Gemini)</h2>
-              <p className="text-xs text-gray-400">مجاني من Google — مطلوب لتشغيل المساعد الذكي</p>
+              <h2 className="font-bold text-gray-800">مفتاح المساعد الذكي (Groq)</h2>
+              <p className="text-xs text-gray-400">مجاني 100% — أسرع من Gemini — لا يحتاج بطاقة بنكية</p>
             </div>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700 space-y-1">
+          <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-800 space-y-1">
             <p className="font-semibold">طريقة الحصول على المفتاح المجاني:</p>
-            <p>١. افتح المتصفح واكتب: <span className="font-mono bg-blue-100 px-1 rounded">aistudio.google.com</span></p>
-            <p>٢. سجّل دخولك بحساب Google</p>
-            <p>٣. اضغط Get API Key ثم Create API Key</p>
-            <p>٤. انسخ المفتاح والصقه في الحقل أدناه</p>
+            <p>١. افتح: <span className="font-mono bg-green-100 px-1 rounded">console.groq.com</span></p>
+            <p>٢. سجّل حساباً جديداً (بريد إلكتروني فقط)</p>
+            <p>٣. من القائمة اضغط <span className="font-semibold">API Keys</span> ثم <span className="font-semibold">Create API Key</span></p>
+            <p>٤. انسخ المفتاح (يبدأ بـ <span className="font-mono">gsk_</span>) والصقه أدناه</p>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">مفتاح Gemini API</label>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">مفتاح Groq API</label>
             <input
               type="password"
-              id="gemini-key-input"
-              defaultValue={typeof window !== "undefined" ? localStorage.getItem("kc_gemini_key") || "" : ""}
-              onChange={e => { if (typeof window !== "undefined") localStorage.setItem("kc_gemini_key", e.target.value.trim()); }}
-              placeholder="AIzaSy..."
+              id="groq-key-input"
+              defaultValue={typeof window !== "undefined" ? localStorage.getItem("kc_groq_key") || "" : ""}
+              onChange={e => { if (typeof window !== "undefined") localStorage.setItem("kc_groq_key", e.target.value.trim()); }}
+              placeholder="gsk_..."
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-violet-500 font-mono"
             />
           </div>
           <div className="flex gap-2">
             <button onClick={() => {
-              const key = typeof window !== "undefined" ? localStorage.getItem("kc_gemini_key") : "";
+              const key = typeof window !== "undefined" ? localStorage.getItem("kc_groq_key") : "";
               if (!key) { alert("❌ الحقل فارغ — أدخل المفتاح أولاً"); return; }
               alert("✅ المفتاح محفوظ بنجاح! يمكنك الآن استخدام المساعد الذكي");
             }} className="bg-violet-700 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-violet-600">
-              حفظ وتحقق
+              حفظ
             </button>
             <button onClick={() => {
-              if (typeof window !== "undefined") { localStorage.removeItem("kc_gemini_key"); }
-              const input = document.getElementById("gemini-key-input") as HTMLInputElement;
+              if (typeof window !== "undefined") { localStorage.removeItem("kc_groq_key"); }
+              const input = document.getElementById("groq-key-input") as HTMLInputElement;
               if (input) input.value = "";
               alert("تم حذف المفتاح");
             }} className="bg-gray-100 text-gray-600 px-5 py-2 rounded-xl text-sm hover:bg-gray-200">
-              حذف المفتاح
+              حذف
             </button>
           </div>
         </div>
@@ -901,6 +904,22 @@ export default function AdminPage() {
                 })}
               </div>
           }
+        </div>
+      )}
+
+      {/* مركز المعرفة CMS */}
+      {tab === "knowledge" && (
+        <div className="card p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-blue-700" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-800">إدارة مركز المعرفة</h3>
+              <p className="text-xs text-gray-400">أضف وعدّل وأحذف الأدلة والنماذج والسياسات والإجراءات والخطط</p>
+            </div>
+          </div>
+          <KnowledgeAdmin />
         </div>
       )}
 
