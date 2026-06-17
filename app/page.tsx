@@ -48,12 +48,12 @@ export default function HomePage() {
   }, []);
 
   const statCards = [
-    { label: "طالب مسجّل", value: stats.students, color: "bg-emerald-500", emoji: "👨‍🎓" },
-    { label: "منسق معتمد", value: stats.coordinators, color: "bg-blue-500", emoji: "👨‍🏫" },
-    { label: "مشروع", value: stats.projects, color: "bg-indigo-500", emoji: "💡" },
-    { label: "دورة", value: stats.courses, color: "bg-purple-500", emoji: "📚" },
-    { label: "فيديو تعليمي", value: stats.videos, color: "bg-red-500", emoji: "🎬" },
-    { label: "يومية مسجّلة", value: stats.logEntries, color: "bg-amber-500", emoji: "📅" },
+    { label: "طالب مسجّل", value: stats.students, from: "from-emerald-600", to: "to-emerald-400", emoji: "👨‍🎓" },
+    { label: "منسق معتمد", value: stats.coordinators, from: "from-blue-600", to: "to-blue-400", emoji: "👨‍🏫" },
+    { label: "مشروع", value: stats.projects, from: "from-indigo-600", to: "to-indigo-400", emoji: "💡" },
+    { label: "دورة", value: stats.courses, from: "from-purple-600", to: "to-purple-400", emoji: "📚" },
+    { label: "فيديو تعليمي", value: stats.videos, from: "from-red-600", to: "to-red-400", emoji: "🎬" },
+    { label: "يومية مسجّلة", value: stats.logEntries, from: "from-amber-500", to: "to-amber-300", emoji: "📅" },
   ];
 
   return (
@@ -98,12 +98,10 @@ export default function HomePage() {
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {statCards.map(s => (
-            <div key={s.label} className="card p-4 text-center">
-              <div className={`w-12 h-12 ${s.color} rounded-2xl flex items-center justify-center mx-auto mb-2 text-2xl`}>
-                {s.emoji}
-              </div>
-              <div className="text-2xl font-bold text-gray-800">{s.value}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+            <div key={s.label} className={`rounded-2xl bg-gradient-to-br ${s.from} ${s.to} p-4 text-white shadow-sm`}>
+              <div className="text-3xl mb-2">{s.emoji}</div>
+              <div className="text-3xl font-bold leading-none">{s.value}</div>
+              <div className="text-white/80 text-xs mt-1.5">{s.label}</div>
             </div>
           ))}
         </div>
