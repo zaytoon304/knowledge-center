@@ -1,14 +1,15 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
-  Archive, Settings, ChevronLeft, Sparkles, X
+  Archive, Settings, ChevronLeft, Sparkles, X, LogOut, LogIn
 } from "lucide-react";
 import clsx from "clsx";
+import { useAuth } from "@/contexts/AuthContext";
 
-const navItems = [
+const adminNavItems = [
   { href: "/", label: "الرئيسية", icon: Home },
   { href: "/knowledge", label: "مركز المعرفة", icon: BookOpen },
   { href: "/programs", label: "مركز البرامج", icon: Layers },
@@ -24,13 +25,21 @@ const navItems = [
   { href: "/admin", label: "لوحة الإدارة", icon: Settings },
 ];
 
+const studentNavItems = [
+  { href: "/student-portal", label: "بوابتي", icon: Users },
+];
+
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  studentMode?: boolean;
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, studentMode = false }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout, isLoggedIn } = useAuth();
+  const navItems = studentMode ? studentNavItems : adminNavItems;
 
   return (
     <>
@@ -84,6 +93,25 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+          {isLoggedIn && user ? (
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-white/20 flex-shrink-0 flex items-center justify-center text-white text-sm font-bold">
+                {user.photo ? <img src={user.photo} alt="" className="w-full h-full object-cover" /> : user.name[0]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-xs font-semibold truncate">{user.name}</p>
+                <p className="text-blue-300 text-xs truncate">{user.school}</p>
+              </div>
+              <button onClick={() => { logout(); router.push("/login"); }} className="text-blue-300 hover:text-red-300 transition-colors" title="تسجيل الخروج">
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" onClick={onClose} className="flex items-center gap-2 mb-3 text-blue-200 hover:text-white transition-colors">
+              <LogIn className="w-4 h-4" />
+              <span className="text-sm">دخول الطالب</span>
+            </Link>
+          )}
           <div className="text-center text-blue-200 text-sm">
             مدارس الأرق
           </div>

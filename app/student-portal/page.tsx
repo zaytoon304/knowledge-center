@@ -1,14 +1,17 @@
 "use client";
 import { useState } from "react";
-import { Users, Trophy, BookOpen, Play, Image, Star, Bell, Plus, Award } from "lucide-react";
+import { Users, Trophy, BookOpen, Play, Image, Star, Bell, Award, MessageSquare, UserCircle, LogIn } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import TeamGroupChat from "@/components/student/TeamGroupChat";
 
 const studentTabs = [
   { id: "dashboard", label: "لوحتي", icon: Star },
   { id: "competitions", label: "المسابقات", icon: Trophy },
   { id: "academy", label: "أكاديمية الابتكار", icon: BookOpen },
   { id: "videos", label: "الفيديوهات", icon: Play },
-  { id: "gallery", label: "الصور والمعارض", icon: Image },
-  { id: "register", label: "طلب مشاركة", icon: Plus },
+  { id: "gallery", label: "المعارض", icon: Image },
+  { id: "groups", label: "جروبات الفرق", icon: MessageSquare },
   { id: "portfolio", label: "ملف إنجازي", icon: Award },
 ];
 
@@ -40,31 +43,70 @@ const gallery = [
   { title: "يوم STEAM المفتوح", count: 42, emoji: "🔬" },
 ];
 
-const studentData = {
-  name: "اسم الطالب",
-  school: "اسم المدرسة",
-  grade: "الصف الدراسي",
-  points: 850,
-  badges: ["مبتكر", "مبرمج", "روبوتيكس"],
-  completedCourses: 3,
-  competitions: 4,
-  achievements: ["اسم الإنجاز الأول", "اسم الإنجاز الثاني"],
-};
+function GuestPrompt() {
+  const router = useRouter();
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8 space-y-6">
+      <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-green-400 rounded-3xl flex items-center justify-center shadow-xl">
+        <Users className="w-12 h-12 text-white" />
+      </div>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">بوابة الطلاب والطالبات</h2>
+        <p className="text-gray-500 max-w-sm mx-auto">سجّل دخولك للوصول إلى بوابتك الشخصية، ومتابعة المسابقات، والانضمام لجروبات الفرق</p>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <button
+          onClick={() => router.push("/login")}
+          className="flex items-center gap-2 bg-emerald-700 text-white px-8 py-3.5 rounded-2xl font-bold text-base hover:bg-emerald-600 transition-colors shadow-lg"
+        >
+          <LogIn className="w-5 h-5" /> دخول / تسجيل جديد
+        </button>
+      </div>
+      <p className="text-sm text-gray-400">ليس لديك حساب؟ يمكنك التسجيل من نفس الصفحة</p>
+    </div>
+  );
+}
 
 export default function StudentPortalPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { isLoggedIn, user } = useAuth();
+
+  if (!isLoggedIn || !user) {
+    return (
+      <div className="space-y-5 animate-fade-in">
+        <div className="card p-6 bg-gradient-to-l from-emerald-700 to-green-600 text-white">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+              <Users className="w-7 h-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">بوابة الطلاب والطالبات</h1>
+              <p className="text-green-100 text-sm">عالمك التعليمي والإبداعي في مكان واحد</p>
+            </div>
+          </div>
+        </div>
+        <GuestPrompt />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5 animate-fade-in">
       {/* Header */}
       <div className="card p-6 bg-gradient-to-l from-emerald-700 to-green-600 text-white">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-            <Users className="w-7 h-7" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-2xl overflow-hidden bg-white/20 flex-shrink-0 flex items-center justify-center text-white text-xl font-bold">
+              {user.photo ? <img src={user.photo} alt="" className="w-full h-full object-cover" /> : <UserCircle className="w-9 h-9" />}
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">مرحباً، {user.name}</h1>
+              <p className="text-green-100 text-sm">{user.school} • {user.grade}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">بوابة الطلاب والطالبات</h1>
-            <p className="text-green-100 text-sm">عالمك التعليمي والإبداعي في مكان واحد</p>
+          <div className="text-center hidden sm:block">
+            <div className="text-2xl font-bold text-yellow-300">⭐ 850</div>
+            <div className="text-green-100 text-xs">نقطة</div>
           </div>
         </div>
       </div>
@@ -92,34 +134,11 @@ export default function StudentPortalPage() {
       {/* Dashboard */}
       {activeTab === "dashboard" && (
         <div className="space-y-4">
-          {/* Student Card */}
-          <div className="card p-5">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-600 to-green-400 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
-                <Users className="w-8 h-8" />
-              </div>
-              <div className="flex-1">
-                <h2 className="font-bold text-gray-800 text-lg">{studentData.name}</h2>
-                <p className="text-sm text-gray-500">{studentData.school} • {studentData.grade}</p>
-                <div className="flex gap-1 mt-2">
-                  {studentData.badges.map(b => (
-                    <span key={b} className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">{b}</span>
-                  ))}
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-yellow-500">⭐ {studentData.points}</div>
-                <div className="text-xs text-gray-500">نقطة</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "دورات مكتملة", value: studentData.completedCourses, icon: "📚", color: "bg-blue-50 text-blue-700" },
-              { label: "مسابقات شاركت", value: studentData.competitions, icon: "🏆", color: "bg-yellow-50 text-yellow-700" },
-              { label: "إنجازات", value: studentData.achievements.length, icon: "⭐", color: "bg-green-50 text-green-700" },
+              { label: "دورات مكتملة", value: 3, icon: "📚", color: "bg-blue-50 text-blue-700" },
+              { label: "مسابقات", value: 4, icon: "🏆", color: "bg-yellow-50 text-yellow-700" },
+              { label: "إنجازات", value: 2, icon: "⭐", color: "bg-green-50 text-green-700" },
             ].map(s => (
               <div key={s.label} className={`card p-4 text-center ${s.color}`}>
                 <div className="text-3xl mb-1">{s.icon}</div>
@@ -129,7 +148,6 @@ export default function StudentPortalPage() {
             ))}
           </div>
 
-          {/* Notifications */}
           <div className="card p-4">
             <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
               <Bell className="w-4 h-4 text-orange-500" /> إشعاراتي
@@ -188,13 +206,11 @@ export default function StudentPortalPage() {
                 <span className="text-sm font-bold text-blue-700">{course.progress}%</span>
               </div>
               <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-l from-green-500 to-emerald-400 rounded-full transition-all" style={{ width: `${course.progress}%` }} />
+                <div className="h-full bg-gradient-to-l from-green-500 to-emerald-400 rounded-full" style={{ width: `${course.progress}%` }} />
               </div>
-              <div className="mt-3">
-                <button className="w-full bg-emerald-700 text-white py-2 rounded-xl text-sm font-medium hover:bg-emerald-600 transition-colors">
-                  {course.progress === 0 ? "ابدأ الدورة" : course.progress === 100 ? "عرض الشهادة" : "متابعة الدورة"}
-                </button>
-              </div>
+              <button className="w-full mt-3 bg-emerald-700 text-white py-2 rounded-xl text-sm font-medium hover:bg-emerald-600 transition-colors">
+                {course.progress === 0 ? "ابدأ الدورة" : course.progress === 100 ? "عرض الشهادة" : "متابعة الدورة"}
+              </button>
             </div>
           ))}
         </div>
@@ -236,86 +252,52 @@ export default function StudentPortalPage() {
         </div>
       )}
 
-      {/* Register Form */}
-      {activeTab === "register" && (
-        <div className="card p-6 max-w-2xl">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">طلب المشاركة في برنامج أو مسابقة</h2>
-          <form className="space-y-4">
-            {[
-              { label: "الاسم الكامل", type: "text", placeholder: "اسمك الكامل" },
-              { label: "الصف الدراسي", type: "text", placeholder: "مثال: الأول الثانوي" },
-              { label: "المدرسة", type: "text", placeholder: "اسم مدرستك" },
-            ].map(f => (
-              <div key={f.label}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
-                <input type={f.type} placeholder={f.placeholder} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 outline-none focus:border-emerald-500" />
-              </div>
-            ))}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">المجال المرغوب</label>
-              <select className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 outline-none focus:border-emerald-500">
-                <option>الذكاء الاصطناعي</option>
-                <option>الروبوت</option>
-                <option>STEAM</option>
-                <option>البحث العلمي</option>
-                <option>الابتكار</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">هل لديك فريق؟</label>
-              <div className="flex gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="team" value="yes" className="accent-emerald-600" />
-                  <span className="text-sm">نعم</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="team" value="no" className="accent-emerald-600" />
-                  <span className="text-sm">لا، أريد الانضمام لفريق</span>
-                </label>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">فكرة المشروع (اختياري)</label>
-              <textarea rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 outline-none focus:border-emerald-500 resize-none" placeholder="اذكر فكرتك إن وجدت..." />
-            </div>
-            <button type="submit" className="w-full bg-emerald-700 text-white py-3 rounded-xl font-semibold hover:bg-emerald-600 transition-colors">
-              إرسال الطلب
-            </button>
-          </form>
+      {/* Group Chats */}
+      {activeTab === "groups" && (
+        <div className="space-y-4">
+          <div className="card p-5">
+            <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-blue-600" /> جروبات الفرق
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">تواصل مع فريقك وشارك الملفات والصور والفيديوهات</p>
+            <TeamGroupChat />
+          </div>
         </div>
       )}
 
       {/* Portfolio */}
       {activeTab === "portfolio" && (
-        <div className="space-y-4">
-          <div className="card p-5">
-            <h2 className="font-bold text-gray-800 mb-4">ملف إنجاز الطالب</h2>
-            <div className="text-center py-6">
-              <div className="text-6xl mb-3">🎓</div>
-              <h3 className="font-bold text-gray-800 text-xl mb-1">{studentData.name}</h3>
-              <p className="text-gray-500 mb-4">{studentData.school}</p>
-              <div className="flex justify-center gap-2 mb-6">
-                {studentData.badges.map(b => (
-                  <span key={b} className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">{b}</span>
-                ))}
+        <div className="card p-5">
+          <h2 className="font-bold text-gray-800 mb-4">ملف إنجاز الطالب</h2>
+          <div className="text-center py-6">
+            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-600 to-green-400 mx-auto mb-3 flex items-center justify-center">
+              {user.photo ? <img src={user.photo} alt="" className="w-full h-full object-cover" /> : <UserCircle className="w-10 h-10 text-white" />}
+            </div>
+            <h3 className="font-bold text-gray-800 text-xl mb-1">{user.name}</h3>
+            <p className="text-gray-500 mb-1">{user.school}</p>
+            <p className="text-gray-400 text-sm mb-4">{user.grade}</p>
+            <div className="flex justify-center gap-2 mb-6">
+              {["مبتكر", "مبرمج", "روبوتيكس"].map(b => (
+                <span key={b} className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">{b}</span>
+              ))}
+            </div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-semibold text-gray-700 mb-2">بياناتي</h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <p>📞 {user.phone}</p>
+                {user.email && <p>✉️ {user.email}</p>}
+                <p>🏫 {user.school}</p>
+                <p>📚 {user.grade}</p>
               </div>
             </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-2">الإنجازات</h4>
-                {studentData.achievements.map(a => (
-                  <div key={a} className="flex items-center gap-2 text-sm text-gray-600 py-1.5 border-b border-gray-50 last:border-0">
-                    <span>🏆</span> {a}
-                  </div>
-                ))}
-              </div>
-              <div className="text-center">
-                <div className="bg-gray-100 rounded-2xl p-6 inline-block">
-                  <div className="text-4xl mb-2">📱</div>
-                  <p className="text-sm text-gray-500 mb-2">QR Code الملف</p>
-                  <div className="w-24 h-24 bg-white border-2 border-gray-200 rounded-xl mx-auto flex items-center justify-center text-3xl">
-                    ◼️
-                  </div>
+            <div className="text-center">
+              <div className="bg-gray-100 rounded-2xl p-6 inline-block">
+                <div className="text-4xl mb-2">📱</div>
+                <p className="text-sm text-gray-500 mb-2">QR Code الملف</p>
+                <div className="w-24 h-24 bg-white border-2 border-gray-200 rounded-xl mx-auto flex items-center justify-center text-3xl">
+                  ◼️
                 </div>
               </div>
             </div>
