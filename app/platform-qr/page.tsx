@@ -14,7 +14,7 @@ export default function PlatformQRPage() {
 
   useEffect(() => {
     const stored = localStorage.getItem("kc_platform_url");
-    const auto = stored || `${window.location.origin}/login`;
+    const auto = stored || "https://knowledge-center-opal.vercel.app/login";
     setUrl(auto);
     setSavedUrl(auto);
   }, []);
