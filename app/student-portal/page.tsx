@@ -1,130 +1,120 @@
 "use client";
 import { useState } from "react";
-import { Users, Trophy, BookOpen, Play, Image, Star, Bell, Award, MessageSquare, UserCircle, LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import TeamGroupChat from "@/components/student/TeamGroupChat";
+import {
+  Users, BookOpen, Play, Lightbulb, Radio, CreditCard,
+  MessageSquare, LogIn, Clock, XCircle, ExternalLink
+} from "lucide-react";
+import GroupsSection from "@/components/student/GroupsSection";
 
-const studentTabs = [
-  { id: "dashboard", label: "لوحتي", icon: Star },
-  { id: "competitions", label: "المسابقات", icon: Trophy },
-  { id: "academy", label: "أكاديمية الابتكار", icon: BookOpen },
+const tabs = [
+  { id: "dashboard", label: "رئيسيتي", icon: Users },
+  { id: "groups", label: "الجروبات", icon: MessageSquare },
+  { id: "courses", label: "الدورات", icon: BookOpen },
   { id: "videos", label: "الفيديوهات", icon: Play },
-  { id: "gallery", label: "المعارض", icon: Image },
-  { id: "groups", label: "جروبات الفرق", icon: MessageSquare },
-  { id: "portfolio", label: "ملف إنجازي", icon: Award },
+  { id: "projects", label: "المشاريع", icon: Lightbulb },
+  { id: "live", label: "البث المباشر", icon: Radio },
+  { id: "card", label: "بطاقتي", icon: CreditCard },
 ];
 
-const availableCompetitions = [
-  { name: "مسابقة WRO للروبوت", deadline: "2025-03-15", field: "الروبوت", status: "مفتوحة", color: "bg-blue-50 border-blue-200" },
-  { name: "هاكاثون الذكاء الاصطناعي", deadline: "2025-03-01", field: "AI", status: "قادمة", color: "bg-purple-50 border-purple-200" },
-  { name: "تحدي STEAM المدرسي", deadline: "2025-04-10", field: "STEAM", status: "مفتوحة", color: "bg-green-50 border-green-200" },
-];
-
-const courses = [
-  { name: "مدخل إلى الذكاء الاصطناعي", progress: 75, level: "مبتدئ", icon: "🤖" },
-  { name: "Arduino للمبتدئين", progress: 40, level: "مبتدئ", icon: "⚡" },
-  { name: "أساسيات الروبوت", progress: 0, level: "مبتدئ", icon: "🤖" },
-];
-
-const videos = [
-  { title: "كيف تبني روبوت بسيط", duration: "8:42", views: 234, emoji: "🤖" },
-  { title: "مقدمة في الذكاء الاصطناعي", duration: "12:15", views: 456, emoji: "🧠" },
-  { title: "مشروع النفق الذكي - كيف بنيناه", duration: "15:30", views: 178, emoji: "🚇" },
-  { title: "كيف تفوز في WRO؟", duration: "20:05", views: 312, emoji: "🏆" },
-  { title: "برمجة Arduino بـ 10 دقائق", duration: "10:22", views: 289, emoji: "💻" },
-  { title: "الطباعة ثلاثية الأبعاد للمبتدئين", duration: "14:18", views: 156, emoji: "🖨️" },
-];
-
-const gallery = [
-  { title: "معرض مشاريع الروبوت 2024", count: 24, emoji: "🤖" },
-  { title: "مسابقة WRO الإقليمية", count: 36, emoji: "🏆" },
-  { title: "ورشة Arduino المدرسية", count: 18, emoji: "⚡" },
-  { title: "يوم STEAM المفتوح", count: 42, emoji: "🔬" },
-];
-
-function GuestPrompt() {
-  const router = useRouter();
+function EmptyState({ icon, text, sub }: { icon: string; text: string; sub: string }) {
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8 space-y-6">
-      <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-green-400 rounded-3xl flex items-center justify-center shadow-xl">
-        <Users className="w-12 h-12 text-white" />
-      </div>
-      <div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">بوابة الطلاب والطالبات</h2>
-        <p className="text-gray-500 max-w-sm mx-auto">سجّل دخولك للوصول إلى بوابتك الشخصية، ومتابعة المسابقات، والانضمام لجروبات الفرق</p>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-3">
-        <button
-          onClick={() => router.push("/login")}
-          className="flex items-center gap-2 bg-emerald-700 text-white px-8 py-3.5 rounded-2xl font-bold text-base hover:bg-emerald-600 transition-colors shadow-lg"
-        >
-          <LogIn className="w-5 h-5" /> دخول / تسجيل جديد
-        </button>
-      </div>
-      <p className="text-sm text-gray-400">ليس لديك حساب؟ يمكنك التسجيل من نفس الصفحة</p>
+    <div className="text-center py-16 text-gray-400">
+      <div className="text-6xl mb-4">{icon}</div>
+      <p className="text-lg font-medium text-gray-500">{text}</p>
+      <p className="text-sm mt-1">{sub}</p>
     </div>
   );
 }
 
 export default function StudentPortalPage() {
+  const { isLoggedIn, user, isApproved, getLiveStream, getCourses, getVideos, getProjects } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("dashboard");
-  const { isLoggedIn, user } = useAuth();
+  const [showCard, setShowCard] = useState(false);
 
+  const courses = getCourses();
+  const videos = getVideos();
+  const projects = getProjects();
+  const live = getLiveStream();
+
+  // Not logged in
   if (!isLoggedIn || !user) {
     return (
       <div className="space-y-5 animate-fade-in">
-        <div className="card p-6 bg-gradient-to-l from-emerald-700 to-green-600 text-white">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-              <Users className="w-7 h-7" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">بوابة الطلاب والطالبات</h1>
-              <p className="text-green-100 text-sm">عالمك التعليمي والإبداعي في مكان واحد</p>
-            </div>
+        <div className="card p-8 bg-gradient-to-l from-emerald-700 to-green-600 text-white text-center">
+          <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-4">
+            <Users className="w-10 h-10" />
           </div>
+          <h1 className="text-2xl font-bold mb-2">بوابة الطلاب والطالبات</h1>
+          <p className="text-green-100 mb-6">سجّل دخولك للوصول إلى بوابتك الشخصية</p>
+          <button onClick={() => router.push("/login")} className="inline-flex items-center gap-2 bg-white text-emerald-700 px-8 py-3 rounded-2xl font-bold text-base hover:bg-yellow-50 transition-colors">
+            <LogIn className="w-5 h-5" /> دخول / تسجيل جديد
+          </button>
         </div>
-        <GuestPrompt />
       </div>
     );
   }
 
+  // Pending approval
+  if (!isApproved) {
+    if (user.status === "rejected") {
+      return (
+        <div className="card p-10 text-center space-y-4 animate-fade-in">
+          <XCircle className="w-16 h-16 text-red-400 mx-auto" />
+          <h2 className="text-xl font-bold text-red-600">تم رفض طلبك</h2>
+          <p className="text-gray-500">يرجى التواصل مع إدارة المنصة لمعرفة السبب</p>
+        </div>
+      );
+    }
+    return (
+      <div className="card p-10 text-center space-y-5 animate-fade-in">
+        <div className="w-20 h-20 bg-yellow-100 rounded-3xl flex items-center justify-center mx-auto">
+          <Clock className="w-10 h-10 text-yellow-500" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800">طلبك قيد المراجعة</h2>
+        <p className="text-gray-500 max-w-sm mx-auto">تم استلام طلب التسجيل الخاص بك. سيتم مراجعته من قِبل الإدارة وستُفعَّل بوابتك قريباً</p>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 max-w-xs mx-auto">
+          <p className="text-sm text-yellow-700 font-semibold">{user.name}</p>
+          <p className="text-xs text-yellow-600">{user.school} • {user.grade}</p>
+        </div>
+        <p className="text-xs text-gray-400">في انتظار موافقة الإدارة...</p>
+      </div>
+    );
+  }
+
+  // Approved student — full portal
   return (
     <div className="space-y-5 animate-fade-in">
       {/* Header */}
-      <div className="card p-6 bg-gradient-to-l from-emerald-700 to-green-600 text-white">
+      <div className="card p-5 bg-gradient-to-l from-emerald-700 to-green-600 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-2xl overflow-hidden bg-white/20 flex-shrink-0 flex items-center justify-center text-white text-xl font-bold">
-              {user.photo ? <img src={user.photo} alt="" className="w-full h-full object-cover" /> : <UserCircle className="w-9 h-9" />}
+              {user.photo
+                ? <img src={user.photo} alt="" className="w-full h-full object-cover" />
+                : <span className="text-2xl">{user.name[0]}</span>}
             </div>
             <div>
               <h1 className="text-xl font-bold">مرحباً، {user.name}</h1>
               <p className="text-green-100 text-sm">{user.school} • {user.grade}</p>
             </div>
           </div>
-          <div className="text-center hidden sm:block">
-            <div className="text-2xl font-bold text-yellow-300">⭐ 850</div>
-            <div className="text-green-100 text-xs">نقطة</div>
-          </div>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-2">
-        {studentTabs.map(tab => {
+        {tabs.map(tab => {
           const Icon = tab.icon;
           return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
                 activeTab === tab.id
                   ? "bg-emerald-700 text-white shadow-md scale-105"
                   : "bg-white text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 border border-gray-200"
-              }`}
-            >
+              }`}>
               <Icon className="w-4 h-4" /> {tab.label}
             </button>
           );
@@ -136,9 +126,9 @@ export default function StudentPortalPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "دورات مكتملة", value: 3, icon: "📚", color: "bg-blue-50 text-blue-700" },
-              { label: "مسابقات", value: 4, icon: "🏆", color: "bg-yellow-50 text-yellow-700" },
-              { label: "إنجازات", value: 2, icon: "⭐", color: "bg-green-50 text-green-700" },
+              { label: "دوراتي", value: courses.length, icon: "📚", color: "bg-blue-50 text-blue-700" },
+              { label: "الفيديوهات", value: videos.length, icon: "🎬", color: "bg-purple-50 text-purple-700" },
+              { label: "المشاريع", value: projects.length, icon: "💡", color: "bg-yellow-50 text-yellow-700" },
             ].map(s => (
               <div key={s.label} className={`card p-4 text-center ${s.color}`}>
                 <div className="text-3xl mb-1">{s.icon}</div>
@@ -147,161 +137,228 @@ export default function StudentPortalPage() {
               </div>
             ))}
           </div>
-
-          <div className="card p-4">
-            <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <Bell className="w-4 h-4 text-orange-500" /> إشعاراتي
-            </h3>
-            <div className="space-y-2">
-              {[
-                { text: "🏆 مسابقة WRO مفتوحة للتسجيل - آخر موعد 15 مارس", type: "warning" },
-                { text: "📚 تم تسجيلك في دورة Arduino - تبدأ الأسبوع القادم", type: "info" },
-                { text: "✅ مشروعك تم اعتماده من قِبل المشرف", type: "success" },
-              ].map((n, i) => (
-                <div key={i} className={`p-3 rounded-xl text-sm ${n.type === "warning" ? "bg-orange-50 text-orange-700" : n.type === "success" ? "bg-green-50 text-green-700" : "bg-blue-50 text-blue-700"}`}>
-                  {n.text}
-                </div>
-              ))}
+          <div className="card p-5">
+            <h3 className="font-bold text-gray-800 mb-3">الاختصارات السريعة</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {tabs.filter(t => t.id !== "dashboard").map(t => {
+                const Icon = t.icon;
+                return (
+                  <button key={t.id} onClick={() => setActiveTab(t.id)}
+                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors text-gray-700 text-sm font-medium">
+                    <Icon className="w-5 h-5" /> {t.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
       )}
 
-      {/* Competitions */}
-      {activeTab === "competitions" && (
-        <div className="space-y-4">
-          <h2 className="font-bold text-gray-800">المسابقات المتاحة</h2>
-          {availableCompetitions.map(comp => (
-            <div key={comp.name} className={`card p-5 border ${comp.color}`}>
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="font-bold text-gray-800">{comp.name}</h3>
-                <span className={`badge text-xs ${comp.status === "مفتوحة" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                  {comp.status}
-                </span>
-              </div>
-              <div className="flex gap-4 text-sm text-gray-500 mb-4">
-                <span>🏷️ {comp.field}</span>
-                <span>📅 آخر موعد: {comp.deadline}</span>
-              </div>
-              <button className="w-full bg-blue-800 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors">
-                سجل الآن
-              </button>
-            </div>
-          ))}
+      {/* Groups */}
+      {activeTab === "groups" && (
+        <div className="card p-5">
+          <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-blue-600" /> الجروبات
+          </h2>
+          <GroupsSection />
         </div>
       )}
 
-      {/* Academy */}
-      {activeTab === "academy" && (
+      {/* Courses */}
+      {activeTab === "courses" && (
         <div className="space-y-4">
-          <h2 className="font-bold text-gray-800">دوراتي</h2>
-          {courses.map(course => (
-            <div key={course.name} className="card p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-3xl">{course.icon}</span>
-                <div className="flex-1">
-                  <h3 className="font-bold text-gray-800">{course.name}</h3>
-                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">{course.level}</span>
-                </div>
-                <span className="text-sm font-bold text-blue-700">{course.progress}%</span>
+          <h2 className="font-bold text-gray-800 flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-blue-600" /> الدورات التدريبية
+          </h2>
+          {courses.length === 0
+            ? <EmptyState icon="📚" text="لا توجد دورات متاحة حالياً" sub="ستُضاف الدورات قريباً من قِبل الإدارة" />
+            : <div className="grid md:grid-cols-2 gap-4">
+                {courses.map(c => (
+                  <div key={c.id} className="card p-5">
+                    <div className="flex items-start gap-3 mb-3">
+                      <span className="text-3xl">{c.emoji}</span>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-800">{c.title}</h3>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.type === "free" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
+                          {c.type === "free" ? "مجاني" : "مدفوع"}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-3">{c.description}</p>
+                    {c.link && (
+                      <a href={c.link} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-2 bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors w-full justify-center">
+                        <ExternalLink className="w-4 h-4" /> الدخول للدورة
+                      </a>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-l from-green-500 to-emerald-400 rounded-full" style={{ width: `${course.progress}%` }} />
-              </div>
-              <button className="w-full mt-3 bg-emerald-700 text-white py-2 rounded-xl text-sm font-medium hover:bg-emerald-600 transition-colors">
-                {course.progress === 0 ? "ابدأ الدورة" : course.progress === 100 ? "عرض الشهادة" : "متابعة الدورة"}
-              </button>
-            </div>
-          ))}
+          }
         </div>
       )}
 
       {/* Videos */}
       {activeTab === "videos" && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {videos.map(v => (
-            <div key={v.title} className="card overflow-hidden cursor-pointer group">
-              <div className="bg-gradient-to-br from-gray-800 to-gray-600 h-36 flex items-center justify-center text-6xl group-hover:scale-105 transition-transform">
-                {v.emoji}
+        <div className="space-y-4">
+          <h2 className="font-bold text-gray-800 flex items-center gap-2">
+            <Play className="w-5 h-5 text-purple-600" /> الفيديوهات التعليمية
+          </h2>
+          {videos.length === 0
+            ? <EmptyState icon="🎬" text="لا توجد فيديوهات بعد" sub="ستُضاف الفيديوهات التعليمية قريباً" />
+            : <div className="grid md:grid-cols-2 gap-4">
+                {videos.map(v => (
+                  <div key={v.id} className="card overflow-hidden">
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-600 h-32 flex items-center justify-center text-5xl">{v.emoji}</div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-gray-800 mb-1">{v.title}</h3>
+                      <p className="text-sm text-gray-500 mb-3">{v.description}</p>
+                      {v.link && (
+                        <a href={v.link} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-purple-700 text-sm font-medium hover:underline">
+                          <ExternalLink className="w-4 h-4" /> مشاهدة الفيديو
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">{v.title}</h3>
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>⏱ {v.duration}</span>
-                  <span>👁 {v.views} مشاهدة</span>
-                </div>
-              </div>
-            </div>
-          ))}
+          }
         </div>
       )}
 
-      {/* Gallery */}
-      {activeTab === "gallery" && (
-        <div className="grid md:grid-cols-2 gap-4">
-          {gallery.map(g => (
-            <div key={g.title} className="card p-5 cursor-pointer group hover:shadow-md transition-all">
-              <div className="text-5xl mb-3 text-center group-hover:scale-110 transition-transform">{g.emoji}</div>
-              <h3 className="font-bold text-gray-800 text-center mb-1">{g.title}</h3>
-              <p className="text-sm text-gray-500 text-center">{g.count} صورة</p>
-              <button className="w-full mt-3 bg-gray-100 text-gray-700 py-2 rounded-xl text-sm hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                عرض الصور
+      {/* Projects */}
+      {activeTab === "projects" && (
+        <div className="space-y-4">
+          <h2 className="font-bold text-gray-800 flex items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-yellow-500" /> مشاريع مقترحة
+          </h2>
+          {projects.length === 0
+            ? <EmptyState icon="💡" text="لا توجد مشاريع مقترحة بعد" sub="ستُضاف أفكار المشاريع قريباً" />
+            : <div className="grid md:grid-cols-2 gap-4">
+                {projects.map(p => (
+                  <div key={p.id} className="card p-5">
+                    <div className="flex items-start gap-3 mb-3">
+                      <span className="text-3xl">{p.emoji}</span>
+                      <div>
+                        <h3 className="font-bold text-gray-800">{p.title}</h3>
+                        <div className="flex gap-2 mt-1">
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{p.field}</span>
+                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{p.level}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500">{p.description}</p>
+                  </div>
+                ))}
+              </div>
+          }
+        </div>
+      )}
+
+      {/* Live Stream */}
+      {activeTab === "live" && (
+        <div className="card p-8 text-center space-y-5">
+          <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto ${live.enabled ? "bg-red-100" : "bg-gray-100"}`}>
+            <Radio className={`w-10 h-10 ${live.enabled ? "text-red-500 animate-pulse" : "text-gray-400"}`} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">{live.title}</h2>
+            <p className="text-gray-500 mt-1">{live.description}</p>
+          </div>
+          {live.enabled ? (
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 bg-red-100 text-red-600 px-4 py-2 rounded-full text-sm font-bold">
+                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                البث مباشر الآن
+              </div>
+              {live.zoomLink && (
+                <div>
+                  <a href={live.zoomLink} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-blue-800 text-white px-8 py-3.5 rounded-2xl font-bold text-base hover:bg-blue-700 transition-colors">
+                    <ExternalLink className="w-5 h-5" /> دخول البث المباشر
+                  </a>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-sm">
+              <span className="w-2 h-2 bg-gray-400 rounded-full" />
+              لا يوجد بث مباشر الآن
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Student Card */}
+      {activeTab === "card" && (
+        <div className="max-w-md mx-auto space-y-4">
+          {!showCard ? (
+            <div className="card p-8 text-center space-y-4">
+              <CreditCard className="w-16 h-16 text-gray-300 mx-auto" />
+              <h2 className="font-bold text-gray-800 text-xl">بطاقتي الشخصية</h2>
+              <p className="text-gray-500 text-sm">بطاقتك تحتوي على بياناتك الكاملة. هي خاصة بك فقط.</p>
+              <button onClick={() => setShowCard(true)}
+                className="bg-emerald-700 text-white px-8 py-3 rounded-2xl font-bold hover:bg-emerald-600 transition-colors">
+                عرض البطاقة
               </button>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Group Chats */}
-      {activeTab === "groups" && (
-        <div className="space-y-4">
-          <div className="card p-5">
-            <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-blue-600" /> جروبات الفرق
-            </h2>
-            <p className="text-sm text-gray-500 mb-4">تواصل مع فريقك وشارك الملفات والصور والفيديوهات</p>
-            <TeamGroupChat />
-          </div>
-        </div>
-      )}
-
-      {/* Portfolio */}
-      {activeTab === "portfolio" && (
-        <div className="card p-5">
-          <h2 className="font-bold text-gray-800 mb-4">ملف إنجاز الطالب</h2>
-          <div className="text-center py-6">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-600 to-green-400 mx-auto mb-3 flex items-center justify-center">
-              {user.photo ? <img src={user.photo} alt="" className="w-full h-full object-cover" /> : <UserCircle className="w-10 h-10 text-white" />}
-            </div>
-            <h3 className="font-bold text-gray-800 text-xl mb-1">{user.name}</h3>
-            <p className="text-gray-500 mb-1">{user.school}</p>
-            <p className="text-gray-400 text-sm mb-4">{user.grade}</p>
-            <div className="flex justify-center gap-2 mb-6">
-              {["مبتكر", "مبرمج", "روبوتيكس"].map(b => (
-                <span key={b} className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">{b}</span>
-              ))}
-            </div>
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-semibold text-gray-700 mb-2">بياناتي</h4>
-              <div className="space-y-2 text-sm text-gray-600">
-                <p>📞 {user.phone}</p>
-                {user.email && <p>✉️ {user.email}</p>}
-                <p>🏫 {user.school}</p>
-                <p>📚 {user.grade}</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="bg-gray-100 rounded-2xl p-6 inline-block">
-                <div className="text-4xl mb-2">📱</div>
-                <p className="text-sm text-gray-500 mb-2">QR Code الملف</p>
-                <div className="w-24 h-24 bg-white border-2 border-gray-200 rounded-xl mx-auto flex items-center justify-center text-3xl">
-                  ◼️
+          ) : (
+            <div className="space-y-4">
+              <button onClick={() => setShowCard(false)} className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                ← إخفاء البطاقة
+              </button>
+              {/* Card Design */}
+              <div className="rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-300 text-xs">مركز المعرفة والابتكار STEAM</p>
+                    <p className="text-yellow-300 text-xs font-bold">بمدارس الأرقم</p>
+                  </div>
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-yellow-300 text-xl">⭐</div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/20 flex-shrink-0 flex items-center justify-center text-3xl font-bold">
+                    {user.photo ? <img src={user.photo} alt="" className="w-full h-full object-cover" /> : user.name[0]}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">{user.name}</h2>
+                    <p className="text-blue-200 text-sm">{user.grade}</p>
+                    <p className="text-blue-300 text-xs mt-1">{user.school}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="bg-white/10 rounded-xl p-3">
+                    <p className="text-blue-300 text-xs mb-1">رقم الهوية</p>
+                    <p className="font-mono font-bold">{user.nationalId}</p>
+                  </div>
+                  <div className="bg-white/10 rounded-xl p-3">
+                    <p className="text-blue-300 text-xs mb-1">تاريخ الميلاد</p>
+                    <p className="font-bold">{user.birthDate || "—"}</p>
+                  </div>
+                  <div className="bg-white/10 rounded-xl p-3">
+                    <p className="text-blue-300 text-xs mb-1">الجوال</p>
+                    <p className="font-bold">{user.phone}</p>
+                  </div>
+                  <div className="bg-white/10 rounded-xl p-3">
+                    <p className="text-blue-300 text-xs mb-1">جوال ولي الأمر</p>
+                    <p className="font-bold">{user.parentPhone || "—"}</p>
+                  </div>
+                </div>
+                {user.email && (
+                  <div className="bg-white/10 rounded-xl p-3 text-sm">
+                    <p className="text-blue-300 text-xs mb-1">البريد الإلكتروني</p>
+                    <p className="font-bold">{user.email}</p>
+                  </div>
+                )}
+                <div className="border-t border-white/20 pt-3 flex justify-between items-center text-xs text-blue-400">
+                  <span>بوابة الطالب الرقمية</span>
+                  <span>ID: {user.id}</span>
                 </div>
               </div>
+              <p className="text-center text-xs text-gray-400">⚠️ هذه البطاقة خاصة بك، لا تشاركها مع أحد</p>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
