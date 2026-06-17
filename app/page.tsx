@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   BookOpen, Layers, FolderOpen, GraduationCap, BarChart3,
   Cpu, Bot, UserSquare, Trophy, Users, Archive, Settings,
-  Sparkles, CalendarDays, Eye, ChevronLeft
+  Sparkles, CalendarDays, Eye, ChevronLeft, Briefcase
 } from "lucide-react";
 
 const sections = [
@@ -78,8 +78,11 @@ export default function HomePage() {
             منصة موحدة لإدارة البرامج والمشاريع والمسابقات والتدريب، وتمكين الطلاب والمنسقين من أدوات المستقبل.
           </p>
           <div className="flex flex-wrap gap-3">
+            <Link href="/coordinator-portal" className="bg-white text-blue-900 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors flex items-center gap-2">
+              <Briefcase className="w-4 h-4" /> بوابة المنسقين
+            </Link>
             <Link href="/student-portal" className="bg-yellow-400 text-blue-900 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-yellow-300 transition-colors flex items-center gap-2">
-              <Users className="w-4 h-4" /> بوابة الطلاب
+              <Users className="w-4 h-4" /> بوابة الطلاب والطالبات
             </Link>
             <Link href="/daily-log" className="bg-white/20 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-white/30 transition-colors flex items-center gap-2">
               <CalendarDays className="w-4 h-4" /> يوميات المركز
