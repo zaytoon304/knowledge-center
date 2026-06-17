@@ -58,8 +58,8 @@ export default function HomePage() {
             <span className="text-yellow-300 text-sm font-medium">وحدة الموهبة والابتكار والذكاء الاصطناعي</span>
           </div>
           <h1 className="text-2xl md:text-4xl font-bold leading-tight mb-4">
-            مركز المعرفة والابتكار
-            <span className="block text-yellow-300">بمدارس الأرق</span>
+            مركز المعرفة والابتكار STEAM
+            <span className="block text-yellow-300">بمدارس الأرقم</span>
           </h1>
           <p className="text-blue-100 text-base md:text-lg leading-relaxed mb-8">
             منصة موحدة لإدارة البرامج والمشاريع والمسابقات والتدريب والمؤشرات،

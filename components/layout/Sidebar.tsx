@@ -56,8 +56,8 @@ export default function Sidebar({ isOpen, onClose, studentMode = false }: Sideba
                 <Sparkles className="w-7 h-7 text-yellow-300" />
               </div>
               <div>
-                <div className="text-white font-bold text-base leading-tight">مركز المعرفة والابتكار</div>
-                <div className="text-blue-200 text-sm">بمدارس الأرق</div>
+                <div className="text-white font-bold text-base leading-tight">مركز المعرفة والابتكار STEAM</div>
+                <div className="text-blue-200 text-sm">بمدارس الأرقم</div>
               </div>
             </div>
             <button onClick={onClose} className="md:hidden text-white/70 hover:text-white">
@@ -113,7 +113,7 @@ export default function Sidebar({ isOpen, onClose, studentMode = false }: Sideba
             </Link>
           )}
           <div className="text-center text-blue-200 text-sm">
-            مدارس الأرق
+            مدارس الأرقم
           </div>
           <div className="text-center text-blue-300 text-xs mt-1">
             وحدة الموهبة والابتكار • 2025

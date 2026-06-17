@@ -83,8 +83,8 @@ export default function LoginPage() {
           <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-10 h-10 text-yellow-300" />
           </div>
-          <h1 className="text-2xl font-bold text-white">مركز المعرفة والابتكار</h1>
-          <p className="text-blue-200 mt-1">بمدارس الأرق</p>
+          <h1 className="text-2xl font-bold text-white">مركز المعرفة والابتكار STEAM</h1>
+          <p className="text-blue-200 mt-1">بمدارس الأرقم</p>
         </div>
 
         {/* Card */}
@@ -229,7 +229,7 @@ export default function LoginPage() {
           )}
 
           <div className="mt-4 text-center">
-            <p className="text-xs text-gray-400">مركز المعرفة والابتكار بمدارس الأرق • 2025</p>
+            <p className="text-xs text-gray-400">مركز المعرفة والابتكار STEAM بمدارس الأرقم • 2025</p>
           </div>
         </div>
       </div>

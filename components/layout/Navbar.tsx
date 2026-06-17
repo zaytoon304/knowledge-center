@@ -107,7 +107,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
           <div className="flex items-center gap-2 pr-3 border-r border-gray-200 mr-1">
             <div className="text-right hidden md:block">
               <div className="text-base font-semibold text-gray-800">مرحباً بك</div>
-              <div className="text-sm text-gray-400">مدارس الأرق</div>
+              <div className="text-sm text-gray-400">مدارس الأرقم</div>
             </div>
             <div className="w-10 h-10 bg-gradient-to-br from-blue-800 to-purple-600 rounded-full flex items-center justify-center text-white">
               <UserCircle className="w-6 h-6" />
