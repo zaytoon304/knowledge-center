@@ -27,11 +27,13 @@ export default function LoginPage() {
     name: "", nationalId: "", school: "", grade: grades[0],
     phone: "", email: "", parentPhone: "", birthDate: "",
     photo: "", password: "", confirmPassword: "", teams: [] as string[],
+    regCode: "",
   });
 
   const [coordData, setCoordData] = useState({
     name: "", email: "", phone: "", school: "", subject: "",
     photo: "", cv: "", cvName: "", password: "", confirmPassword: "",
+    regCode: "",
   });
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void) => {
@@ -69,8 +71,8 @@ export default function LoginPage() {
     if (regData.password.length < 6) { setError("كلمة المرور 6 أحرف على الأقل"); return; }
     if (regData.password !== regData.confirmPassword) { setError("كلمة المرور غير متطابقة"); return; }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { confirmPassword, ...data } = regData;
-    const result = register(data);
+    const { confirmPassword, regCode, ...data } = regData;
+    const result = register(data, regCode);
     if (result.success) { setSuccess("تم إنشاء حسابك! جارٍ التوجيه..."); setTimeout(() => router.push("/student-portal"), 1200); }
     else { setError(result.message); }
   };
@@ -82,8 +84,8 @@ export default function LoginPage() {
     if (coordData.password.length < 6) { setError("كلمة المرور 6 أحرف على الأقل"); return; }
     if (coordData.password !== coordData.confirmPassword) { setError("كلمة المرور غير متطابقة"); return; }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { confirmPassword, ...data } = coordData;
-    const result = registerCoordinator(data);
+    const { confirmPassword, regCode, ...data } = coordData;
+    const result = registerCoordinator(data, regCode);
     if (result.success) { setSuccess("تم إرسال طلبك! جارٍ التوجيه..."); setTimeout(() => router.push("/coordinator-portal"), 1200); }
     else { setError(result.message); }
   };
@@ -175,6 +177,10 @@ export default function LoginPage() {
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">كلمة المرور *</label><input type="password" value={regData.password} onChange={e => setRegData(p => ({ ...p, password: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">تأكيد المرور *</label><input type="password" value={regData.confirmPassword} onChange={e => setRegData(p => ({ ...p, confirmPassword: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
               </div>
+              <div className="col-span-2">
+                <label className="text-xs font-semibold text-gray-600 mb-0.5 block">رمز التسجيل <span className="text-gray-400 font-normal">(إن وجد)</span></label>
+                <input value={regData.regCode} onChange={e => setRegData(p => ({ ...p, regCode: e.target.value }))} placeholder="أدخل الرمز إن طُلب منك" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" />
+              </div>
               <button type="submit" className="w-full bg-emerald-700 text-white py-3 rounded-xl font-bold hover:bg-emerald-600 mt-1">إنشاء حساب طالب</button>
             </form>
           )}
@@ -205,6 +211,10 @@ export default function LoginPage() {
                 </div>
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">كلمة المرور *</label><input type="password" value={coordData.password} onChange={e => setCoordData(p => ({ ...p, password: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">تأكيد المرور *</label><input type="password" value={coordData.confirmPassword} onChange={e => setCoordData(p => ({ ...p, confirmPassword: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs font-semibold text-gray-600 mb-0.5 block">رمز التسجيل <span className="text-gray-400 font-normal">(مطلوب)</span></label>
+                <input value={coordData.regCode} onChange={e => setCoordData(p => ({ ...p, regCode: e.target.value }))} placeholder="أدخل رمز التسجيل" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" />
               </div>
               <button type="submit" className="w-full bg-violet-700 text-white py-3 rounded-xl font-bold hover:bg-violet-600 mt-1">إنشاء حساب منسق</button>
             </form>

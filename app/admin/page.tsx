@@ -2,9 +2,10 @@
 import { useState, useEffect } from "react";
 import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
-  Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock
+  Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
+  Briefcase, ShoppingBag, Star, Key
 } from "lucide-react";
-import { useAuth, StudentProfile, ChatGroup, CourseItem, VideoItem, ProjectItem } from "@/contexts/AuthContext";
+import { useAuth, StudentProfile, CoordinatorProfile, ChatGroup, CourseItem, VideoItem, ProjectItem, ShopItem, PlatformAchievement } from "@/contexts/AuthContext";
 
 const ADMIN_PASSWORD = "arqam2025";
 
@@ -53,19 +54,32 @@ const GROUP_COLORS = [
 const EMOJIS = ["🤖", "🏆", "🧠", "🔬", "💡", "🚀", "⭐", "📚", "🎯", "🌟"];
 
 export default function AdminPage() {
-  const { getAllStudents, approveStudent, rejectStudent, getGroups, createGroup, deleteGroup,
+  const { getAllStudents, approveStudent, rejectStudent, deleteStudent,
+    getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator,
+    getGroups, createGroup, deleteGroup,
     getLiveStream, updateLiveStream, getCourses, addCourse, deleteCourse,
-    getVideos, addVideo, deleteVideo, getProjects, addProject, deleteProject } = useAuth();
+    getVideos, addVideo, deleteVideo, getProjects, addProject, deleteProject,
+    getShopItems, addShopItem, deleteShopItem,
+    getPlatformAchievements, addPlatformAchievement, deletePlatformAchievement,
+    getRegCodes, setRegCodes } = useAuth();
 
   // --- كل الـ hooks أولاً قبل أي return ---
   const [authed, setAuthed] = useState(false);
   const [tab, setTab] = useState("students");
   const [students, setStudents] = useState<StudentProfile[]>([]);
+  const [coordinators, setCoordinators] = useState<CoordinatorProfile[]>([]);
   const [groups, setGroups] = useState<ChatGroup[]>([]);
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [live, setLive] = useState(getLiveStream());
+  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+  const [platformAchievements, setPlatformAchievements] = useState<PlatformAchievement[]>([]);
+  const [regCodes, setRegCodesState] = useState(getRegCodes());
+  const [sForm, setSForm] = useState({ name: "", description: "", price: "", image: "", imageName: "", category: "كتب", contact: "" });
+  const [showSForm, setShowSForm] = useState(false);
+  const [aForm, setAForm] = useState({ title: "", description: "", date: "", image: "", imageName: "" });
+  const [showAForm, setShowAForm] = useState(false);
   const [gForm, setGForm] = useState({ name: "", description: "", emoji: "🤖", color: GROUP_COLORS[0].value, type: "team" as "general" | "team" });
   const [showGForm, setShowGForm] = useState(false);
   const [cForm, setCForm] = useState({ title: "", description: "", type: "free" as "free" | "paid", link: "", emoji: "📚" });
@@ -77,11 +91,15 @@ export default function AdminPage() {
 
   const refresh = () => {
     setStudents(getAllStudents());
+    setCoordinators(getAllCoordinators());
     setGroups(getGroups());
     setCourses(getCourses());
     setVideos(getVideos());
     setProjects(getProjects());
     setLive(getLiveStream());
+    setShopItems(getShopItems());
+    setPlatformAchievements(getPlatformAchievements());
+    setRegCodesState(getRegCodes());
   };
 
   useEffect(() => {
@@ -96,14 +114,20 @@ export default function AdminPage() {
   const pending = students.filter(s => s.status === "pending");
   const approved = students.filter(s => s.status === "approved");
 
+  const pendingCoords = coordinators.filter(c => c.status === "pending");
+
   const navTabs = [
-    { id: "students", label: "طلبات التسجيل", icon: Users, badge: pending.length },
+    { id: "students", label: "طلبات الطلاب", icon: Users, badge: pending.length },
+    { id: "coordinators", label: "طلبات المنسقين", icon: Briefcase, badge: pendingCoords.length },
     { id: "approved", label: "الطلاب المعتمدون", icon: CheckCircle },
     { id: "groups", label: "الجروبات", icon: MessageSquare },
     { id: "live", label: "البث المباشر", icon: Radio },
     { id: "courses", label: "الدورات", icon: BookOpen },
     { id: "videos", label: "الفيديوهات", icon: Play },
     { id: "projects", label: "المشاريع", icon: Lightbulb },
+    { id: "shop", label: "المتجر", icon: ShoppingBag },
+    { id: "achievements", label: "الإنجازات", icon: Star },
+    { id: "codes", label: "رموز التسجيل", icon: Key },
     { id: "permissions", label: "الصلاحيات", icon: Shield },
   ];
 
@@ -195,7 +219,7 @@ export default function AdminPage() {
             : <div className="card overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-gray-50">
-                    <tr>{["الطالب", "المدرسة", "الصف", "الجوال", "الهوية"].map(h => <th key={h} className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">{h}</th>)}</tr>
+                    <tr>{["الطالب", "المدرسة", "الصف", "الجوال", "حذف"].map(h => <th key={h} className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">{h}</th>)}</tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {approved.map(s => (
@@ -211,7 +235,7 @@ export default function AdminPage() {
                         <td className="px-4 py-3 text-sm text-gray-600">{s.school}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{s.grade}</td>
                         <td className="px-4 py-3 text-sm text-gray-500">{s.phone}</td>
-                        <td className="px-4 py-3 text-sm text-gray-500 font-mono">{s.nationalId}</td>
+                        <td className="px-4 py-3"><button onClick={() => { if(confirm("حذف هذا الطالب؟")) { deleteStudent(s.id); refresh(); } }} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -414,6 +438,237 @@ export default function AdminPage() {
                   <button onClick={() => { deleteProject(p.id); refresh(); }} className="p-2 text-red-400 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4" /></button>
                 </div>
               ))}</div>}
+        </div>
+      )}
+
+      {/* Coordinators */}
+      {tab === "coordinators" && (
+        <div className="space-y-3">
+          <h2 className="font-bold text-gray-800">طلبات المنسقين ({pendingCoords.length})</h2>
+          {pendingCoords.length === 0
+            ? <div className="card p-10 text-center text-gray-400"><Briefcase className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا توجد طلبات معلقة من المنسقين</p></div>
+            : pendingCoords.map(c => (
+              <div key={c.id} className="card p-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center text-xl font-bold text-gray-500">
+                    {c.photo ? <img src={c.photo} alt="" className="w-full h-full object-cover" /> : c.name[0]}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-800">{c.name}</p>
+                    <p className="text-sm text-gray-500">{c.school} • {c.subject}</p>
+                    <p className="text-xs text-gray-400">{c.email} • {c.phone}</p>
+                    {c.cv && (
+                      <button onClick={() => { const a = document.createElement("a"); a.href = c.cv; a.download = c.cvName || "cv.pdf"; a.click(); }}
+                        className="mt-2 text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                        📄 تحميل السيرة الذاتية ({c.cvName})
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <button onClick={() => { approveCoordinator(c.id); refresh(); }}
+                      className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-500">
+                      <CheckCircle className="w-4 h-4" /> قبول
+                    </button>
+                    <button onClick={() => { rejectCoordinator(c.id); refresh(); }}
+                      className="flex items-center gap-1.5 bg-orange-100 text-orange-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-orange-200">
+                      <XCircle className="w-4 h-4" /> رفض
+                    </button>
+                    <button onClick={() => { if(confirm("حذف هذا المنسق نهائياً؟")) { deleteCoordinator(c.id); refresh(); } }}
+                      className="flex items-center gap-1.5 bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-200">
+                      <Trash2 className="w-4 h-4" /> حذف
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+          {/* المنسقون المعتمدون */}
+          {coordinators.filter(c => c.status === "approved").length > 0 && (
+            <div className="mt-6">
+              <h3 className="font-bold text-gray-700 mb-3">المنسقون المعتمدون ({coordinators.filter(c => c.status === "approved").length})</h3>
+              <div className="card overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>{["المنسق", "المدرسة", "المادة", "البريد", "حذف"].map(h => <th key={h} className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">{h}</th>)}</tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {coordinators.filter(c => c.status === "approved").map(c => (
+                      <tr key={c.id} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-100 flex-shrink-0 flex items-center justify-center text-xs font-bold text-blue-700">
+                              {c.photo ? <img src={c.photo} alt="" className="w-full h-full object-cover" /> : c.name[0]}
+                            </div>
+                            <span className="text-sm font-medium">{c.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{c.school}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{c.subject}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">{c.email}</td>
+                        <td className="px-4 py-3"><button onClick={() => { if(confirm("حذف هذا المنسق؟")) { deleteCoordinator(c.id); refresh(); } }} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Shop */}
+      {tab === "shop" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-gray-800">المتجر ({shopItems.length})</h2>
+            <button onClick={() => setShowSForm(!showSForm)} className="flex items-center gap-2 bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700"><Plus className="w-4 h-4" /> منتج جديد</button>
+          </div>
+          {showSForm && (
+            <div className="card p-5 space-y-3">
+              <h3 className="font-bold text-gray-700">إضافة منتج جديد للمتجر</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">اسم المنتج *</label><input value={sForm.name} onChange={e => setSForm(p => ({ ...p, name: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" /></div>
+                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">الوصف</label><textarea value={sForm.description} onChange={e => setSForm(p => ({ ...p, description: e.target.value }))} rows={2} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none resize-none" /></div>
+                <div><label className="text-xs font-semibold text-gray-600 mb-1 block">السعر (ر.س) *</label><input value={sForm.price} onChange={e => setSForm(p => ({ ...p, price: e.target.value }))} placeholder="مثال: 50" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" /></div>
+                <div><label className="text-xs font-semibold text-gray-600 mb-1 block">الفئة</label><select value={sForm.category} onChange={e => setSForm(p => ({ ...p, category: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none"><option>كتب</option><option>مكونات إلكترونية</option><option>أدوات</option><option>روبوتات</option><option>أخرى</option></select></div>
+                <div><label className="text-xs font-semibold text-gray-600 mb-1 block">رقم التواصل</label><input value={sForm.contact} onChange={e => setSForm(p => ({ ...p, contact: e.target.value }))} placeholder="05XXXXXXXX" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" /></div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">صورة المنتج</label>
+                  <label className={`border-2 border-dashed rounded-xl px-3 py-2.5 cursor-pointer text-sm flex items-center gap-2 ${sForm.image ? "border-blue-400 bg-blue-50 text-blue-700" : "border-gray-300 text-gray-400 hover:border-blue-400"}`}>
+                    <ShoppingBag className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{sForm.imageName || "اختر صورة"}</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const f = e.target.files?.[0]; if (!f) return;
+                      const r = new FileReader();
+                      r.onload = ev => setSForm(p => ({ ...p, image: ev.target?.result as string, imageName: f.name }));
+                      r.readAsDataURL(f); e.target.value = "";
+                    }} />
+                  </label>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => { if (!sForm.name.trim() || !sForm.price.trim()) return; addShopItem(sForm); setShowSForm(false); setSForm({ name: "", description: "", price: "", image: "", imageName: "", category: "كتب", contact: "" }); refresh(); }} className="bg-blue-800 text-white px-6 py-2 rounded-xl text-sm font-semibold">إضافة</button>
+                <button onClick={() => setShowSForm(false)} className="bg-gray-100 text-gray-600 px-6 py-2 rounded-xl text-sm">إلغاء</button>
+              </div>
+            </div>
+          )}
+          {shopItems.length === 0
+            ? <div className="card p-10 text-center text-gray-400"><ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا توجد منتجات في المتجر بعد</p></div>
+            : <div className="grid md:grid-cols-2 gap-4">
+                {shopItems.map(s => (
+                  <div key={s.id} className="card overflow-hidden">
+                    {s.image
+                      ? <img src={s.image} alt="" className="w-full h-32 object-cover" />
+                      : <div className="w-full h-32 bg-gray-100 flex items-center justify-center text-4xl">🛒</div>
+                    }
+                    <div className="p-4">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div><p className="font-bold text-gray-800">{s.name}</p><span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{s.category}</span></div>
+                        <span className="font-bold text-green-600">{s.price} ر.س</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 mb-3">{s.description}</p>
+                      <button onClick={() => { if(confirm("حذف هذا المنتج؟")) { deleteShopItem(s.id); refresh(); } }} className="flex items-center gap-2 text-red-500 text-xs hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /> حذف</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+          }
+        </div>
+      )}
+
+      {/* Platform Achievements */}
+      {tab === "achievements" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-gray-800">إنجازات المنصة ({platformAchievements.length})</h2>
+            <button onClick={() => setShowAForm(!showAForm)} className="flex items-center gap-2 bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700"><Plus className="w-4 h-4" /> إنجاز جديد</button>
+          </div>
+          {showAForm && (
+            <div className="card p-5 space-y-3">
+              <h3 className="font-bold text-gray-700">إضافة إنجاز جديد للمنصة</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">عنوان الإنجاز *</label><input value={aForm.title} onChange={e => setAForm(p => ({ ...p, title: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" /></div>
+                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">الوصف</label><textarea value={aForm.description} onChange={e => setAForm(p => ({ ...p, description: e.target.value }))} rows={2} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none resize-none" /></div>
+                <div><label className="text-xs font-semibold text-gray-600 mb-1 block">التاريخ</label><input type="date" value={aForm.date} onChange={e => setAForm(p => ({ ...p, date: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" /></div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">صورة الإنجاز</label>
+                  <label className={`border-2 border-dashed rounded-xl px-3 py-2.5 cursor-pointer text-sm flex items-center gap-2 ${aForm.image ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-300 text-gray-400 hover:border-yellow-400"}`}>
+                    <Star className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{aForm.imageName || "اختر صورة"}</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const f = e.target.files?.[0]; if (!f) return;
+                      const r = new FileReader();
+                      r.onload = ev => setAForm(p => ({ ...p, image: ev.target?.result as string, imageName: f.name }));
+                      r.readAsDataURL(f); e.target.value = "";
+                    }} />
+                  </label>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => { if (!aForm.title.trim()) return; addPlatformAchievement(aForm); setShowAForm(false); setAForm({ title: "", description: "", date: "", image: "", imageName: "" }); refresh(); }} className="bg-blue-800 text-white px-6 py-2 rounded-xl text-sm font-semibold">إضافة</button>
+                <button onClick={() => setShowAForm(false)} className="bg-gray-100 text-gray-600 px-6 py-2 rounded-xl text-sm">إلغاء</button>
+              </div>
+            </div>
+          )}
+          {platformAchievements.length === 0
+            ? <div className="card p-10 text-center text-gray-400"><Star className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا توجد إنجازات بعد</p></div>
+            : <div className="grid md:grid-cols-2 gap-4">
+                {platformAchievements.map(a => (
+                  <div key={a.id} className="card overflow-hidden">
+                    {a.image && <img src={a.image} alt="" className="w-full h-36 object-cover" />}
+                    <div className="p-4">
+                      <p className="font-bold text-gray-800">{a.title}</p>
+                      {a.date && <p className="text-xs text-gray-400 mt-0.5">{new Date(a.date).toLocaleDateString("ar-SA")}</p>}
+                      <p className="text-sm text-gray-600 mt-2">{a.description}</p>
+                      <button onClick={() => { if(confirm("حذف هذا الإنجاز؟")) { deletePlatformAchievement(a.id); refresh(); } }} className="mt-3 flex items-center gap-2 text-red-500 text-xs hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /> حذف</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+          }
+        </div>
+      )}
+
+      {/* Registration Codes */}
+      {tab === "codes" && (
+        <div className="card p-6 max-w-lg space-y-5">
+          <div className="flex items-center gap-3 mb-2">
+            <Key className="w-6 h-6 text-yellow-600" />
+            <h2 className="font-bold text-gray-800 text-lg">رموز التسجيل السرية</h2>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
+            إذا تركت الرمز فارغاً يمكن لأي شخص التسجيل بدون رمز. إذا حددت رمزاً فلن يستطيع التسجيل إلا من يعرفه.
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">رمز تسجيل الطلاب</label>
+            <input
+              value={regCodes.studentCode}
+              onChange={e => setRegCodesState(p => ({ ...p, studentCode: e.target.value }))}
+              placeholder="اتركه فارغاً للسماح للجميع"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">رمز تسجيل المنسقين</label>
+            <input
+              value={regCodes.coordCode}
+              onChange={e => setRegCodesState(p => ({ ...p, coordCode: e.target.value }))}
+              placeholder="اتركه فارغاً للسماح للجميع"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500"
+            />
+          </div>
+          <button
+            onClick={() => { setRegCodes(regCodes); alert("تم حفظ رموز التسجيل بنجاح ✓"); }}
+            className="w-full bg-yellow-500 text-white py-3 rounded-xl font-bold hover:bg-yellow-400">
+            حفظ الرموز
+          </button>
+          {(regCodes.studentCode || regCodes.coordCode) && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-1">
+              <p className="text-xs font-semibold text-green-700">الرموز الحالية:</p>
+              {regCodes.studentCode && <p className="text-sm text-green-800">طلاب: <span className="font-mono font-bold">{regCodes.studentCode}</span></p>}
+              {regCodes.coordCode && <p className="text-sm text-green-800">منسقون: <span className="font-mono font-bold">{regCodes.coordCode}</span></p>}
+            </div>
+          )}
         </div>
       )}
 

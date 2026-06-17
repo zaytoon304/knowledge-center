@@ -39,6 +39,21 @@ export interface ProjectItem {
   id: string; title: string; description: string; field: string; level: string; emoji: string;
 }
 
+export interface ShopItem {
+  id: string; name: string; description: string; price: string;
+  image: string; imageName: string; category: string; contact: string; createdAt: string;
+}
+
+export interface PlatformAchievement {
+  id: string; title: string; description: string; date: string;
+  image: string; imageName: string; createdAt: string;
+}
+
+export interface RegCodes {
+  studentCode: string;
+  coordCode: string;
+}
+
 interface AuthContextType {
   user: AnyUser | null;
   isLoggedIn: boolean;
@@ -47,16 +62,18 @@ interface AuthContextType {
   isApproved: boolean;
   login: (id: string, pw: string) => { success: boolean; message: string };
   loginCoordinator: (email: string, pw: string) => { success: boolean; message: string };
-  register: (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">) => { success: boolean; message: string };
-  registerCoordinator: (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">) => { success: boolean; message: string };
+  register: (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">, code: string) => { success: boolean; message: string };
+  registerCoordinator: (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">, code: string) => { success: boolean; message: string };
   logout: () => void;
   updateProfile: (data: Partial<AnyUser>) => void;
   getAllStudents: () => StudentProfile[];
   approveStudent: (id: string) => void;
   rejectStudent: (id: string) => void;
+  deleteStudent: (id: string) => void;
   getAllCoordinators: () => CoordinatorProfile[];
   approveCoordinator: (id: string) => void;
   rejectCoordinator: (id: string) => void;
+  deleteCoordinator: (id: string) => void;
   getGroups: () => ChatGroup[];
   createGroup: (g: Omit<ChatGroup, "id" | "createdAt">) => void;
   deleteGroup: (id: string) => void;
@@ -71,6 +88,14 @@ interface AuthContextType {
   getProjects: () => ProjectItem[];
   addProject: (p: Omit<ProjectItem, "id">) => void;
   deleteProject: (id: string) => void;
+  getShopItems: () => ShopItem[];
+  addShopItem: (s: Omit<ShopItem, "id" | "createdAt">) => void;
+  deleteShopItem: (id: string) => void;
+  getPlatformAchievements: () => PlatformAchievement[];
+  addPlatformAchievement: (a: Omit<PlatformAchievement, "id" | "createdAt">) => void;
+  deletePlatformAchievement: (id: string) => void;
+  getRegCodes: () => RegCodes;
+  setRegCodes: (codes: RegCodes) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -80,6 +105,8 @@ const KEYS = {
   coordinators: "kc_coordinators",
   groups: "kc_groups", liveStream: "kc_liveStream",
   courses: "kc_courses", videos: "kc_videos", projects: "kc_projects",
+  shop: "kc_shop", achievements: "kc_platform_achievements",
+  regCodes: "kc_reg_codes",
 };
 
 function load<T>(key: string, fallback: T): T {
@@ -109,6 +136,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getAllStudents = () => load<StudentProfile[]>(KEYS.students, []);
   const getAllCoordinators = () => load<CoordinatorProfile[]>(KEYS.coordinators, []);
+  const getRegCodes = () => load<RegCodes>(KEYS.regCodes, { studentCode: "", coordCode: "" });
+  const setRegCodes = (codes: RegCodes) => save(KEYS.regCodes, codes);
 
   const login = (identifier: string, pw: string) => {
     const s = getAllStudents().find(s => s.nationalId === identifier && s.password === pw);
@@ -132,7 +161,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: false, message: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
   };
 
-  const register = (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">) => {
+  const register = (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">, code: string) => {
+    const codes = getRegCodes();
+    if (codes.studentCode && code !== codes.studentCode)
+      return { success: false, message: "رمز التسجيل غير صحيح" };
     const all = getAllStudents();
     if (all.find(s => s.nationalId === data.nationalId))
       return { success: false, message: "رقم الهوية مسجل مسبقاً" };
@@ -142,7 +174,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: true, message: "pending" };
   };
 
-  const registerCoordinator = (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">) => {
+  const registerCoordinator = (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">, code: string) => {
+    const codes = getRegCodes();
+    if (codes.coordCode && code !== codes.coordCode)
+      return { success: false, message: "رمز التسجيل غير صحيح" };
     const all = getAllCoordinators();
     if (all.find(c => c.email === data.email))
       return { success: false, message: "البريد الإلكتروني مسجل مسبقاً" };
@@ -158,11 +193,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const updated = { ...user, ...data } as AnyUser;
     if (user.role === "coordinator") {
-      const all = getAllCoordinators().map(c => c.id === user.id ? updated as CoordinatorProfile : c);
-      save(KEYS.coordinators, all);
+      save(KEYS.coordinators, getAllCoordinators().map(c => c.id === user.id ? updated as CoordinatorProfile : c));
     } else {
-      const all = getAllStudents().map(s => s.id === user.id ? updated as StudentProfile : s);
-      save(KEYS.students, all);
+      save(KEYS.students, getAllStudents().map(s => s.id === user.id ? updated as StudentProfile : s));
     }
     setUser(updated); save(KEYS.currentUser, updated);
   };
@@ -175,6 +208,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const rejectStudent = (id: string) => {
     save(KEYS.students, getAllStudents().map(s => s.id === id ? { ...s, status: "rejected" as const } : s));
   };
+  const deleteStudent = (id: string) => {
+    save(KEYS.students, getAllStudents().filter(s => s.id !== id));
+    if (user?.id === id) logout();
+  };
+
   const approveCoordinator = (id: string) => {
     const all = getAllCoordinators().map(c => c.id === id ? { ...c, status: "approved" as const } : c);
     save(KEYS.coordinators, all);
@@ -182,6 +220,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   const rejectCoordinator = (id: string) => {
     save(KEYS.coordinators, getAllCoordinators().map(c => c.id === id ? { ...c, status: "rejected" as const } : c));
+  };
+  const deleteCoordinator = (id: string) => {
+    save(KEYS.coordinators, getAllCoordinators().filter(c => c.id !== id));
+    if (user?.id === id) logout();
   };
 
   const getGroups = () => load<ChatGroup[]>(KEYS.groups, []);
@@ -204,6 +246,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const addProject = (p: Omit<ProjectItem, "id">) => save(KEYS.projects, [...getProjects(), { ...p, id: Date.now().toString() }]);
   const deleteProject = (id: string) => save(KEYS.projects, getProjects().filter(p => p.id !== id));
 
+  const getShopItems = () => load<ShopItem[]>(KEYS.shop, []);
+  const addShopItem = (s: Omit<ShopItem, "id" | "createdAt">) =>
+    save(KEYS.shop, [...getShopItems(), { ...s, id: Date.now().toString(), createdAt: new Date().toISOString() }]);
+  const deleteShopItem = (id: string) => save(KEYS.shop, getShopItems().filter(s => s.id !== id));
+
+  const getPlatformAchievements = () => load<PlatformAchievement[]>(KEYS.achievements, []);
+  const addPlatformAchievement = (a: Omit<PlatformAchievement, "id" | "createdAt">) =>
+    save(KEYS.achievements, [...getPlatformAchievements(), { ...a, id: Date.now().toString(), createdAt: new Date().toISOString() }]);
+  const deletePlatformAchievement = (id: string) =>
+    save(KEYS.achievements, getPlatformAchievements().filter(a => a.id !== id));
+
   return (
     <AuthContext.Provider value={{
       user, isLoggedIn: !!user, isStudent: user?.role === "student",
@@ -211,13 +264,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isApproved: user?.status === "approved",
       login, loginCoordinator, register, registerCoordinator,
       logout, updateProfile,
-      getAllStudents, approveStudent, rejectStudent,
-      getAllCoordinators, approveCoordinator, rejectCoordinator,
+      getAllStudents, approveStudent, rejectStudent, deleteStudent,
+      getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator,
       getGroups, createGroup, deleteGroup,
       getLiveStream, updateLiveStream,
       getCourses, addCourse, deleteCourse,
       getVideos, addVideo, deleteVideo,
       getProjects, addProject, deleteProject,
+      getShopItems, addShopItem, deleteShopItem,
+      getPlatformAchievements, addPlatformAchievement, deletePlatformAchievement,
+      getRegCodes, setRegCodes,
     }}>
       {children}
     </AuthContext.Provider>

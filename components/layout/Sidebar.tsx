@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
-  Archive, Settings, ChevronLeft, Sparkles, X, LogOut, LogIn, Briefcase
+  Archive, Settings, ChevronLeft, Sparkles, X, LogOut, LogIn, Briefcase, Eye
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/contexts/AuthContext";
@@ -112,10 +112,14 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
               </button>
             </div>
           ) : (
-            <Link href="/login" onClick={onClose} className="flex items-center gap-2 mb-3 text-blue-200 hover:text-white transition-colors">
-              <LogIn className="w-4 h-4" />
-              <span className="text-sm">دخول الطالب</span>
-            </Link>
+            <div className="flex flex-col gap-1.5 mb-3">
+              <Link href="/login" onClick={onClose} className="flex items-center gap-2 text-blue-200 hover:text-white transition-colors">
+                <LogIn className="w-4 h-4" /><span className="text-sm">تسجيل الدخول</span>
+              </Link>
+              <Link href="/visitor" onClick={onClose} className="flex items-center gap-2 text-blue-300 hover:text-white transition-colors">
+                <Eye className="w-4 h-4" /><span className="text-sm">تصفح كزائر</span>
+              </Link>
+            </div>
           )}
           <div className="text-center text-blue-200 text-sm">
             مدارس الأرقم
