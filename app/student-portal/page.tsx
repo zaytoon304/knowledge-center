@@ -4,7 +4,7 @@ import { useAuth, StudentProfile } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import {
   Users, BookOpen, Play, Lightbulb, Radio, CreditCard,
-  MessageSquare, LogIn, Clock, XCircle, ExternalLink
+  MessageSquare, LogIn, Clock, XCircle, ExternalLink, ChevronDown, ChevronUp, Code
 } from "lucide-react";
 import GroupsSection from "@/components/student/GroupsSection";
 
@@ -33,6 +33,7 @@ export default function StudentPortalPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showCard, setShowCard] = useState(false);
+  const [expandedProject, setExpandedProject] = useState<string | null>(null);
 
   const courses = getCourses();
   const videos = getVideos();
@@ -236,21 +237,37 @@ export default function StudentPortalPage() {
             <Lightbulb className="w-5 h-5 text-yellow-500" /> مشاريع مقترحة
           </h2>
           {projects.length === 0
-            ? <EmptyState icon="💡" text="لا توجد مشاريع مقترحة بعد" sub="ستُضاف أفكار المشاريع قريباً" />
-            : <div className="grid md:grid-cols-2 gap-4">
+            ? <EmptyState icon="💡" text="لا توجد مشاريع بعد" sub="ستُضاف المشاريع قريباً" />
+            : <div className="space-y-3">
                 {projects.map(p => (
-                  <div key={p.id} className="card p-5">
-                    <div className="flex items-start gap-3 mb-3">
-                      <span className="text-3xl">{p.emoji}</span>
-                      <div>
+                  <div key={p.id} className="card overflow-hidden">
+                    <div className="flex items-center gap-3 p-4">
+                      {p.image
+                        ? <img src={p.image} alt="" className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
+                        : <span className="text-3xl w-16 h-16 flex items-center justify-center flex-shrink-0">{p.emoji}</span>
+                      }
+                      <div className="flex-1">
                         <h3 className="font-bold text-gray-800">{p.title}</h3>
-                        <div className="flex gap-2 mt-1">
+                        <div className="flex gap-2 mt-1 flex-wrap">
                           <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{p.field}</span>
                           <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{p.level}</span>
+                          {p.division && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{p.division}</span>}
                         </div>
+                        {p.students && <p className="text-xs text-gray-500 mt-1">👥 {p.students}</p>}
                       </div>
+                      <button onClick={() => setExpandedProject(expandedProject === p.id ? null : p.id)}
+                        className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl flex-shrink-0">
+                        {expandedProject === p.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
                     </div>
-                    <p className="text-sm text-gray-500">{p.description}</p>
+                    {expandedProject === p.id && (
+                      <div className="px-4 pb-4 space-y-3 border-t border-gray-50 pt-3">
+                        {p.description && <div><p className="text-xs font-semibold text-gray-500 mb-1">💡 فكرة المشروع</p><p className="text-sm text-gray-700 leading-relaxed">{p.description}</p></div>}
+                        {p.components && <div><p className="text-xs font-semibold text-gray-500 mb-1">🔧 المكونات</p><p className="text-sm text-gray-700">{p.components}</p></div>}
+                        {p.code && <div><p className="text-xs font-semibold text-gray-500 mb-1">💻 الكود</p><pre className="bg-gray-900 text-green-400 rounded-xl p-3 text-xs overflow-x-auto">{p.code}</pre></div>}
+                        {p.codeFile && <div><button onClick={() => { const a = document.createElement("a"); a.href = p.codeFile; a.download = p.codeFileName || "code"; a.click(); }} className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-xl text-sm hover:bg-green-100"><Code className="w-4 h-4" /> تحميل ملف الكود: {p.codeFileName}</button></div>}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

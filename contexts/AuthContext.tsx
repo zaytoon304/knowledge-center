@@ -37,6 +37,20 @@ export interface VideoItem {
 
 export interface ProjectItem {
   id: string; title: string; description: string; field: string; level: string; emoji: string;
+  image: string; imageName: string;
+  students: string;
+  division: string;
+  components: string;
+  code: string;
+  codeFile: string; codeFileName: string;
+}
+
+export interface DailyLogEntry {
+  id: string; title: string; date: string; description: string;
+  category: string;
+  images: Array<{ data: string; name: string }>;
+  videoLinks: string[];
+  createdAt: string;
 }
 
 export interface ShopItem {
@@ -88,6 +102,9 @@ interface AuthContextType {
   getProjects: () => ProjectItem[];
   addProject: (p: Omit<ProjectItem, "id">) => void;
   deleteProject: (id: string) => void;
+  getDailyLog: () => DailyLogEntry[];
+  addDailyLogEntry: (e: Omit<DailyLogEntry, "id" | "createdAt">) => void;
+  deleteDailyLogEntry: (id: string) => void;
   getShopItems: () => ShopItem[];
   addShopItem: (s: Omit<ShopItem, "id" | "createdAt">) => void;
   deleteShopItem: (id: string) => void;
@@ -106,7 +123,7 @@ const KEYS = {
   groups: "kc_groups", liveStream: "kc_liveStream",
   courses: "kc_courses", videos: "kc_videos", projects: "kc_projects",
   shop: "kc_shop", achievements: "kc_platform_achievements",
-  regCodes: "kc_reg_codes",
+  regCodes: "kc_reg_codes", dailyLog: "kc_daily_log",
 };
 
 function load<T>(key: string, fallback: T): T {
@@ -246,6 +263,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const addProject = (p: Omit<ProjectItem, "id">) => save(KEYS.projects, [...getProjects(), { ...p, id: Date.now().toString() }]);
   const deleteProject = (id: string) => save(KEYS.projects, getProjects().filter(p => p.id !== id));
 
+  const getDailyLog = () => load<DailyLogEntry[]>(KEYS.dailyLog, []);
+  const addDailyLogEntry = (e: Omit<DailyLogEntry, "id" | "createdAt">) =>
+    save(KEYS.dailyLog, [...getDailyLog(), { ...e, id: Date.now().toString(), createdAt: new Date().toISOString() }]);
+  const deleteDailyLogEntry = (id: string) => save(KEYS.dailyLog, getDailyLog().filter(e => e.id !== id));
+
   const getShopItems = () => load<ShopItem[]>(KEYS.shop, []);
   const addShopItem = (s: Omit<ShopItem, "id" | "createdAt">) =>
     save(KEYS.shop, [...getShopItems(), { ...s, id: Date.now().toString(), createdAt: new Date().toISOString() }]);
@@ -271,6 +293,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getCourses, addCourse, deleteCourse,
       getVideos, addVideo, deleteVideo,
       getProjects, addProject, deleteProject,
+      getDailyLog, addDailyLogEntry, deleteDailyLogEntry,
       getShopItems, addShopItem, deleteShopItem,
       getPlatformAchievements, addPlatformAchievement, deletePlatformAchievement,
       getRegCodes, setRegCodes,

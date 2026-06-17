@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
-  Archive, Settings, ChevronLeft, Sparkles, X, LogOut, LogIn, Briefcase, Eye
+  Archive, Settings, ChevronLeft, Sparkles, X, LogOut, LogIn, Briefcase, Eye, CalendarDays
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +22,7 @@ const adminNavItems = [
   { href: "/competitions", label: "المسابقات والجوائز", icon: Trophy },
   { href: "/student-portal", label: "بوابة الطلاب", icon: Users },
   { href: "/project-bank", label: "بنك المشاريع", icon: Archive },
+  { href: "/daily-log", label: "يوميات المركز", icon: CalendarDays },
   { href: "/admin", label: "لوحة الإدارة", icon: Settings },
 ];
 
