@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
-  Archive, Settings, ChevronLeft, Sparkles, X, LogOut, LogIn
+  Archive, Settings, ChevronLeft, Sparkles, X, LogOut, LogIn, Briefcase
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,17 +29,22 @@ const studentNavItems = [
   { href: "/student-portal", label: "بوابتي", icon: Users },
 ];
 
+const coordinatorNavItems = [
+  { href: "/coordinator-portal", label: "بوابتي", icon: Briefcase },
+];
+
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
   studentMode?: boolean;
+  coordinatorMode?: boolean;
 }
 
-export default function Sidebar({ isOpen, onClose, studentMode = false }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, studentMode = false, coordinatorMode = false }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, isLoggedIn } = useAuth();
-  const navItems = studentMode ? studentNavItems : adminNavItems;
+  const navItems = studentMode ? studentNavItems : coordinatorMode ? coordinatorNavItems : adminNavItems;
 
   return (
     <>

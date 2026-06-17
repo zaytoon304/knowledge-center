@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, StudentProfile } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import {
   Users, BookOpen, Play, Lightbulb, Radio, CreditCard,
@@ -77,7 +77,7 @@ export default function StudentPortalPage() {
         <p className="text-gray-500 max-w-sm mx-auto">تم استلام طلب التسجيل الخاص بك. سيتم مراجعته من قِبل الإدارة وستُفعَّل بوابتك قريباً</p>
         <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 max-w-xs mx-auto">
           <p className="text-sm text-yellow-700 font-semibold">{user.name}</p>
-          <p className="text-xs text-yellow-600">{user.school} • {user.grade}</p>
+          <p className="text-xs text-yellow-600">{(user as StudentProfile).school} • {(user as StudentProfile).grade}</p>
         </div>
         <p className="text-xs text-gray-400">في انتظار موافقة الإدارة...</p>
       </div>
@@ -85,6 +85,8 @@ export default function StudentPortalPage() {
   }
 
   // Approved student — full portal
+  const student = user as StudentProfile;
+
   return (
     <div className="space-y-5 animate-fade-in">
       {/* Header */}
@@ -92,13 +94,13 @@ export default function StudentPortalPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-2xl overflow-hidden bg-white/20 flex-shrink-0 flex items-center justify-center text-white text-xl font-bold">
-              {user.photo
-                ? <img src={user.photo} alt="" className="w-full h-full object-cover" />
-                : <span className="text-2xl">{user.name[0]}</span>}
+              {student.photo
+                ? <img src={student.photo} alt="" className="w-full h-full object-cover" />
+                : <span className="text-2xl">{student.name[0]}</span>}
             </div>
             <div>
-              <h1 className="text-xl font-bold">مرحباً، {user.name}</h1>
-              <p className="text-green-100 text-sm">{user.school} • {user.grade}</p>
+              <h1 className="text-xl font-bold">مرحباً، {student.name}</h1>
+              <p className="text-green-100 text-sm">{student.school} • {student.grade}</p>
             </div>
           </div>
         </div>
@@ -319,41 +321,41 @@ export default function StudentPortalPage() {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/20 flex-shrink-0 flex items-center justify-center text-3xl font-bold">
-                    {user.photo ? <img src={user.photo} alt="" className="w-full h-full object-cover" /> : user.name[0]}
+                    {student.photo ? <img src={student.photo} alt="" className="w-full h-full object-cover" /> : student.name[0]}
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold">{user.name}</h2>
-                    <p className="text-blue-200 text-sm">{user.grade}</p>
-                    <p className="text-blue-300 text-xs mt-1">{user.school}</p>
+                    <h2 className="text-xl font-bold">{student.name}</h2>
+                    <p className="text-blue-200 text-sm">{student.grade}</p>
+                    <p className="text-blue-300 text-xs mt-1">{student.school}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-white/10 rounded-xl p-3">
                     <p className="text-blue-300 text-xs mb-1">رقم الهوية</p>
-                    <p className="font-mono font-bold">{user.nationalId}</p>
+                    <p className="font-mono font-bold">{student.nationalId}</p>
                   </div>
                   <div className="bg-white/10 rounded-xl p-3">
                     <p className="text-blue-300 text-xs mb-1">تاريخ الميلاد</p>
-                    <p className="font-bold">{user.birthDate || "—"}</p>
+                    <p className="font-bold">{student.birthDate || "—"}</p>
                   </div>
                   <div className="bg-white/10 rounded-xl p-3">
                     <p className="text-blue-300 text-xs mb-1">الجوال</p>
-                    <p className="font-bold">{user.phone}</p>
+                    <p className="font-bold">{student.phone}</p>
                   </div>
                   <div className="bg-white/10 rounded-xl p-3">
                     <p className="text-blue-300 text-xs mb-1">جوال ولي الأمر</p>
-                    <p className="font-bold">{user.parentPhone || "—"}</p>
+                    <p className="font-bold">{student.parentPhone || "—"}</p>
                   </div>
                 </div>
-                {user.email && (
+                {student.email && (
                   <div className="bg-white/10 rounded-xl p-3 text-sm">
                     <p className="text-blue-300 text-xs mb-1">البريد الإلكتروني</p>
-                    <p className="font-bold">{user.email}</p>
+                    <p className="font-bold">{student.email}</p>
                   </div>
                 )}
                 <div className="border-t border-white/20 pt-3 flex justify-between items-center text-xs text-blue-400">
                   <span>بوابة الطالب الرقمية</span>
-                  <span>ID: {user.id}</span>
+                  <span>ID: {student.id}</span>
                 </div>
               </div>
               <p className="text-center text-xs text-gray-400">⚠️ هذه البطاقة خاصة بك، لا تشاركها مع أحد</p>

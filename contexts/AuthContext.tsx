@@ -2,78 +2,61 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export interface StudentProfile {
-  id: string;
-  name: string;
-  nationalId: string;
-  school: string;
-  grade: string;
-  phone: string;
-  email: string;
-  parentPhone: string;
-  birthDate: string;
-  photo: string;
-  password: string;
-  role: "student";
-  teams: string[];
-  registeredAt: string;
-  status: "pending" | "approved" | "rejected";
+  id: string; name: string; nationalId: string; school: string; grade: string;
+  phone: string; email: string; parentPhone: string; birthDate: string;
+  photo: string; password: string; role: "student"; teams: string[];
+  registeredAt: string; status: "pending" | "approved" | "rejected";
 }
 
+export interface CoordinatorProfile {
+  id: string; name: string; email: string; phone: string;
+  school: string; subject: string;
+  photo: string; cv: string; cvName: string;
+  password: string; role: "coordinator";
+  registeredAt: string; status: "pending" | "approved" | "rejected";
+}
+
+export type AnyUser = StudentProfile | CoordinatorProfile;
+
 export interface ChatGroup {
-  id: string;
-  name: string;
-  type: "general" | "team";
-  emoji: string;
-  color: string;
-  description: string;
-  createdAt: string;
+  id: string; name: string; type: "general" | "team";
+  emoji: string; color: string; description: string; createdAt: string;
 }
 
 export interface LiveStreamSettings {
-  enabled: boolean;
-  zoomLink: string;
-  title: string;
-  description: string;
+  enabled: boolean; zoomLink: string; title: string; description: string;
 }
 
 export interface CourseItem {
-  id: string;
-  title: string;
-  description: string;
-  type: "free" | "paid";
-  link: string;
-  emoji: string;
+  id: string; title: string; description: string; type: "free" | "paid"; link: string; emoji: string;
 }
 
 export interface VideoItem {
-  id: string;
-  title: string;
-  link: string;
-  description: string;
-  emoji: string;
+  id: string; title: string; link: string; description: string; emoji: string;
 }
 
 export interface ProjectItem {
-  id: string;
-  title: string;
-  description: string;
-  field: string;
-  level: string;
-  emoji: string;
+  id: string; title: string; description: string; field: string; level: string; emoji: string;
 }
 
 interface AuthContextType {
-  user: StudentProfile | null;
+  user: AnyUser | null;
   isLoggedIn: boolean;
   isStudent: boolean;
+  isCoordinator: boolean;
   isApproved: boolean;
-  login: (nationalId: string, password: string) => { success: boolean; message: string };
+  login: (id: string, pw: string) => { success: boolean; message: string };
+  loginCoordinator: (email: string, pw: string) => { success: boolean; message: string };
   register: (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">) => { success: boolean; message: string };
+  registerCoordinator: (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">) => { success: boolean; message: string };
   logout: () => void;
-  updateProfile: (data: Partial<StudentProfile>) => void;
+  updateProfile: (data: Partial<AnyUser>) => void;
   getAllStudents: () => StudentProfile[];
   approveStudent: (id: string) => void;
   rejectStudent: (id: string) => void;
+  getAllCoordinators: () => CoordinatorProfile[];
+  approveCoordinator: (id: string) => void;
+  rejectCoordinator: (id: string) => void;
   getGroups: () => ChatGroup[];
   createGroup: (g: Omit<ChatGroup, "id" | "createdAt">) => void;
   deleteGroup: (id: string) => void;
@@ -93,13 +76,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const KEYS = {
-  students: "kc_students",
-  currentUser: "kc_currentUser",
-  groups: "kc_groups",
-  liveStream: "kc_liveStream",
-  courses: "kc_courses",
-  videos: "kc_videos",
-  projects: "kc_projects",
+  students: "kc_students", currentUser: "kc_currentUser",
+  coordinators: "kc_coordinators",
+  groups: "kc_groups", liveStream: "kc_liveStream",
+  courses: "kc_courses", videos: "kc_videos", projects: "kc_projects",
 };
 
 function load<T>(key: string, fallback: T): T {
@@ -114,52 +94,77 @@ const defaultLiveStream: LiveStreamSettings = {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<StudentProfile | null>(null);
+  const [user, setUser] = useState<AnyUser | null>(null);
 
   useEffect(() => {
-    const stored = load<StudentProfile | null>(KEYS.currentUser, null);
+    const stored = load<AnyUser | null>(KEYS.currentUser, null);
     if (stored) {
-      const all = load<StudentProfile[]>(KEYS.students, []);
-      const fresh = all.find(s => s.id === stored.id);
+      const all = stored.role === "coordinator"
+        ? load<CoordinatorProfile[]>(KEYS.coordinators, [])
+        : load<StudentProfile[]>(KEYS.students, []);
+      const fresh = (all as AnyUser[]).find(u => u.id === stored.id);
       setUser(fresh || stored);
     }
   }, []);
 
   const getAllStudents = () => load<StudentProfile[]>(KEYS.students, []);
+  const getAllCoordinators = () => load<CoordinatorProfile[]>(KEYS.coordinators, []);
 
-  const login = (nationalId: string, password: string) => {
-    const found = getAllStudents().find(s => s.nationalId === nationalId && s.password === password);
-    if (!found) return { success: false, message: "رقم الهوية أو كلمة المرور غير صحيحة" };
-    setUser(found);
-    save(KEYS.currentUser, found);
-    if (found.status === "pending") return { success: true, message: "pending" };
-    if (found.status === "rejected") return { success: false, message: "تم رفض طلبك. تواصل مع الإدارة" };
-    return { success: true, message: "تم تسجيل الدخول" };
+  const login = (identifier: string, pw: string) => {
+    const s = getAllStudents().find(s => s.nationalId === identifier && s.password === pw);
+    if (s) {
+      setUser(s); save(KEYS.currentUser, s);
+      if (s.status === "pending") return { success: true, message: "pending" };
+      if (s.status === "rejected") return { success: false, message: "تم رفض طلبك. تواصل مع الإدارة" };
+      return { success: true, message: "ok" };
+    }
+    return { success: false, message: "رقم الهوية أو كلمة المرور غير صحيحة" };
+  };
+
+  const loginCoordinator = (email: string, pw: string) => {
+    const c = getAllCoordinators().find(c => c.email === email && c.password === pw);
+    if (c) {
+      setUser(c); save(KEYS.currentUser, c);
+      if (c.status === "pending") return { success: true, message: "pending" };
+      if (c.status === "rejected") return { success: false, message: "تم رفض طلبك. تواصل مع الإدارة" };
+      return { success: true, message: "ok" };
+    }
+    return { success: false, message: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
   };
 
   const register = (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">) => {
     const all = getAllStudents();
     if (all.find(s => s.nationalId === data.nationalId))
       return { success: false, message: "رقم الهوية مسجل مسبقاً" };
-    const student: StudentProfile = {
-      ...data, id: Date.now().toString(), role: "student",
-      registeredAt: new Date().toISOString(), status: "pending",
-    };
+    const student: StudentProfile = { ...data, id: Date.now().toString(), role: "student", registeredAt: new Date().toISOString(), status: "pending" };
     save(KEYS.students, [...all, student]);
-    setUser(student);
-    save(KEYS.currentUser, student);
+    setUser(student); save(KEYS.currentUser, student);
+    return { success: true, message: "pending" };
+  };
+
+  const registerCoordinator = (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">) => {
+    const all = getAllCoordinators();
+    if (all.find(c => c.email === data.email))
+      return { success: false, message: "البريد الإلكتروني مسجل مسبقاً" };
+    const coord: CoordinatorProfile = { ...data, id: Date.now().toString(), role: "coordinator", registeredAt: new Date().toISOString(), status: "pending" };
+    save(KEYS.coordinators, [...all, coord]);
+    setUser(coord); save(KEYS.currentUser, coord);
     return { success: true, message: "pending" };
   };
 
   const logout = () => { setUser(null); localStorage.removeItem(KEYS.currentUser); };
 
-  const updateProfile = (data: Partial<StudentProfile>) => {
+  const updateProfile = (data: Partial<AnyUser>) => {
     if (!user) return;
-    const updated = { ...user, ...data };
-    const all = getAllStudents().map(s => s.id === user.id ? updated : s);
-    save(KEYS.students, all);
-    setUser(updated);
-    save(KEYS.currentUser, updated);
+    const updated = { ...user, ...data } as AnyUser;
+    if (user.role === "coordinator") {
+      const all = getAllCoordinators().map(c => c.id === user.id ? updated as CoordinatorProfile : c);
+      save(KEYS.coordinators, all);
+    } else {
+      const all = getAllStudents().map(s => s.id === user.id ? updated as StudentProfile : s);
+      save(KEYS.students, all);
+    }
+    setUser(updated); save(KEYS.currentUser, updated);
   };
 
   const approveStudent = (id: string) => {
@@ -167,17 +172,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     save(KEYS.students, all);
     if (user?.id === id) { const u = { ...user, status: "approved" as const }; setUser(u); save(KEYS.currentUser, u); }
   };
-
   const rejectStudent = (id: string) => {
-    const all = getAllStudents().map(s => s.id === id ? { ...s, status: "rejected" as const } : s);
-    save(KEYS.students, all);
+    save(KEYS.students, getAllStudents().map(s => s.id === id ? { ...s, status: "rejected" as const } : s));
+  };
+  const approveCoordinator = (id: string) => {
+    const all = getAllCoordinators().map(c => c.id === id ? { ...c, status: "approved" as const } : c);
+    save(KEYS.coordinators, all);
+    if (user?.id === id) { const u = { ...user, status: "approved" as const }; setUser(u); save(KEYS.currentUser, u); }
+  };
+  const rejectCoordinator = (id: string) => {
+    save(KEYS.coordinators, getAllCoordinators().map(c => c.id === id ? { ...c, status: "rejected" as const } : c));
   };
 
   const getGroups = () => load<ChatGroup[]>(KEYS.groups, []);
-  const createGroup = (g: Omit<ChatGroup, "id" | "createdAt">) => {
-    const groups = getGroups();
-    save(KEYS.groups, [...groups, { ...g, id: Date.now().toString(), createdAt: new Date().toISOString() }]);
-  };
+  const createGroup = (g: Omit<ChatGroup, "id" | "createdAt">) =>
+    save(KEYS.groups, [...getGroups(), { ...g, id: Date.now().toString(), createdAt: new Date().toISOString() }]);
   const deleteGroup = (id: string) => save(KEYS.groups, getGroups().filter(g => g.id !== id));
 
   const getLiveStream = () => load<LiveStreamSettings>(KEYS.liveStream, defaultLiveStream);
@@ -198,9 +207,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, isLoggedIn: !!user, isStudent: user?.role === "student",
+      isCoordinator: user?.role === "coordinator",
       isApproved: user?.status === "approved",
-      login, register, logout, updateProfile,
+      login, loginCoordinator, register, registerCoordinator,
+      logout, updateProfile,
       getAllStudents, approveStudent, rejectStudent,
+      getAllCoordinators, approveCoordinator, rejectCoordinator,
       getGroups, createGroup, deleteGroup,
       getLiveStream, updateLiveStream,
       getCourses, addCourse, deleteCourse,

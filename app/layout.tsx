@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isStudent, isLoggedIn } = useAuth();
+  const { isStudent, isCoordinator, isLoggedIn } = useAuth();
   const pathname = usePathname();
 
   const isLoginPage = pathname === "/login";
@@ -19,7 +19,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} studentMode={isStudent && isLoggedIn} />
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        studentMode={isStudent && isLoggedIn}
+        coordinatorMode={isCoordinator && isLoggedIn}
+      />
       <div className="main-content flex flex-col min-h-screen">
         <Navbar onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 p-4 md:p-6">
