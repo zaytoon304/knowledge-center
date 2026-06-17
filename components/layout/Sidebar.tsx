@@ -85,10 +85,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
           <div className="text-center text-blue-200 text-sm">
-            وحدة الموهبة والابتكار والذكاء الاصطناعي
+            مدارس الأرق
           </div>
           <div className="text-center text-blue-300 text-xs mt-1">
-            النسخة 1.0 • 2025
+            وحدة الموهبة والابتكار • 2025
           </div>
         </div>
       </aside>

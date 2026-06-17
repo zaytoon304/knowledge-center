@@ -31,9 +31,9 @@ const sections = [
 ];
 
 const recentProjects = [
-  { name: "النفق الذكي", school: "ثانوية الملك فهد", status: "فائز", field: "AI" },
-  { name: "المزرعة الذكية", school: "متوسطة الأميرة نورة", status: "مشارك", field: "IoT" },
-  { name: "الشجرة الذكية", school: "ثانوية الإشراق", status: "فائز", field: "STEAM" },
+  { name: "النفق الذكي", school: "اسم المدرسة", status: "فائز", field: "AI" },
+  { name: "المزرعة الذكية", school: "اسم المدرسة", status: "مشارك", field: "IoT" },
+  { name: "الشجرة الذكية", school: "اسم المدرسة", status: "فائز", field: "STEAM" },
 ];
 
 const statusColors: Record<string, string> = {
@@ -58,8 +58,8 @@ export default function HomePage() {
             <span className="text-yellow-300 text-sm font-medium">وحدة الموهبة والابتكار والذكاء الاصطناعي</span>
           </div>
           <h1 className="text-2xl md:text-4xl font-bold leading-tight mb-4">
-            نحو منظومة معرفية وتعليمية
-            <span className="block text-yellow-300">مستدامة للموهبة والابتكار</span>
+            مركز المعرفة والابتكار
+            <span className="block text-yellow-300">بمدارس الأرق</span>
           </h1>
           <p className="text-blue-100 text-base md:text-lg leading-relaxed mb-8">
             منصة موحدة لإدارة البرامج والمشاريع والمسابقات والتدريب والمؤشرات،

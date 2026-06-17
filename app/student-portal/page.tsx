@@ -70,20 +70,20 @@ export default function StudentPortalPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-2">
         {studentTabs.map(tab => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
                 activeTab === tab.id
-                  ? "bg-emerald-700 text-white shadow-md"
-                  : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                  ? "bg-emerald-700 text-white shadow-md scale-105"
+                  : "bg-white text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 border border-gray-200"
               }`}
             >
-              <Icon className="w-3.5 h-3.5" /> {tab.label}
+              <Icon className="w-4 h-4" /> {tab.label}
             </button>
           );
         })}
