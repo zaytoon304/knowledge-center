@@ -1,292 +1,251 @@
 "use client";
-import { useState } from "react";
-import { Bot, Send, Sparkles, ChevronLeft, Copy, RotateCcw } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Bot, Send, Sparkles, Copy, RotateCcw, Key } from "lucide-react";
+import Link from "next/link";
 
-type Category = {
-  id: string;
-  label: string;
-  icon: string;
-  questions: string[];
-};
+const SYSTEM_PROMPT = `أنت مساعد ذكي متخصص في مركز المعرفة والابتكار STEAM بمدارس الأرقم.
+تساعد الطلاب والمعلمين والمنسقين في:
+- كتابة أكواد Arduino وPython وC++ وMicroPython وشرحها
+- أفكار مشاريع الروبوت والذكاء الاصطناعي والإلكترونيات وIoT
+- شرح المفاهيم العلمية والرياضية بأسلوب مبسط ومشجع
+- المسابقات: WRO، أولمبياد الرياضيات، أولمبياد العلوم، بيبراس، كانجارو، موهوب، نسمو
+- توصيل المكونات الإلكترونية (Arduino, ESP32, Raspberry Pi, حسّاسات، محركات)
+- STEAM والابتكار والبحث العلمي للطلاب
+- إجابة أسئلة المواد الدراسية (رياضيات، علوم، فيزياء، كيمياء...)
 
-const categories: Category[] = [
-  {
-    id: "programs",
-    label: "أسئلة البرامج",
-    icon: "📚",
-    questions: [
-      "كيف أبدأ برنامج الذكاء الاصطناعي في المدرسة؟",
-      "ما هي مكونات برنامج STEAM؟",
-      "كيف أختار الطلاب للبرامج الإثرائية؟",
-      "ما الفرق بين برنامج الموهبة وبرنامج الابتكار؟",
-    ],
-  },
-  {
-    id: "competitions",
-    label: "أسئلة المسابقات",
-    icon: "🏆",
-    questions: [
-      "كيف أجهز فريق WRO؟",
-      "ما متطلبات مسابقة RoboRave؟",
-      "ما الفرق بين مسابقة بيبراس وكانجارو؟",
-      "كيف أسجل في الأولمبياد الوطني للإبداع؟",
-    ],
-  },
-  {
-    id: "tech",
-    label: "الدعم الفني",
-    icon: "⚙️",
-    questions: [
-      "ما مكونات مشروع إنترنت أشياء بسيط؟",
-      "ما الفرق بين Arduino و ESP32؟",
-      "كيف أوصل حساس الحرارة بـ Arduino؟",
-      "ما أفضل برنامج لتعليم الروبوت للمبتدئين؟",
-    ],
-  },
-  {
-    id: "documents",
-    label: "توليد النماذج",
-    icon: "📝",
-    questions: [
-      "اكتب خطاب تكليف لمنسق روبوت",
-      "أنشئ نموذج تقرير إنجاز للوحدة",
-      "اكتب محضر اجتماع لفريق الوحدة",
-      "أنشئ خطة تدريبية لدورة Arduino",
-    ],
-  },
-  {
-    id: "projects",
-    label: "اقتراح المشاريع",
-    icon: "💡",
-    questions: [
-      "أريد فكرة مشروع ذكاء اصطناعي للمرحلة المتوسطة",
-      "اقترح مشروع STEAM للصف الرابع",
-      "ما مشاريع الروبوت المناسبة لمسابقة WRO؟",
-      "فكرة مشروع بحث علمي في بيئة المدرسة",
-    ],
-  },
-  {
-    id: "achievements",
-    label: "توثيق الإنجازات",
-    icon: "🌟",
-    questions: [
-      "كيف أوثق إنجازاً بشكل رسمي؟",
-      "ما خطوات إصدار شهادة مشاركة؟",
-      "كيف أُعد ملف إنجاز للطالب؟",
-      "ما معايير تقييم المشروع؟",
-    ],
-  },
+قواعد:
+- أجب دائماً بالعربية الفصحى البسيطة
+- الأكواد: ضعها داخل \`\`\` مع ذكر اللغة
+- كن مشجعاً وإيجابياً، خاصة مع الطلاب الصغار
+- إذا طُلبت توصيلات إلكترونية فصفها بوضوح`;
+
+const QUICK_QUESTIONS = [
+  { label: "💡 فكرة مشروع AI", q: "أريد فكرة مشروع ذكاء اصطناعي مناسب للمرحلة المتوسطة" },
+  { label: "🤖 كود Arduino", q: "كيف أوصل حساس الحرارة DHT11 بـ Arduino وأقرأ قيمته؟" },
+  { label: "🏆 مسابقة WRO", q: "كيف أجهز فريق مسابقة WRO من الصفر؟" },
+  { label: "⚡ ESP32 vs Arduino", q: "ما الفرق بين Arduino و ESP32 وأيهما أختار لمشروعي؟" },
+  { label: "🔬 فكرة بحث علمي", q: "اقترح لي فكرة بحث علمي مناسبة للمرحلة الابتدائية" },
+  { label: "📐 مسألة رياضيات", q: "اشرح لي قانون الاحتمالات بأسلوب بسيط مع مثال" },
+  { label: "🌱 مشروع بيئي", q: "أريد مشروع روبوت له علاقة بالبيئة والاستدامة" },
+  { label: "📋 خطة درس STEAM", q: "ساعدني في كتابة خطة درس STEAM لطلاب الصف الخامس" },
 ];
-
-const aiResponses: Record<string, string> = {
-  "كيف أجهز فريق WRO؟": `**تجهيز فريق WRO - دليل شامل**
-
-**الخطوة 1: تشكيل الفريق**
-• اختر 2-3 طلاب متحمسين وموهوبين
-• تنوع المهارات: برمجة + ميكانيكا + إبداع
-• التزام الفريق بالتدريب الأسبوعي
-
-**الخطوة 2: اختيار الفئة**
-• WRO Regular: لعب آلي بـ LEGO
-• WRO Advanced Robotics: روبوت مفتوح المصدر
-• WRO Future Innovators: مشروع إبداعي
-
-**الخطوة 3: التدريب**
-• ابدأ بتعليم LEGO Mindstorms أو الفئة المختارة
-• 3-4 جلسات أسبوعياً لمدة 3 أشهر قبل المسابقة
-• التدرب على حل التحديات وتوثيق الحلول
-
-**الخطوة 4: التسجيل**
-• سجل عبر الموقع الرسمي WRO Arabia
-• ادفع رسوم التسجيل ضمن الموعد المحدد
-• رفع وثائق الفريق
-
-**نصيحة ذهبية:** ابدأ التجهيز مبكراً 6 أشهر قبل الموعد!`,
-
-  "أريد فكرة مشروع ذكاء اصطناعي للمرحلة المتوسطة": `**أفكار مشاريع AI للمرحلة المتوسطة** 🤖
-
-**1. كاشف النفايات الذكي**
-• الفكرة: كاميرا تصنف النفايات (بلاستيك/ورق/عضوي)
-• الأدوات: Teachable Machine + كاميرا + Raspberry Pi
-• المشكلة المحلولة: الفرز الصحيح للنفايات
-• الصعوبة: متوسطة ✅
-
-**2. مساعد المذاكرة الذكي**
-• الفكرة: تطبيق يجيب على أسئلة الطلاب
-• الأدوات: Python + ChatGPT API
-• المشكلة المحلولة: دعم الطلاب خارج أوقات المدرسة
-• الصعوبة: متوسطة ✅
-
-**3. كاشف التعب عبر الكاميرا**
-• الفكرة: يراقب وجه الطالب ويكشف علامات التعب
-• الأدوات: OpenCV + Python + Webcam
-• المشكلة المحلولة: تنبيه المعلم بمستوى تركيز الطلاب
-• الصعوبة: متقدمة ⭐
-
-**الأنسب للبدء:** ابدأ بمشروع **كاشف النفايات** - بسيط وله أثر بيئي واضح!`,
-};
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
-export default function AIAssistantPage() {
-  const [messages, setMessages] = useState<Message[]>([
+async function callGemini(history: Message[], apiKey: string): Promise<string> {
+  const contents = history.map(m => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
     {
-      role: "assistant",
-      content: "مرحباً! أنا المساعد الذكي لوحدة الموهبة والابتكار. يمكنني مساعدتك في:\n\n• اقتراح أفكار مشاريع مبتكرة\n• الإجابة على أسئلة البرامج والمسابقات\n• توليد نماذج وخطابات رسمية\n• الدعم الفني للأدوات والمكونات\n\nاختر تصنيفاً أو اكتب سؤالك مباشرة!",
-    },
-  ]);
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents,
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        generationConfig: { temperature: 0.7, maxOutputTokens: 1500 },
+      }),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `خطأ ${res.status}`);
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "لم أتلقَّ ردًّا، حاول مجدداً.";
+}
+
+function formatContent(text: string) {
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("```")) {
+      const lines = part.split("\n");
+      const lang = lines[0].replace("```", "").trim();
+      const code = lines.slice(1, -1).join("\n");
+      return (
+        <div key={i} className="my-2 rounded-xl overflow-hidden border border-gray-700">
+          {lang && <div className="bg-gray-800 text-gray-300 text-xs px-3 py-1">{lang}</div>}
+          <pre className="bg-gray-900 text-green-300 p-3 text-xs overflow-x-auto leading-relaxed">{code}</pre>
+        </div>
+      );
+    }
+    return (
+      <span key={i}>
+        {part.split("\n").map((line, j) => {
+          const bold = line.replace(/\*\*(.*?)\*\*/g, (_, m) => `<strong>${m}</strong>`);
+          return (
+            <span key={j}>
+              {j > 0 && <br />}
+              <span dangerouslySetInnerHTML={{ __html: bold }} />
+            </span>
+          );
+        })}
+      </span>
+    );
+  });
+}
+
+const WELCOME: Message = {
+  role: "assistant",
+  content: "مرحباً! أنا مساعدك الذكي في مركز الابتكار STEAM 🤖\n\nأستطيع مساعدتك في:\n• **الأكواد:** Arduino، Python، C++\n• **المشاريع:** روبوت، ذكاء اصطناعي، إلكترونيات\n• **المسابقات:** WRO، أولمبياد، بيبراس، كانجارو\n• **المواد العلمية:** رياضيات، علوم، فيزياء\n\nاكتب سؤالك أو اختر من الأسئلة السريعة 👇",
+};
+
+export default function AIAssistantPage() {
+  const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = (text: string) => {
-    if (!text.trim()) return;
+  useEffect(() => {
+    const k = localStorage.getItem("kc_gemini_key") || "";
+    setApiKey(k);
+  }, []);
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+
+  const send = async (text: string) => {
+    if (!text.trim() || loading) return;
     const userMsg: Message = { role: "user", content: text };
-    setMessages(prev => [...prev, userMsg]);
+    const newHistory = [...messages, userMsg];
+    setMessages(newHistory);
     setInput("");
+    setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      const response = aiResponses[text] ||
-        `شكراً على سؤالك: **"${text}"**\n\nهذا جواب تجريبي من المساعد الذكي. في النسخة الكاملة، سيتم الربط مع نموذج لغوي متقدم للإجابة بدقة.\n\nيمكنك:\n• اختيار أسئلة جاهزة من التصنيفات أدناه\n• الاتصال بمنسق الوحدة للاستفسارات الحرجة`;
-      setMessages(prev => [...prev, { role: "assistant", content: response }]);
+    if (!apiKey) {
+      setMessages(prev => [...prev, { role: "assistant", content: "⚠️ لم يتم إعداد مفتاح المساعد الذكي بعد.\n\nيرجى مراجعة الأدمن لإدخال مفتاح Gemini في لوحة الإدارة ← رموز التسجيل." }]);
       setLoading(false);
-    }, 1200);
+      return;
+    }
+
+    try {
+      const reply = await callGemini(newHistory, apiKey);
+      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "خطأ غير معروف";
+      setError(msg);
+      setMessages(prev => [...prev, { role: "assistant", content: `❌ حدث خطأ: ${msg}\n\nتأكد من صحة مفتاح API في لوحة الإدارة.` }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const formatMessage = (text: string) => {
-    return text.split("\n").map((line, i) => {
-      if (line.startsWith("**") && line.endsWith("**")) {
-        return <p key={i} className="font-bold text-gray-800 mt-2">{line.replace(/\*\*/g, "")}</p>;
-      }
-      if (line.startsWith("•")) {
-        return <p key={i} className="flex items-start gap-2 text-sm text-gray-700"><span className="text-blue-500 mt-0.5">•</span><span>{line.substring(1).trim()}</span></p>;
-      }
-      return line ? <p key={i} className="text-sm text-gray-700">{line}</p> : <br key={i} />;
-    });
-  };
+  const reset = () => { setMessages([WELCOME]); setError(""); };
 
   return (
-    <div className="space-y-4 animate-fade-in h-full">
+    <div className="space-y-4 animate-fade-in">
       {/* Header */}
       <div className="card p-5 bg-gradient-to-l from-violet-800 to-purple-700 text-white">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-            <Bot className="w-7 h-7" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+              <Bot className="w-7 h-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">المساعد الذكي</h1>
+              <p className="text-purple-200 text-sm">مدعوم بـ Google Gemini — مجاني ويدعم العربية</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">المساعد الذكي</h1>
-            <p className="text-purple-200 text-sm">مساعدك الذكي لوحدة الموهبة والابتكار والذكاء الاصطناعي</p>
-          </div>
+          {!apiKey && (
+            <Link href="/admin" className="flex items-center gap-2 bg-yellow-400 text-gray-900 px-3 py-2 rounded-xl text-xs font-bold hover:bg-yellow-300 flex-shrink-0">
+              <Key className="w-4 h-4" /> إعداد المفتاح
+            </Link>
+          )}
+          {apiKey && (
+            <div className="flex items-center gap-2 bg-green-400/20 border border-green-400/40 text-green-200 px-3 py-1.5 rounded-xl text-xs flex-shrink-0">
+              ✓ متصل
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-5">
-        {/* Categories */}
-        <div className="space-y-2">
-          <h3 className="font-bold text-gray-700 text-sm mb-3 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-500" />
-            أسئلة جاهزة حسب التصنيف
-          </h3>
-          {categories.map(cat => (
-            <div key={cat.id} className="card overflow-hidden">
-              <button
-                className="w-full flex items-center justify-between p-3 text-right hover:bg-gray-50 transition-colors"
-                onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{cat.icon}</span>
-                  <span className="text-sm font-semibold text-gray-700">{cat.label}</span>
-                </div>
-                <ChevronLeft className={`w-4 h-4 text-gray-400 transition-transform ${activeCategory === cat.id ? "rotate-90" : ""}`} />
-              </button>
-              {activeCategory === cat.id && (
-                <div className="border-t border-gray-100 divide-y divide-gray-50">
-                  {cat.questions.map(q => (
-                    <button
-                      key={q}
-                      onClick={() => sendMessage(q)}
-                      className="w-full text-right text-xs text-gray-600 px-4 py-2.5 hover:bg-purple-50 hover:text-purple-700 transition-colors"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
+      {/* Quick questions */}
+      <div>
+        <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1"><Sparkles className="w-3.5 h-3.5 text-purple-500" /> أسئلة سريعة:</p>
+        <div className="flex gap-2 flex-wrap">
+          {QUICK_QUESTIONS.map(q => (
+            <button key={q.q} onClick={() => send(q.q)} disabled={loading}
+              className="text-xs px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-all disabled:opacity-50">
+              {q.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Chat */}
+      <div className="card flex flex-col" style={{ height: "520px" }}>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.map((msg, idx) => (
+            <div key={idx} className={`flex ${msg.role === "user" ? "justify-start" : "justify-end"}`}>
+              {msg.role === "assistant" && (
+                <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-sm flex-shrink-0 ml-2 mt-1">🤖</div>
+              )}
+              <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
+                msg.role === "user"
+                  ? "bg-blue-700 text-white rounded-tr-sm"
+                  : "bg-gray-50 border border-gray-100 rounded-tl-sm text-gray-800"
+              }`}>
+                <div className="leading-relaxed">{msg.role === "assistant" ? formatContent(msg.content) : msg.content}</div>
+                {msg.role === "assistant" && (
+                  <button onClick={() => navigator.clipboard.writeText(msg.content)}
+                    className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600">
+                    <Copy className="w-3 h-3" /> نسخ
+                  </button>
+                )}
+              </div>
+              {msg.role === "user" && (
+                <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-sm flex-shrink-0 mr-2 mt-1">👤</div>
               )}
             </div>
           ))}
+
+          {loading && (
+            <div className="flex justify-end">
+              <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-sm flex-shrink-0 ml-2">🤖</div>
+              <div className="bg-gray-50 border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3">
+                <div className="flex gap-1 items-center">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.15s" }} />
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
+                  <span className="text-xs text-gray-400 mr-1">يفكر...</span>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
         </div>
 
-        {/* Chat */}
-        <div className="lg:col-span-2 card flex flex-col" style={{ height: "600px" }}>
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.role === "user" ? "justify-start" : "justify-end"}`}>
-                <div className={`max-w-[80%] rounded-2xl p-4 ${
-                  msg.role === "user"
-                    ? "bg-blue-800 text-white rounded-tr-none"
-                    : "bg-gray-50 border border-gray-100 rounded-tl-none"
-                }`}>
-                  {msg.role === "user" ? (
-                    <p className="text-sm">{msg.content}</p>
-                  ) : (
-                    <div className="space-y-1">{formatMessage(msg.content)}</div>
-                  )}
-                  {msg.role === "assistant" && (
-                    <button
-                      onClick={() => navigator.clipboard.writeText(msg.content)}
-                      className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
-                    >
-                      <Copy className="w-3 h-3" /> نسخ
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {loading && (
-              <div className="flex justify-end">
-                <div className="bg-gray-50 border border-gray-100 rounded-2xl rounded-tl-none p-4">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
-                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Input */}
-          <div className="border-t border-gray-100 p-4">
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setMessages([{ role: "assistant", content: "تم مسح المحادثة. كيف يمكنني مساعدتك؟" }]); }}
-                className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors flex-shrink-0"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-              <input
-                type="text"
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && sendMessage(input)}
-                placeholder="اكتب سؤالك هنا..."
-                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-purple-400 text-right"
-              />
-              <button
-                onClick={() => sendMessage(input)}
-                disabled={!input.trim() || loading}
-                className="bg-purple-700 text-white p-2.5 rounded-xl hover:bg-purple-600 transition-colors disabled:opacity-50 flex-shrink-0"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
+        {/* Input */}
+        <div className="border-t border-gray-100 p-3">
+          {error && <p className="text-xs text-red-500 mb-2 px-1">{error}</p>}
+          <div className="flex gap-2">
+            <button onClick={reset} title="محادثة جديدة"
+              className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors flex-shrink-0">
+              <RotateCcw className="w-4 h-4" />
+            </button>
+            <input
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && !e.shiftKey && send(input)}
+              placeholder={apiKey ? "اكتب سؤالك هنا..." : "⚠️ يحتاج إعداد مفتاح API من الأدمن"}
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-purple-400 text-right"
+            />
+            <button onClick={() => send(input)} disabled={!input.trim() || loading}
+              className="bg-purple-700 text-white p-2.5 rounded-xl hover:bg-purple-600 transition-colors disabled:opacity-40 flex-shrink-0">
+              <Send className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>

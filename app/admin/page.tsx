@@ -710,7 +710,56 @@ export default function AdminPage() {
 
       {/* Registration Codes */}
       {tab === "codes" && (
-        <div className="card p-6 max-w-lg space-y-5">
+        <div className="space-y-5 max-w-lg">
+
+        {/* مفتاح Gemini */}
+        <div className="card p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center text-xl">🤖</div>
+            <div>
+              <h2 className="font-bold text-gray-800">مفتاح المساعد الذكي (Gemini)</h2>
+              <p className="text-xs text-gray-400">مجاني من Google — مطلوب لتشغيل المساعد الذكي</p>
+            </div>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700 space-y-1">
+            <p className="font-semibold">طريقة الحصول على المفتاح المجاني:</p>
+            <p>١. افتح المتصفح واكتب: <span className="font-mono bg-blue-100 px-1 rounded">aistudio.google.com</span></p>
+            <p>٢. سجّل دخولك بحساب Google</p>
+            <p>٣. اضغط Get API Key ثم Create API Key</p>
+            <p>٤. انسخ المفتاح والصقه في الحقل أدناه</p>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">مفتاح Gemini API</label>
+            <input
+              type="password"
+              id="gemini-key-input"
+              defaultValue={typeof window !== "undefined" ? localStorage.getItem("kc_gemini_key") || "" : ""}
+              onChange={e => { if (typeof window !== "undefined") localStorage.setItem("kc_gemini_key", e.target.value.trim()); }}
+              placeholder="AIzaSy..."
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-violet-500 font-mono"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => {
+              const key = typeof window !== "undefined" ? localStorage.getItem("kc_gemini_key") : "";
+              if (!key) { alert("❌ الحقل فارغ — أدخل المفتاح أولاً"); return; }
+              alert("✅ المفتاح محفوظ بنجاح! يمكنك الآن استخدام المساعد الذكي");
+            }} className="bg-violet-700 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-violet-600">
+              حفظ وتحقق
+            </button>
+            <button onClick={() => {
+              if (typeof window !== "undefined") { localStorage.removeItem("kc_gemini_key"); }
+              const input = document.getElementById("gemini-key-input") as HTMLInputElement;
+              if (input) input.value = "";
+              alert("تم حذف المفتاح");
+            }} className="bg-gray-100 text-gray-600 px-5 py-2 rounded-xl text-sm hover:bg-gray-200">
+              حذف المفتاح
+            </button>
+          </div>
+        </div>
+
+        {/* رموز التسجيل */}
+        <div className="card p-6 space-y-5">
           <div className="flex items-center gap-3 mb-2">
             <Key className="w-6 h-6 text-yellow-600" />
             <h2 className="font-bold text-gray-800 text-lg">رموز التسجيل السرية</h2>
@@ -748,6 +797,7 @@ export default function AdminPage() {
               {regCodes.coordCode && <p className="text-sm text-green-800">منسقون: <span className="font-mono font-bold">{regCodes.coordCode}</span></p>}
             </div>
           )}
+        </div>
         </div>
       )}
 
