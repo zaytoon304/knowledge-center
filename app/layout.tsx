@@ -14,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <head>
-        <title>مركز المعرفة والابتكار</title>
+        <title>مركز المعرفة والابتكار بمدارس الأرق</title>
         <meta name="description" content="نظام الإدارة المعرفية والتعليمية لوحدة الموهبة والابتكار والذكاء الاصطناعي" />
       </head>
       <body>

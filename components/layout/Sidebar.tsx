@@ -47,8 +47,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <Sparkles className="w-7 h-7 text-yellow-300" />
               </div>
               <div>
-                <div className="text-white font-bold text-base leading-tight">مركز المعرفة</div>
-                <div className="text-blue-200 text-sm">والابتكار</div>
+                <div className="text-white font-bold text-base leading-tight">مركز المعرفة والابتكار</div>
+                <div className="text-blue-200 text-sm">بمدارس الأرق</div>
               </div>
             </div>
             <button onClick={onClose} className="md:hidden text-white/70 hover:text-white">
