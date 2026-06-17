@@ -4,7 +4,7 @@ import { useAuth, CoordinatorProfile } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import {
   Briefcase, Calendar, Layers, Trophy, Star, Archive, GraduationCap,
-  LogIn, Clock, XCircle, Download, FileText, Camera
+  LogIn, Clock, XCircle, Download, FileText, Camera, Users
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -14,9 +14,11 @@ const CompetitionsSection = dynamic(() => import("@/components/coordinator/Compe
 const AchievementsSection = dynamic(() => import("@/components/coordinator/AchievementsSection"), { ssr: false });
 const ArchiveSection = dynamic(() => import("@/components/coordinator/ArchiveSection"), { ssr: false });
 const ProfDevSection = dynamic(() => import("@/components/coordinator/ProfDevSection"), { ssr: false });
+const StudentsSection = dynamic(() => import("@/components/coordinator/StudentsSection"), { ssr: false });
 
 const tabs = [
   { id: "dashboard", label: "رئيسيتي", icon: Briefcase },
+  { id: "students", label: "طلابي وفرقي", icon: Users },
   { id: "plans", label: "الخطط", icon: Calendar },
   { id: "programs", label: "البرامج", icon: Layers },
   { id: "competitions", label: "المسابقات", icon: Trophy },
@@ -180,6 +182,7 @@ export default function CoordinatorPortalPage() {
         </div>
       )}
 
+      {tab === "students" && <StudentsSection />}
       {tab === "plans" && <PlansSection />}
       {tab === "programs" && <ProgramsSection />}
       {tab === "competitions" && <CompetitionsSection />}

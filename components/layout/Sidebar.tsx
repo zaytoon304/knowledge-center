@@ -44,7 +44,11 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, isLoggedIn } = useAuth();
-  const navItems = studentMode ? studentNavItems : coordinatorMode ? coordinatorNavItems : adminNavItems;
+  const navItems = studentMode
+    ? studentNavItems
+    : coordinatorMode
+    ? [coordinatorNavItems[0], ...adminNavItems.filter(i => i.href !== "/admin")]
+    : adminNavItems;
 
   return (
     <>
