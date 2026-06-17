@@ -231,6 +231,7 @@ export default function AdminPage() {
     { id: "emerging_tech_cms", label: "التقنيات الناشئة", icon: Cpu },
     { id: "indicators_cms", label: "المؤشرات", icon: BarChart3 },
     { id: "meetings_admin", label: "الاجتماعات", icon: Video },
+    { id: "monthly_report", label: "التقرير الشهري", icon: BarChart3 },
     { id: "permissions", label: "الصلاحيات", icon: Shield },
   ];
 
@@ -1081,6 +1082,9 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* التقرير الشهري */}
+      {tab === "monthly_report" && <MonthlyReport />}
+
       {/* Permissions */}
       {tab === "permissions" && (
         <div className="card p-5">
@@ -1114,6 +1118,104 @@ export default function AdminPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ===== مكوّن التقرير الشهري ===== */
+function MonthlyReport() {
+  const [generated, setGenerated] = useState(false);
+
+  const g = (key: string) => { try { const d = localStorage.getItem(key); return d ? JSON.parse(d) : []; } catch { return []; } };
+
+  const students: {status:string}[] = g("kc_students");
+  const coords: {status:string}[] = g("kc_coordinators");
+  const programs = g("kc_programs");
+  const competitions = g("kc_competitions");
+  const courses = g("kc_courses");
+  const projects = g("kc_projects");
+  const kanban: {stage:string}[] = g("kc_kanban");
+  const certs = g("kc_certificates");
+  const points: {points:number}[] = g("kc_points");
+  const meetings: {status:string}[] = g("kc_meetings");
+  const knowledge = ["kc_knowledge_guides","kc_knowledge_forms","kc_knowledge_policies","kc_knowledge_procedures","kc_knowledge_plans"].reduce((s,k)=>s+(g(k) as unknown[]).length,0);
+
+  const approvedStudents = students.filter(s=>s.status==="approved").length;
+  const approvedCoords = coords.filter(c=>c.status==="approved").length;
+  const totalPoints = points.reduce((s,p)=>s+(p.points||0),0);
+  const completedKanban = kanban.filter(k=>k.stage==="final").length;
+  const completedMeetings = meetings.filter(m=>m.status==="completed").length;
+
+  const now = new Date();
+  const monthName = now.toLocaleDateString("ar-SA",{month:"long",year:"numeric"});
+
+  const stats = [
+    {label:"الطلاب المعتمدون",value:approvedStudents,icon:"👨‍🎓"},
+    {label:"المنسقون",value:approvedCoords,icon:"👩‍💼"},
+    {label:"البرامج",value:programs.length,icon:"📚"},
+    {label:"المسابقات",value:competitions.length,icon:"🏆"},
+    {label:"الدورات التدريبية",value:courses.length,icon:"🎓"},
+    {label:"مشاريع مكتملة",value:completedKanban,icon:"✅"},
+    {label:"الشهادات المصدرة",value:certs.length,icon:"🎖️"},
+    {label:"النقاط الموزعة",value:totalPoints,icon:"⭐"},
+    {label:"الاجتماعات المنعقدة",value:completedMeetings,icon:"📋"},
+    {label:"وثائق المعرفة",value:knowledge,icon:"📁"},
+    {label:"إجمالي المشاريع",value:projects.length,icon:"💡"},
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center"><BarChart3 className="w-5 h-5 text-orange-700"/></div>
+          <div><h3 className="font-bold text-gray-800">التقرير الشهري التلقائي</h3><p className="text-xs text-gray-400">{monthName}</p></div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={()=>setGenerated(true)} className="bg-orange-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-orange-500 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4"/> توليد التقرير
+          </button>
+          {generated && <button onClick={()=>window.print()} className="bg-gray-700 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-600">🖨️ طباعة PDF</button>}
+        </div>
+      </div>
+      {!generated ? (
+        <div className="card p-10 text-center text-gray-400">
+          <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-30"/>
+          <p>اضغط "توليد التقرير" لاستخراج إحصائيات المنصة كاملة</p>
+        </div>
+      ) : (
+        <div>
+          <div className="card p-6 bg-gradient-to-l from-orange-700 to-amber-600 text-white mb-4">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold">تقرير مركز المعرفة والابتكار STEAM</h2>
+              <p className="text-orange-100 mt-1">{monthName} | مدارس الأرقم</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            {stats.map(s=>(
+              <div key={s.label} className="card p-4 text-center hover:shadow-md transition-shadow">
+                <div className="text-3xl mb-2">{s.icon}</div>
+                <div className="text-3xl font-bold text-gray-800">{s.value}</div>
+                <div className="text-xs text-gray-500 mt-1">{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <div className="card p-5 mb-3">
+            <h4 className="font-bold text-gray-800 mb-3">ملخص إنجازات المركز</h4>
+            <div className="space-y-2 text-sm text-gray-700 leading-relaxed">
+              <p>• بلغ إجمالي الطلاب المعتمدين <strong>{approvedStudents}</strong> طالباً والمنسقين <strong>{approvedCoords}</strong> منسقاً</p>
+              <p>• تم تنفيذ <strong>{programs.length}</strong> برنامجاً و<strong>{courses.length}</strong> دورة تدريبية و<strong>{competitions.length}</strong> مسابقة</p>
+              <p>• بلغ إجمالي المشاريع <strong>{projects.length}</strong>، أُكمل منها <strong>{completedKanban}</strong> مشروعاً بالكامل</p>
+              <p>• صُدرت <strong>{certs.length}</strong> شهادة رقمية ووُزِّعت <strong>{totalPoints}</strong> نقطة تحفيزية على الطلاب</p>
+              <p>• عُقد <strong>{completedMeetings}</strong> اجتماعاً رسمياً مسجلة محاضره في المنصة</p>
+              <p>• يضم مركز المعرفة <strong>{knowledge}</strong> وثيقة من أدلة ونماذج وسياسات وإجراءات</p>
+            </div>
+          </div>
+          <div className="card p-4 bg-gray-50 text-center">
+            <p className="text-xs text-gray-400">📅 تاريخ الإصدار: {now.toLocaleDateString("ar-SA",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+            <p className="text-xs text-gray-400 mt-1">تم إنشاء هذا التقرير تلقائياً من منصة مركز المعرفة والابتكار</p>
           </div>
         </div>
       )}

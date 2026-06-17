@@ -5,7 +5,7 @@ import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
   Archive, Settings, X, LogOut, LogIn, Briefcase, CalendarDays,
-  MessageSquare, Video, ChevronLeft, Eye
+  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +27,10 @@ const adminNavItems = [
   { href: "/daily-log", label: "يوميات المركز", icon: CalendarDays },
   { href: "/groups", label: "الجروبات", icon: MessageSquare },
   { href: "/meetings", label: "الاجتماعات", icon: Video },
+  { href: "/project-tracking", label: "متابعة المشاريع", icon: Kanban },
+  { href: "/leaderboard", label: "لوحة المتصدرين", icon: Medal },
+  { href: "/certificates", label: "الشهادات الرقمية", icon: Award },
+  { href: "/parent-portal", label: "بوابة الأولياء", icon: Baby },
   { href: "/admin", label: "لوحة الإدارة", icon: Settings },
 ];
 
