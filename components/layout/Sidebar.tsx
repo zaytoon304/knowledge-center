@@ -76,35 +76,37 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="p-3 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={clsx(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
-                  isActive
-                    ? "bg-white/20 text-white shadow-sm"
-                    : "text-blue-100 hover:bg-white/10 hover:text-white"
-                )}
-              >
-                <Icon className={clsx("w-5 h-5 flex-shrink-0", isActive ? "text-yellow-300" : "text-blue-200 group-hover:text-white")} />
-                <span className="text-base font-medium">{item.label}</span>
-                {isActive && <ChevronLeft className="w-4 h-4 mr-auto text-yellow-300" />}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Navigation — قابل للتمرير */}
+        <div className="sidebar-nav">
+          <nav className="p-3 space-y-1 pb-4">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className={clsx(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+                    isActive
+                      ? "bg-white/20 text-white shadow-sm"
+                      : "text-blue-100 hover:bg-white/10 hover:text-white"
+                  )}
+                >
+                  <Icon className={clsx("w-5 h-5 flex-shrink-0", isActive ? "text-yellow-300" : "text-blue-200 group-hover:text-white")} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                  {isActive && <ChevronLeft className="w-4 h-4 mr-auto text-yellow-300" />}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-        {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+        {/* Footer — ثابت في الأسفل */}
+        <div className="sidebar-footer p-4">
           {isLoggedIn && user ? (
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-2">
               <div className="w-9 h-9 rounded-full overflow-hidden bg-white/20 flex-shrink-0 flex items-center justify-center text-white text-sm font-bold">
                 {user.photo ? <img src={user.photo} alt="" className="w-full h-full object-cover" /> : user.name[0]}
               </div>
@@ -117,19 +119,16 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
               </button>
             </div>
           ) : (
-            <div className="flex flex-col gap-1.5 mb-3">
-              <Link href="/login" onClick={onClose} className="flex items-center gap-2 text-blue-200 hover:text-white transition-colors">
-                <LogIn className="w-4 h-4" /><span className="text-sm">تسجيل الدخول</span>
+            <div className="flex gap-3 mb-2">
+              <Link href="/login" onClick={onClose} className="flex items-center gap-1.5 text-blue-200 hover:text-white transition-colors text-xs">
+                <LogIn className="w-4 h-4" /> دخول
               </Link>
-              <Link href="/visitor" onClick={onClose} className="flex items-center gap-2 text-blue-300 hover:text-white transition-colors">
-                <Eye className="w-4 h-4" /><span className="text-sm">تصفح كزائر</span>
+              <Link href="/visitor" onClick={onClose} className="flex items-center gap-1.5 text-blue-300 hover:text-white transition-colors text-xs">
+                <Eye className="w-4 h-4" /> زائر
               </Link>
             </div>
           )}
-          <div className="text-center text-blue-200 text-sm">
-            مدارس الأرقم
-          </div>
-          <div className="text-center text-blue-300 text-xs mt-1">
+          <div className="text-center text-blue-300 text-xs">
             وحدة الموهبة والابتكار • 2025
           </div>
         </div>
