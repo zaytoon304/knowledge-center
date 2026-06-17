@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import { BarChart3, TrendingUp, Trophy, Users, BookOpen, FolderOpen, Download } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -6,14 +7,28 @@ import {
 } from "recharts";
 import { monthlyData, programDistribution } from "@/data/stats";
 
-const kpiCards = [
-  { label: "البرامج المنفذة", value: 6, total: 6, icon: BookOpen, color: "bg-purple-600", percent: 100 },
-  { label: "المشاريع الكلية", value: 35, total: 40, icon: FolderOpen, color: "bg-blue-600", percent: 88 },
-  { label: "الطلاب المشاركون", value: 120, total: 150, icon: Users, color: "bg-green-600", percent: 80 },
-  { label: "المسابقات", value: 8, total: 8, icon: Trophy, color: "bg-yellow-500", percent: 100 },
-  { label: "الدورات التدريبية", value: 12, total: 15, icon: BookOpen, color: "bg-teal-600", percent: 80 },
-  { label: "إنجاز الخطة", value: "92%", total: null, icon: TrendingUp, color: "bg-orange-500", percent: 92 },
+const DEFAULT_KPI = [
+  { id: "d1", label: "البرامج المنفذة", value: "6", total: "6", emoji: "📚", color: "bg-purple-600", note: "" },
+  { id: "d2", label: "المشاريع الكلية", value: "35", total: "40", emoji: "📁", color: "bg-blue-600", note: "" },
+  { id: "d3", label: "الطلاب المشاركون", value: "120", total: "150", emoji: "👨‍🎓", color: "bg-green-600", note: "" },
+  { id: "d4", label: "المسابقات", value: "8", total: "8", emoji: "🏆", color: "bg-yellow-500", note: "" },
+  { id: "d5", label: "الدورات التدريبية", value: "12", total: "15", emoji: "🎓", color: "bg-teal-600", note: "" },
+  { id: "d6", label: "إنجاز الخطة", value: "92%", total: "", emoji: "📈", color: "bg-orange-500", note: "" },
 ];
+
+interface KPI { id: string; label: string; value: string; total?: string; emoji?: string; color?: string; note?: string; }
+
+function loadKPIs(): KPI[] {
+  try { const d = localStorage.getItem("kc_indicators"); const arr = d ? JSON.parse(d) : []; return arr.length ? arr : DEFAULT_KPI; } catch { return DEFAULT_KPI; }
+}
+
+function calcPercent(value: string, total?: string): number {
+  const v = parseFloat(value);
+  const t = parseFloat(total || "");
+  if (!isNaN(v) && !isNaN(t) && t > 0) return Math.round((v / t) * 100);
+  const pct = parseFloat(value);
+  return isNaN(pct) ? 100 : Math.min(pct, 100);
+}
 
 interface TooltipProps {
   active?: boolean;
@@ -36,6 +51,9 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 };
 
 export default function IndicatorsPage() {
+  const [kpis, setKpis] = useState<KPI[]>(DEFAULT_KPI);
+  useEffect(() => { setKpis(loadKPIs()); }, []);
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -65,19 +83,20 @@ export default function IndicatorsPage() {
           المؤشرات الرئيسية
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {kpiCards.map(kpi => {
-            const Icon = kpi.icon;
+          {kpis.map(kpi => {
+            const pct = calcPercent(kpi.value, kpi.total);
             return (
-              <div key={kpi.label} className="card p-4 text-center">
-                <div className={`${kpi.color} w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3 text-white shadow-md`}>
-                  <Icon className="w-5 h-5" />
+              <div key={kpi.id} className="card p-4 text-center">
+                <div className={`${kpi.color || "bg-blue-600"} w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3 text-white shadow-md text-lg`}>
+                  {kpi.emoji || "📊"}
                 </div>
                 <div className="text-2xl font-bold text-gray-800">{kpi.value}</div>
                 <div className="text-xs text-gray-500 mt-1 mb-2">{kpi.label}</div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full ${kpi.color} rounded-full`} style={{ width: `${kpi.percent}%` }} />
+                  <div className={`h-full ${kpi.color || "bg-blue-600"} rounded-full`} style={{ width: `${pct}%` }} />
                 </div>
-                <div className="text-xs text-gray-400 mt-1">{kpi.percent}%</div>
+                <div className="text-xs text-gray-400 mt-1">{pct}%{kpi.total ? ` من ${kpi.total}` : ""}</div>
+                {kpi.note && <div className="text-xs text-gray-400 mt-1">{kpi.note}</div>}
               </div>
             );
           })}

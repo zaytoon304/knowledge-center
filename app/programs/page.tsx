@@ -1,154 +1,102 @@
 "use client";
-import { useState } from "react";
-import { Layers, Star, Lightbulb, Beaker, Brain, Bot, Search, ChevronLeft, Users, Target, BarChart3 } from "lucide-react";
-import { programs } from "@/data/programs";
+import { useState, useEffect } from "react";
+import { Layers, Search, ChevronLeft, Users, Target, Clock } from "lucide-react";
 
-const iconMap: Record<string, React.ElementType> = {
-  Star, Lightbulb, Beaker, Brain, Bot, Search,
-};
+interface Program {
+  id: string; title: string; description: string; emoji: string;
+  gradient: string; targetAudience: string; duration: string;
+  status: string; image?: string;
+}
+
+function load(): Program[] {
+  try { const d = localStorage.getItem("kc_programs"); return d ? JSON.parse(d) : []; } catch { return []; }
+}
 
 export default function ProgramsPage() {
-  const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [search, setSearch] = useState("");
 
-  const program = programs.find(p => p.id === selectedProgram);
+  useEffect(() => { setPrograms(load()); }, []);
+
+  const filtered = programs.filter(p =>
+    !search || p.title.includes(search) || p.description?.includes(search)
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="card p-6 bg-gradient-to-l from-purple-800 to-indigo-700 text-white">
-        <div className="flex items-center gap-3 mb-2">
+      <div className="card p-6 bg-gradient-to-l from-purple-800 to-violet-600 text-white">
+        <div className="flex items-center gap-3 mb-3">
           <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-            <Layers className="w-7 h-7" />
+            <Layers className="w-7 h-7 text-white" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">مركز البرامج</h1>
-            <p className="text-purple-200 text-sm">البرامج الرسمية لوحدة الموهبة والابتكار والذكاء الاصطناعي</p>
+            <p className="text-purple-200 text-sm">برامج الموهبة والابتكار وSTEAM</p>
           </div>
+        </div>
+        <div className="bg-white/10 rounded-xl p-3 text-center w-32">
+          <div className="text-2xl font-bold text-yellow-300">{programs.length}</div>
+          <div className="text-purple-100 text-sm">برنامج نشط</div>
         </div>
       </div>
 
-      {!selectedProgram ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {programs.map(prog => {
-            const Icon = iconMap[prog.icon] || Star;
-            return (
-              <div
-                key={prog.id}
-                onClick={() => setSelectedProgram(prog.id)}
-                className="card p-6 cursor-pointer group"
-              >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${prog.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
-                  <Icon className="w-7 h-7 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-800 text-lg mb-2">{prog.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed mb-4">{prog.description}</p>
+      {/* Search */}
+      <div className="card p-4">
+        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+          <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="ابحث في البرامج..."
+            className="bg-transparent outline-none text-sm flex-1 text-right" />
+        </div>
+      </div>
 
-                <div className="space-y-2 mb-4">
-                  {prog.subPrograms.slice(0, 4).map(sub => (
-                    <div key={sub} className="flex items-center gap-2 text-sm text-gray-600">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
-                      {sub}
-                    </div>
-                  ))}
-                  {prog.subPrograms.length > 4 && (
-                    <div className="text-xs text-gray-400">+{prog.subPrograms.length - 4} أكثر...</div>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <div className="flex items-center gap-1 text-xs text-gray-400">
-                    <Users className="w-3.5 h-3.5" />
-                    {prog.target}
-                  </div>
-                  <div className="flex items-center gap-1 text-blue-600 text-sm font-medium group-hover:gap-2 transition-all">
-                    عرض التفاصيل <ChevronLeft className="w-4 h-4" />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+      {/* Programs */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <Layers className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p className="font-medium text-gray-500">{search ? "لا نتائج مطابقة" : "لا توجد برامج بعد"}</p>
+          {!search && <p className="text-sm mt-1">يمكن للأدمن إضافة البرامج من لوحة الإدارة ← البرامج</p>}
         </div>
       ) : (
-        program && (
-          <div className="space-y-5">
-            <button
-              onClick={() => setSelectedProgram(null)}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              <ChevronLeft className="w-4 h-4 rotate-180" />
-              العودة للبرامج
-            </button>
-
-            <div className={`card p-8 bg-gradient-to-br ${program.color} text-white`}>
-              <h2 className="text-3xl font-bold mb-2">{program.title}</h2>
-              <p className="text-white/80 text-lg mb-4">{program.description}</p>
-              <div className="flex gap-4 text-sm">
-                <div className="bg-white/20 px-3 py-1 rounded-full">الفئة المستهدفة: {program.target}</div>
-                <div className="bg-white/20 px-3 py-1 rounded-full">المسؤول: {program.manager}</div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filtered.map(program => (
+            <div key={program.id} className="card overflow-hidden group cursor-pointer hover:shadow-lg transition-all">
+              {program.image ? (
+                <img src={program.image} alt={program.title} className="w-full h-36 object-cover" />
+              ) : (
+                <div className={`w-full h-36 bg-gradient-to-br ${program.gradient || "from-purple-700 to-violet-500"} flex items-center justify-center`}>
+                  <span className="text-5xl">{program.emoji || "🎯"}</span>
+                </div>
+              )}
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h3 className="font-bold text-gray-800 text-sm leading-tight">{program.title}</h3>
+                  {program.status && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+                      program.status === "نشط" ? "bg-green-100 text-green-700" :
+                      program.status === "قادم" ? "bg-yellow-100 text-yellow-700" :
+                      "bg-gray-100 text-gray-500"
+                    }`}>{program.status}</span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 leading-relaxed mb-3">{program.description}</p>
+                <div className="flex flex-wrap gap-3 text-xs text-gray-400 mb-4">
+                  {program.targetAudience && (
+                    <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {program.targetAudience}</span>
+                  )}
+                  {program.duration && (
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {program.duration}</span>
+                  )}
+                </div>
+                <button className={`w-full py-2 rounded-xl text-white text-sm font-medium bg-gradient-to-l ${program.gradient || "from-purple-700 to-violet-500"} flex items-center justify-center gap-2 group-hover:opacity-90 transition-opacity`}>
+                  <span>التفاصيل والتسجيل</span>
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
               </div>
             </div>
-
-            <div className="grid md:grid-cols-3 gap-5">
-              {/* Goals */}
-              <div className="card p-5">
-                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-purple-600" /> الأهداف
-                </h3>
-                <div className="space-y-2">
-                  {program.goals.map((g, i) => (
-                    <div key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                      <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs text-purple-700 font-bold">{i + 1}</div>
-                      {g}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Outcomes */}
-              <div className="card p-5">
-                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-green-600" /> المخرجات
-                </h3>
-                <div className="space-y-2">
-                  {program.outcomes.map((o, i) => (
-                    <div key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                      <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 mt-1.5" />
-                      {o}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* SubPrograms */}
-              <div className="card p-5">
-                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-blue-600" /> البرامج الفرعية
-                </h3>
-                <div className="space-y-2">
-                  {program.subPrograms.map((sub, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm bg-blue-50 text-blue-700 px-3 py-2 rounded-lg">
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                      {sub}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* KPIs placeholder */}
-            <div className="card p-5">
-              <h3 className="font-bold text-gray-800 mb-4">مؤشرات الأداء</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {program.outcomes.map((o, i) => (
-                  <div key={i} className="bg-gray-50 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-700">{[35, 120, 12, 8][i] ?? "–"}</div>
-                    <div className="text-xs text-gray-500 mt-1">{o.split(" ").slice(0, 3).join(" ")}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )
+          ))}
+        </div>
       )}
     </div>
   );

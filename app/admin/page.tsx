@@ -3,10 +3,89 @@ import { useState, useEffect } from "react";
 import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
-  Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon
+  Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
+  Layers, Trophy, Archive, Cpu, BarChart3
 } from "lucide-react";
 import dynamic from "next/dynamic";
 const KnowledgeAdmin = dynamic(() => import("@/components/admin/KnowledgeAdmin"), { ssr: false });
+const SectionCMS = dynamic(() => import("@/components/admin/SectionCMS"), { ssr: false });
+
+const PROGRAMS_CONFIG = {
+  storageKey: "kc_programs", title: "البرامج", icon: "🎯",
+  displayField: "title", subField: "description",
+  fields: [
+    { key: "title", label: "اسم البرنامج", type: "text" as const, required: true, placeholder: "مثال: برنامج الروبوت" },
+    { key: "description", label: "الوصف", type: "textarea" as const, placeholder: "وصف مختصر للبرنامج..." },
+    { key: "emoji", label: "أيقونة", type: "emoji" as const },
+    { key: "gradient", label: "اللون", type: "text" as const, placeholder: "from-blue-700 to-blue-500" },
+    { key: "targetAudience", label: "الفئة المستهدفة", type: "select" as const, options: ["طلاب ابتدائي", "طلاب متوسط", "طلاب ثانوي", "الجميع", "معلمون", "منسقون"] },
+    { key: "duration", label: "المدة", type: "text" as const, placeholder: "مثال: 8 أسابيع" },
+    { key: "status", label: "الحالة", type: "select" as const, options: ["نشط", "قادم", "منتهي"] },
+    { key: "image", label: "صورة", type: "image" as const },
+  ],
+};
+
+const COMPETITIONS_CONFIG = {
+  storageKey: "kc_competitions", title: "المسابقات والجوائز", icon: "🏆",
+  displayField: "title", subField: "description",
+  fields: [
+    { key: "title", label: "اسم المسابقة", type: "text" as const, required: true, placeholder: "مثال: مسابقة WRO 2025" },
+    { key: "description", label: "الوصف", type: "textarea" as const, placeholder: "تفاصيل المسابقة..." },
+    { key: "type", label: "النوع", type: "select" as const, options: ["محلية", "وطنية", "دولية", "مدرسية"] },
+    { key: "subject", label: "المجال", type: "select" as const, options: ["روبوت", "رياضيات", "علوم", "برمجة", "ذكاء اصطناعي", "ابتكار", "متعدد"] },
+    { key: "date", label: "تاريخ المسابقة", type: "date" as const },
+    { key: "status", label: "الحالة", type: "select" as const, options: ["مفتوح", "قادم", "منتهي"] },
+    { key: "registrationLink", label: "رابط التسجيل", type: "url" as const, placeholder: "https://..." },
+    { key: "tags", label: "الأعمار المستهدفة", type: "tags" as const, placeholder: "مثال: 10-14 سنة" },
+    { key: "image", label: "صورة", type: "image" as const },
+  ],
+};
+
+const PROJECT_BANK_CONFIG = {
+  storageKey: "kc_project_bank", title: "بنك المشاريع", icon: "💡",
+  displayField: "title", subField: "description",
+  fields: [
+    { key: "title", label: "عنوان المشروع", type: "text" as const, required: true, placeholder: "مثال: روبوت تتبع الخط" },
+    { key: "description", label: "وصف المشروع", type: "textarea" as const, placeholder: "فكرة المشروع وأهدافه..." },
+    { key: "category", label: "التصنيف", type: "select" as const, options: ["روبوت", "ذكاء اصطناعي", "إلكترونيات", "IoT", "برمجة", "بيئة", "ابتكار", "أخرى"] },
+    { key: "difficulty", label: "الصعوبة", type: "select" as const, options: ["سهل", "متوسط", "صعب", "متقدم"] },
+    { key: "duration", label: "المدة التقديرية", type: "text" as const, placeholder: "مثال: 3 أسابيع" },
+    { key: "materials", label: "المكونات والأدوات", type: "textarea" as const, placeholder: "اذكر المكونات المطلوبة..." },
+    { key: "status", label: "الحالة", type: "select" as const, options: ["نشط", "قيد التنفيذ", "منتهي"] },
+    { key: "image", label: "صورة", type: "image" as const },
+  ],
+};
+
+const EMERGING_TECH_CONFIG = {
+  storageKey: "kc_emerging_tech", title: "التقنيات الناشئة", icon: "💡",
+  displayField: "title", subField: "subtitle",
+  fields: [
+    { key: "title", label: "اسم التقنية", type: "text" as const, required: true, placeholder: "مثال: الذكاء الاصطناعي" },
+    { key: "subtitle", label: "الاسم بالإنجليزية", type: "text" as const, placeholder: "Artificial Intelligence" },
+    { key: "emoji", label: "أيقونة", type: "emoji" as const },
+    { key: "color", label: "لون التدرج", type: "text" as const, placeholder: "from-indigo-600 to-purple-500" },
+    { key: "description", label: "الوصف", type: "textarea" as const, placeholder: "شرح مختصر للتقنية..." },
+    { key: "tools", label: "الأدوات والتطبيقات (بفاصلة)", type: "textarea" as const, placeholder: "ChatGPT, Scratch, Teachable Machine..." },
+    { key: "applications", label: "مجالات التطبيق (بفاصلة)", type: "textarea" as const, placeholder: "التعرف على الصور, الترجمة الآلية..." },
+    { key: "projects", label: "أفكار مشاريع (بفاصلة)", type: "textarea" as const, placeholder: "كاشف النفايات, مساعد ذكي..." },
+    { key: "levels", label: "المراحل الدراسية", type: "tags" as const, placeholder: "ابتدائي / متوسط / ثانوي" },
+    { key: "image", label: "صورة", type: "image" as const },
+  ],
+};
+
+const INDICATORS_CONFIG = {
+  storageKey: "kc_indicators", title: "مؤشرات الأداء", icon: "📊",
+  displayField: "label", subField: "value",
+  fields: [
+    { key: "label", label: "اسم المؤشر", type: "text" as const, required: true, placeholder: "مثال: البرامج المنفذة" },
+    { key: "value", label: "القيمة", type: "text" as const, required: true, placeholder: "مثال: 6 أو 92%" },
+    { key: "total", label: "المستهدف", type: "text" as const, placeholder: "مثال: 8" },
+    { key: "emoji", label: "أيقونة", type: "emoji" as const },
+    { key: "color", label: "اللون", type: "select" as const, options: ["bg-purple-600", "bg-blue-600", "bg-green-600", "bg-yellow-500", "bg-teal-600", "bg-orange-500", "bg-red-600"] },
+    { key: "note", label: "ملاحظة", type: "text" as const, placeholder: "مثال: حتى نهاية الفصل الأول" },
+  ],
+};
+
 import { useAuth, StudentProfile, CoordinatorProfile, ChatGroup, CourseItem, VideoItem, ProjectItem, ShopItem, PlatformAchievement, DailyLogEntry } from "@/contexts/AuthContext";
 
 const ADMIN_PASSWORD = "arqam2025";
@@ -146,6 +225,11 @@ export default function AdminPage() {
     { id: "codes", label: "رموز التسجيل", icon: Key },
     { id: "daily", label: "يوميات المركز", icon: CalendarDays, badge: dailyLog.length || undefined },
     { id: "knowledge", label: "مركز المعرفة", icon: BookOpen },
+    { id: "programs_cms", label: "البرامج", icon: Layers },
+    { id: "competitions_cms", label: "المسابقات", icon: Trophy },
+    { id: "project_bank_cms", label: "بنك المشاريع", icon: Archive },
+    { id: "emerging_tech_cms", label: "التقنيات الناشئة", icon: Cpu },
+    { id: "indicators_cms", label: "المؤشرات", icon: BarChart3 },
     { id: "permissions", label: "الصلاحيات", icon: Shield },
   ];
 
@@ -920,6 +1004,61 @@ export default function AdminPage() {
             </div>
           </div>
           <KnowledgeAdmin />
+        </div>
+      )}
+
+      {/* البرامج CMS */}
+      {tab === "programs_cms" && (
+        <div className="card p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><Layers className="w-5 h-5 text-purple-700" /></div>
+            <div><h3 className="font-bold text-gray-800">إدارة البرامج</h3><p className="text-xs text-gray-400">أضف وعدّل وأحذف برامج مركز البرامج</p></div>
+          </div>
+          <SectionCMS config={PROGRAMS_CONFIG} />
+        </div>
+      )}
+
+      {/* المسابقات CMS */}
+      {tab === "competitions_cms" && (
+        <div className="card p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center"><Trophy className="w-5 h-5 text-yellow-700" /></div>
+            <div><h3 className="font-bold text-gray-800">إدارة المسابقات والجوائز</h3><p className="text-xs text-gray-400">أضف وعدّل وأحذف المسابقات</p></div>
+          </div>
+          <SectionCMS config={COMPETITIONS_CONFIG} />
+        </div>
+      )}
+
+      {/* بنك المشاريع CMS */}
+      {tab === "project_bank_cms" && (
+        <div className="card p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center"><Archive className="w-5 h-5 text-slate-700" /></div>
+            <div><h3 className="font-bold text-gray-800">إدارة بنك المشاريع</h3><p className="text-xs text-gray-400">أضف وعدّل وأحذف أفكار المشاريع</p></div>
+          </div>
+          <SectionCMS config={PROJECT_BANK_CONFIG} />
+        </div>
+      )}
+
+      {/* التقنيات الناشئة CMS */}
+      {tab === "emerging_tech_cms" && (
+        <div className="card p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center"><Cpu className="w-5 h-5 text-indigo-700" /></div>
+            <div><h3 className="font-bold text-gray-800">إدارة التقنيات الناشئة</h3><p className="text-xs text-gray-400">أضف وعدّل وأحذف التقنيات الناشئة</p></div>
+          </div>
+          <SectionCMS config={EMERGING_TECH_CONFIG} />
+        </div>
+      )}
+
+      {/* المؤشرات CMS */}
+      {tab === "indicators_cms" && (
+        <div className="card p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center"><BarChart3 className="w-5 h-5 text-orange-700" /></div>
+            <div><h3 className="font-bold text-gray-800">إدارة مؤشرات الأداء</h3><p className="text-xs text-gray-400">عدّل مؤشرات الأداء الرئيسية KPIs</p></div>
+          </div>
+          <SectionCMS config={INDICATORS_CONFIG} />
         </div>
       )}
 

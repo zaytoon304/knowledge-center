@@ -1,206 +1,129 @@
 "use client";
-import { useState } from "react";
-import { Trophy, Calendar, Users, Plus, Filter, ChevronLeft, CheckCircle, Clock, Globe, MapPin } from "lucide-react";
-import { competitions } from "@/data/competitions";
-import Badge from "@/components/ui/Badge";
+import { useState, useEffect } from "react";
+import { Trophy, Calendar, Search, Globe, MapPin, ChevronLeft, ExternalLink } from "lucide-react";
 
-const typeColors: Record<string, string> = {
-  "دولية": "bg-blue-100 text-blue-700",
-  "وطنية": "bg-green-100 text-green-700",
-  "محلية": "bg-purple-100 text-purple-700",
-  "داخلية": "bg-orange-100 text-orange-700",
-};
+interface Competition {
+  id: string; title: string; description: string; type: string;
+  subject: string; date: string; status: string;
+  registrationLink?: string; tags?: string[]; image?: string;
+}
+
+function load(): Competition[] {
+  try { const d = localStorage.getItem("kc_competitions"); return d ? JSON.parse(d) : []; } catch { return []; }
+}
+
+const statusColor = (s: string) =>
+  s === "مفتوح" ? "bg-green-100 text-green-700" :
+  s === "قادم" ? "bg-yellow-100 text-yellow-700" :
+  "bg-gray-100 text-gray-500";
+
+const typeColor = (t: string) =>
+  t === "دولية" ? "bg-blue-100 text-blue-700" :
+  t === "وطنية" ? "bg-purple-100 text-purple-700" :
+  t === "محلية" ? "bg-green-100 text-green-700" :
+  "bg-gray-100 text-gray-500";
 
 export default function CompetitionsPage() {
-  const [typeFilter, setTypeFilter] = useState("الكل");
-  const [statusFilter, setStatusFilter] = useState("الكل");
-  const [selected, setSelected] = useState<number | null>(null);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("الكل");
+
+  useEffect(() => { setCompetitions(load()); }, []);
+
+  const types = ["الكل", ...Array.from(new Set(competitions.map(c => c.type).filter(Boolean)))];
 
   const filtered = competitions.filter(c => {
-    return (typeFilter === "الكل" || c.type === typeFilter) &&
-           (statusFilter === "الكل" || c.status === statusFilter);
+    const matchSearch = !search || c.title.includes(search) || c.description?.includes(search);
+    const matchFilter = filter === "الكل" || c.type === filter;
+    return matchSearch && matchFilter;
   });
-
-  const comp = competitions.find(c => c.id === selected);
-
-  if (selected && comp) {
-    return (
-      <div className="space-y-5 animate-fade-in">
-        <button onClick={() => setSelected(null)} className="flex items-center gap-2 text-blue-600 text-sm font-medium">
-          ← العودة للمسابقات
-        </button>
-        <div className="card p-8">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">{comp.name}</h1>
-              <div className="flex gap-2">
-                <span className={`badge text-xs ${typeColors[comp.type]}`}>{comp.type}</span>
-                <Badge>{comp.status}</Badge>
-                <span className="badge text-xs bg-gray-100 text-gray-600">{comp.field}</span>
-              </div>
-            </div>
-          </div>
-          <p className="text-gray-600 leading-relaxed mb-6">{comp.description}</p>
-
-          <div className="grid md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-blue-50 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2 text-blue-700">
-                <Users className="w-4 h-4" />
-                <span className="font-semibold text-sm">الفئة المستهدفة</span>
-              </div>
-              <div className="text-blue-800">{comp.targetAge}</div>
-            </div>
-            <div className="bg-orange-50 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2 text-orange-700">
-                <Clock className="w-4 h-4" />
-                <span className="font-semibold text-sm">آخر موعد للتسجيل</span>
-              </div>
-              <div className="text-orange-800">{comp.deadline}</div>
-            </div>
-            <div className="bg-green-50 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2 text-green-700">
-                <Calendar className="w-4 h-4" />
-                <span className="font-semibold text-sm">موعد المسابقة</span>
-              </div>
-              <div className="text-green-800">{comp.eventDate}</div>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-5">
-            <div className="card p-4">
-              <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" /> الشروط والمتطلبات
-              </h3>
-              <div className="space-y-2">
-                {comp.requirements.map(r => (
-                  <div key={r} className="flex items-start gap-2 text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    {r}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {comp.achievements.length > 0 && (
-              <div className="card p-4">
-                <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-yellow-500" /> الإنجازات السابقة
-                </h3>
-                {comp.achievements.map(a => (
-                  <div key={a} className="flex items-center gap-2 text-sm text-gray-600 py-1">
-                    <span className="text-yellow-500">🏆</span> {a}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-6 flex gap-3">
-            <button className="flex-1 bg-blue-800 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
-              اشترك الآن
-            </button>
-            <button className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors">
-              <Plus className="w-4 h-4" /> أضف فريقاً
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="card p-6 bg-gradient-to-l from-yellow-600 to-amber-500 text-white">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-              <Trophy className="w-7 h-7" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">مركز المسابقات والجوائز</h1>
-              <p className="text-yellow-100 text-sm">جميع المسابقات المحلية والوطنية والدولية</p>
-            </div>
+      <div className="card p-6 bg-gradient-to-l from-yellow-700 to-amber-500 text-white">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+            <Trophy className="w-7 h-7 text-white" />
           </div>
-          <button className="bg-white text-yellow-700 px-4 py-2 rounded-xl font-semibold text-sm hover:bg-yellow-50">
-            <Plus className="w-4 h-4 inline ml-1" /> مسابقة جديدة
-          </button>
+          <div>
+            <h1 className="text-2xl font-bold">المسابقات والجوائز</h1>
+            <p className="text-yellow-100 text-sm">المسابقات المحلية والوطنية والدولية</p>
+          </div>
         </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { l: "إجمالي المسابقات", v: competitions.length, c: "bg-blue-50 text-blue-700" },
-          { l: "مفتوحة للتسجيل", v: competitions.filter(c => c.status === "مفتوح").length, c: "bg-green-50 text-green-700" },
-          { l: "فرق مشاركة", v: competitions.reduce((s, c) => s + c.teams, 0), c: "bg-purple-50 text-purple-700" },
-          { l: "إنجازات محققة", v: competitions.reduce((s, c) => s + c.achievements.length, 0), c: "bg-yellow-50 text-yellow-700" },
-        ].map(s => (
-          <div key={s.l} className={`card p-4 text-center ${s.c}`}>
-            <div className="text-3xl font-bold">{s.v}</div>
-            <div className="text-xs font-medium mt-1">{s.l}</div>
-          </div>
-        ))}
+        <div className="flex gap-3">
+          {[
+            { n: competitions.filter(c => c.status === "مفتوح").length, l: "مفتوح للتسجيل" },
+            { n: competitions.filter(c => c.status === "قادم").length, l: "قادم" },
+            { n: competitions.length, l: "إجمالي" },
+          ].map(s => (
+            <div key={s.l} className="bg-white/10 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-white">{s.n}</div>
+              <div className="text-yellow-100 text-xs mt-0.5">{s.l}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Filters */}
       <div className="card p-4 flex flex-wrap gap-3">
-        {[
-          { label: "النوع", options: ["الكل", "دولية", "وطنية", "محلية", "داخلية"], value: typeFilter, set: setTypeFilter },
-          { label: "الحالة", options: ["الكل", "مفتوح", "مغلق", "قادم", "منتهي"], value: statusFilter, set: setStatusFilter },
-        ].map(f => (
-          <div key={f.label} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
-            <Filter className="w-3.5 h-3.5 text-gray-400" />
-            <select value={f.value} onChange={e => f.set(e.target.value)} className="bg-transparent text-sm outline-none text-gray-600">
-              {f.options.map(o => <option key={o}>{o}</option>)}
-            </select>
-          </div>
-        ))}
+        <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2">
+          <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="ابحث في المسابقات..."
+            className="bg-transparent outline-none text-sm flex-1 text-right" />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {types.map(t => (
+            <button key={t} onClick={() => setFilter(t)}
+              className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${filter === t ? "bg-yellow-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Competition Cards */}
-      <div className="grid md:grid-cols-2 gap-5">
-        {filtered.map(comp => (
-          <div key={comp.id} className="card p-5 cursor-pointer group" onClick={() => setSelected(comp.id)}>
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <div className="flex gap-2 mb-2">
-                  <span className={`badge text-xs ${typeColors[comp.type]}`}>{comp.type}</span>
-                  <Badge>{comp.status}</Badge>
+      {/* List */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <Trophy className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p className="font-medium text-gray-500">{search ? "لا نتائج مطابقة" : "لا توجد مسابقات بعد"}</p>
+          {!search && <p className="text-sm mt-1">يمكن للأدمن إضافة المسابقات من لوحة الإدارة ← المسابقات</p>}
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-4">
+          {filtered.map(comp => (
+            <div key={comp.id} className="card overflow-hidden hover:shadow-md transition-shadow">
+              {comp.image && <img src={comp.image} alt={comp.title} className="w-full h-40 object-cover" />}
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <h3 className="font-bold text-gray-800 text-sm leading-tight">{comp.title}</h3>
+                  <div className="flex flex-col gap-1">
+                    {comp.status && <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor(comp.status)}`}>{comp.status}</span>}
+                    {comp.type && <span className={`text-xs px-2 py-0.5 rounded-full ${typeColor(comp.type)}`}>{comp.type}</span>}
+                  </div>
                 </div>
-                <h3 className="font-bold text-gray-800 group-hover:text-blue-700 transition-colors">{comp.name}</h3>
-              </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                {comp.type === "دولية" ? <Globe className="w-6 h-6 text-yellow-600" /> : <MapPin className="w-6 h-6 text-yellow-600" />}
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-500 leading-relaxed mb-4">{comp.description}</p>
-
-            <div className="grid grid-cols-3 gap-2 text-xs text-gray-500 mb-4">
-              <div className="flex items-center gap-1"><Users className="w-3 h-3" />{comp.targetAge}</div>
-              <div className="flex items-center gap-1"><Clock className="w-3 h-3" />{comp.deadline}</div>
-              <div className="flex items-center gap-1"><Users className="w-3 h-3" />{comp.teams} فريق</div>
-            </div>
-
-            {comp.achievements.length > 0 && (
-              <div className="bg-yellow-50 rounded-xl p-3 mb-4">
-                <div className="flex items-center gap-1 text-yellow-700 text-xs font-semibold mb-1">
-                  <Trophy className="w-3.5 h-3.5" /> إنجاز سابق
+                <p className="text-xs text-gray-500 leading-relaxed mb-3">{comp.description}</p>
+                <div className="flex flex-wrap gap-3 text-xs text-gray-400 mb-4">
+                  {comp.date && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {comp.date}</span>}
+                  {comp.subject && <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> {comp.subject}</span>}
                 </div>
-                <div className="text-xs text-yellow-700">{comp.achievements[0]}</div>
+                {comp.tags && comp.tags.length > 0 && (
+                  <div className="flex gap-1 flex-wrap mb-3">
+                    {comp.tags.map((t, i) => <span key={i} className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{t}</span>)}
+                  </div>
+                )}
+                {comp.registrationLink && (
+                  <a href={comp.registrationLink} target="_blank" rel="noopener noreferrer"
+                    className="w-full py-2.5 rounded-xl text-white text-sm font-medium bg-yellow-600 hover:bg-yellow-500 flex items-center justify-center gap-2 transition-colors">
+                    <ExternalLink className="w-4 h-4" /> سجّل الآن
+                  </a>
+                )}
               </div>
-            )}
-
-            <div className="flex gap-2 pt-3 border-t border-gray-100">
-              <button className="flex-1 bg-blue-800 text-white text-xs py-2 rounded-xl hover:bg-blue-700 transition-colors">اشترك الآن</button>
-              <button className="bg-gray-100 text-gray-600 text-xs px-3 py-2 rounded-xl hover:bg-gray-200">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
