@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { Bell, Search, Menu, Moon, Sun, X, UserCircle } from "lucide-react";
+import CenterLogo from "@/components/icons/CenterLogo";
+import Link from "next/link";
 
 const notifications = [
   { id: 1, text: "مسابقة جديدة مفتوحة للتسجيل", time: "منذ ساعتين", unread: true },
@@ -28,11 +30,20 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
     <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
       <div className="flex items-center justify-between px-4 md:px-6 h-16">
 
-        {/* Right: Menu + Search */}
+        {/* Right: Menu + Logo + Search */}
         <div className="flex items-center gap-3">
           <button onClick={onMenuClick} className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100">
             <Menu className="w-6 h-6" />
           </button>
+
+          {/* شعار المركز — يظهر على الجوال فقط (السايدبار مخفي) */}
+          <Link href="/" className="md:hidden flex items-center gap-2">
+            <CenterLogo className="w-9 h-9 drop-shadow" />
+            <div className="leading-tight">
+              <div className="text-blue-900 font-bold text-xs">مركز المعرفة</div>
+              <div className="text-yellow-600 text-[10px] font-semibold">STEAM • الأرقم</div>
+            </div>
+          </Link>
 
           {showSearch ? (
             <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5 w-72">

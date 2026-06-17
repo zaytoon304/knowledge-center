@@ -5,7 +5,7 @@ import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
   Archive, Settings, X, LogOut, LogIn, Briefcase, CalendarDays,
-  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby
+  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,6 +31,8 @@ const adminNavItems = [
   { href: "/leaderboard", label: "لوحة المتصدرين", icon: Medal },
   { href: "/certificates", label: "الشهادات الرقمية", icon: Award },
   { href: "/parent-portal", label: "بوابة الأولياء", icon: Baby },
+  { href: "/supervisor", label: "الملف الشخصي", icon: Contact },
+  { href: "/platform-qr", label: "باركود المنصة", icon: QrCode },
   { href: "/admin", label: "لوحة الإدارة", icon: Settings },
 ];
 

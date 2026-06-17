@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
-  Layers, Trophy, Archive, Cpu, BarChart3, Video
+  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink
 } from "lucide-react";
 import dynamic from "next/dynamic";
 const KnowledgeAdmin = dynamic(() => import("@/components/admin/KnowledgeAdmin"), { ssr: false });
@@ -88,6 +88,27 @@ const INDICATORS_CONFIG = {
 
 import { useAuth, StudentProfile, CoordinatorProfile, ChatGroup, CourseItem, VideoItem, ProjectItem, ShopItem, PlatformAchievement, DailyLogEntry } from "@/contexts/AuthContext";
 
+interface VisitorRequest {
+  id: string; name: string; phone: string; email: string;
+  purpose: "courses" | "shop" | "activities";
+  purposeLabel: string; notes: string;
+  status: "pending" | "approved" | "rejected";
+  submittedAt: string;
+}
+
+const PURPOSE_LABELS_MAP: Record<string, string> = {
+  courses: "🎓 الدورات التدريبية",
+  shop: "🛍️ المتجر",
+  activities: "📰 متابعة الأنشطة",
+};
+
+function loadVisitorRequests(): VisitorRequest[] {
+  try { return JSON.parse(localStorage.getItem("kc_visitor_requests") || "[]"); } catch { return []; }
+}
+function saveVisitorRequests(data: VisitorRequest[]) {
+  localStorage.setItem("kc_visitor_requests", JSON.stringify(data));
+}
+
 const ADMIN_PASSWORD = "arqam2025";
 
 function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
@@ -148,6 +169,7 @@ export default function AdminPage() {
   // --- كل الـ hooks أولاً قبل أي return ---
   const [authed, setAuthed] = useState(false);
   const [tab, setTab] = useState("students");
+  const [visitorRequests, setVisitorRequests] = useState<VisitorRequest[]>([]);
   const [students, setStudents] = useState<StudentProfile[]>([]);
   const [coordinators, setCoordinators] = useState<CoordinatorProfile[]>([]);
   const [groups, setGroups] = useState<ChatGroup[]>([]);
@@ -195,6 +217,7 @@ export default function AdminPage() {
     setPlatformAchievements(getPlatformAchievements());
     setRegCodesState(getRegCodes());
     setDailyLog(getDailyLog());
+    setVisitorRequests(loadVisitorRequests());
   };
 
   useEffect(() => {
@@ -232,6 +255,8 @@ export default function AdminPage() {
     { id: "indicators_cms", label: "المؤشرات", icon: BarChart3 },
     { id: "meetings_admin", label: "الاجتماعات", icon: Video },
     { id: "monthly_report", label: "التقرير الشهري", icon: BarChart3 },
+    { id: "visitors", label: "طلبات الزوار", icon: Globe, badge: visitorRequests.filter(v => v.status === "pending").length || undefined },
+    { id: "supervisor_profile", label: "ملفي الشخصي", icon: UserSquare2 },
     { id: "permissions", label: "الصلاحيات", icon: Shield },
   ];
 
@@ -1085,6 +1110,99 @@ export default function AdminPage() {
       {/* التقرير الشهري */}
       {tab === "monthly_report" && <MonthlyReport />}
 
+      {/* ملف المشرف الشخصي */}
+      {tab === "supervisor_profile" && <SupervisorProfileEditor />}
+
+      {/* طلبات الزوار */}
+      {tab === "visitors" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-gray-800 flex items-center gap-2">
+              <Globe className="w-5 h-5 text-teal-600" />
+              طلبات تسجيل الزوار ({visitorRequests.filter(v => v.status === "pending").length} معلق)
+            </h2>
+            <div className="flex gap-2 text-xs">
+              <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-lg font-medium">
+                ⏳ معلق: {visitorRequests.filter(v => v.status === "pending").length}
+              </span>
+              <span className="bg-green-100 text-green-700 px-2 py-1 rounded-lg font-medium">
+                ✅ معتمد: {visitorRequests.filter(v => v.status === "approved").length}
+              </span>
+              <span className="bg-red-100 text-red-700 px-2 py-1 rounded-lg font-medium">
+                ❌ مرفوض: {visitorRequests.filter(v => v.status === "rejected").length}
+              </span>
+            </div>
+          </div>
+
+          {visitorRequests.length === 0 && (
+            <div className="card p-10 text-center text-gray-400">
+              <Globe className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>لا توجد طلبات زوار حتى الآن</p>
+            </div>
+          )}
+
+          {/* المعلقة أولاً */}
+          {visitorRequests.filter(v => v.status === "pending").map(v => (
+            <div key={v.id} className="card p-4 border-r-4 border-yellow-400">
+              <div className="flex items-start gap-4 flex-wrap">
+                <div className="w-11 h-11 bg-teal-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">
+                  {v.purpose === "courses" ? "🎓" : v.purpose === "shop" ? "🛍️" : "📰"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-bold text-gray-800">{v.name}</p>
+                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">⏳ بانتظار الموافقة</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-0.5">{v.phone}{v.email ? ` • ${v.email}` : ""}</p>
+                  <p className="text-sm text-teal-700 font-medium mt-1">{PURPOSE_LABELS_MAP[v.purpose]}</p>
+                  {v.notes && <p className="text-xs text-gray-400 mt-1 bg-gray-50 rounded-lg px-2 py-1">"{v.notes}"</p>}
+                  <p className="text-xs text-gray-300 mt-1">{new Date(v.submittedAt).toLocaleDateString("ar-SA")}</p>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button onClick={() => {
+                    const updated = visitorRequests.map(r => r.id === v.id ? { ...r, status: "approved" as const } : r);
+                    saveVisitorRequests(updated); setVisitorRequests(updated);
+                  }} className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-green-500">
+                    <CheckCircle className="w-4 h-4" /> قبول
+                  </button>
+                  <button onClick={() => {
+                    const updated = visitorRequests.map(r => r.id === v.id ? { ...r, status: "rejected" as const } : r);
+                    saveVisitorRequests(updated); setVisitorRequests(updated);
+                  }} className="flex items-center gap-1.5 bg-red-100 text-red-600 px-3 py-2 rounded-xl text-sm font-semibold hover:bg-red-200">
+                    <XCircle className="w-4 h-4" /> رفض
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* المعتمدة */}
+          {visitorRequests.filter(v => v.status === "approved").length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 mb-2 mt-4">الزوار المعتمدون</h3>
+              {visitorRequests.filter(v => v.status === "approved").map(v => (
+                <div key={v.id} className="card p-3 mb-2 flex items-center gap-3">
+                  <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center text-lg flex-shrink-0">
+                    {v.purpose === "courses" ? "🎓" : v.purpose === "shop" ? "🛍️" : "📰"}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 text-sm">{v.name}</p>
+                    <p className="text-xs text-gray-400">{v.phone} • {PURPOSE_LABELS_MAP[v.purpose]}</p>
+                  </div>
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✅ معتمد</span>
+                  <button onClick={() => {
+                    const updated = visitorRequests.filter(r => r.id !== v.id);
+                    saveVisitorRequests(updated); setVisitorRequests(updated);
+                  }} className="text-red-400 hover:text-red-600 p-1">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Permissions */}
       {tab === "permissions" && (
         <div className="card p-5">
@@ -1219,6 +1337,386 @@ function MonthlyReport() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ===== مكوّن محرر الملف الشخصي للمشرف ===== */
+interface SPProfile {
+  name: string; nameEn: string; title: string; subtitle: string; bio: string;
+  photo: string; phone: string; email: string; twitter: string; location: string;
+  skills: string[]; siteUrl: string;
+  education: Array<{ degree: string; institution: string; year: string; emoji: string }>;
+  experience: Array<{ role: string; org: string; period: string; desc: string }>;
+  certificates: Array<{ title: string; issuer: string; year: string; image: string }>;
+  cvFile: string; cvName: string;
+}
+
+const SP_DEFAULT: SPProfile = {
+  name: "", nameEn: "", title: "مشرف الموهبة والذكاء الاصطناعي",
+  subtitle: "مدارس الأرقم — مركز المعرفة والابتكار STEAM",
+  bio: "", photo: "", phone: "", email: "", twitter: "", location: "المملكة العربية السعودية",
+  skills: ["الذكاء الاصطناعي", "الروبوتيك", "STEAM", "تعليم الابتكار"],
+  education: [], experience: [], certificates: [], cvFile: "", cvName: "", siteUrl: "",
+};
+
+function SupervisorProfileEditor() {
+  const [profile, setProfile] = useState<SPProfile>(() => {
+    try { const d = localStorage.getItem("kc_supervisor_profile"); return d ? { ...SP_DEFAULT, ...JSON.parse(d) } : SP_DEFAULT; } catch { return SP_DEFAULT; }
+  });
+  const [saved, setSaved] = useState(false);
+  const [activeSection, setActiveSection] = useState<"basic" | "edu" | "exp" | "certs">("basic");
+  const [skillInput, setSkillInput] = useState("");
+  const [newEdu, setNewEdu] = useState({ degree: "", institution: "", year: "", emoji: "🎓" });
+  const [newExp, setNewExp] = useState({ role: "", org: "", period: "", desc: "" });
+  const [newCert, setNewCert] = useState({ title: "", issuer: "", year: "", image: "" });
+  const photoRef = useRef<HTMLInputElement>(null);
+  const certImgRef = useRef<HTMLInputElement>(null);
+  const cvRef = useRef<HTMLInputElement>(null);
+
+  const save = () => {
+    localStorage.setItem("kc_supervisor_profile", JSON.stringify(profile));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const toBase64 = (file: File, cb: (s: string) => void) => {
+    const r = new FileReader(); r.onload = e => cb(e.target?.result as string); r.readAsDataURL(file);
+  };
+
+  const addSkill = () => {
+    if (!skillInput.trim()) return;
+    setProfile(p => ({ ...p, skills: [...p.skills, skillInput.trim()] }));
+    setSkillInput("");
+  };
+
+  const sectionBtns = [
+    { id: "basic" as const, label: "البيانات الأساسية", emoji: "👤" },
+    { id: "edu" as const, label: "التعليم", emoji: "🎓" },
+    { id: "exp" as const, label: "الخبرات", emoji: "💼" },
+    { id: "certs" as const, label: "الشهادات", emoji: "🏅" },
+  ];
+
+  const pageUrl = typeof window !== "undefined" ? `${window.location.origin}/supervisor` : "/supervisor";
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="card p-5 bg-gradient-to-l from-indigo-900 to-blue-800 text-white">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <UserSquare2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold">ملفي الشخصي المهني</h3>
+              <p className="text-blue-200 text-xs">صفحة عامة قابلة للمشاركة مع الطلاب والمنسقين</p>
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <a href="/supervisor" target="_blank"
+              className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-xl text-sm transition-colors">
+              <ExternalLink className="w-4 h-4" /> معاينة الصفحة
+            </a>
+            <button onClick={save}
+              className="flex items-center gap-1.5 bg-yellow-400 text-blue-900 px-4 py-2 rounded-xl text-sm font-bold hover:bg-yellow-300">
+              {saved ? "✅ تم الحفظ!" : "💾 حفظ التغييرات"}
+            </button>
+          </div>
+        </div>
+        <div className="mt-3 bg-white/10 rounded-xl p-2.5 flex items-center gap-2">
+          <span className="text-xs text-blue-200">رابط صفحتك:</span>
+          <span className="text-white text-xs font-mono flex-1">{pageUrl}</span>
+        </div>
+      </div>
+
+      {/* Section Nav */}
+      <div className="flex gap-2 flex-wrap">
+        {sectionBtns.map(s => (
+          <button key={s.id} onClick={() => setActiveSection(s.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeSection === s.id ? "bg-indigo-700 text-white shadow" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>
+            <span>{s.emoji}</span> {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ===== البيانات الأساسية ===== */}
+      {activeSection === "basic" && (
+        <div className="card p-5 space-y-4">
+          {/* الصورة */}
+          <div className="flex flex-col items-center gap-2 mb-2">
+            <div onClick={() => photoRef.current?.click()}
+              className="w-28 h-28 rounded-2xl overflow-hidden border-4 border-indigo-100 cursor-pointer hover:border-indigo-400 bg-gray-50 flex items-center justify-center transition-colors">
+              {profile.photo
+                ? <img src={profile.photo} alt="" className="w-full h-full object-cover" />
+                : <div className="text-center text-gray-400"><UserSquare2 className="w-10 h-10 mx-auto mb-1" /><p className="text-xs">صورتك الشخصية</p></div>
+              }
+            </div>
+            <input ref={photoRef} type="file" accept="image/*" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) toBase64(f, v => setProfile(p => ({ ...p, photo: v }))); }} />
+            <button onClick={() => photoRef.current?.click()} className="text-indigo-700 text-xs underline">
+              {profile.photo ? "تغيير الصورة" : "رفع الصورة"}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2 sm:col-span-1">
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">الاسم بالعربية *</label>
+              <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))}
+                placeholder="اسمك الكامل" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">الاسم بالإنجليزية</label>
+              <input value={profile.nameEn} onChange={e => setProfile(p => ({ ...p, nameEn: e.target.value }))}
+                placeholder="Your Full Name" dir="ltr" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">المسمى الوظيفي</label>
+              <input value={profile.title} onChange={e => setProfile(p => ({ ...p, title: e.target.value }))}
+                placeholder="مثال: مشرف الموهبة والذكاء الاصطناعي" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">العنوان الفرعي</label>
+              <input value={profile.subtitle} onChange={e => setProfile(p => ({ ...p, subtitle: e.target.value }))}
+                placeholder="مثال: مدارس الأرقم — مركز المعرفة" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">الجوال</label>
+              <input value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))}
+                placeholder="05XXXXXXXX" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">البريد الإلكتروني</label>
+              <input type="email" value={profile.email} onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
+                placeholder="email@example.com" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">تويتر / X</label>
+              <input value={profile.twitter} onChange={e => setProfile(p => ({ ...p, twitter: e.target.value }))}
+                placeholder="@username" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">الموقع</label>
+              <input value={profile.location} onChange={e => setProfile(p => ({ ...p, location: e.target.value }))}
+                placeholder="المدينة / البلد" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">رابط مخصص لرمز QR <span className="font-normal text-gray-400">(اتركه فارغاً لاستخدام الرابط التلقائي)</span></label>
+              <input value={profile.siteUrl} onChange={e => setProfile(p => ({ ...p, siteUrl: e.target.value }))}
+                placeholder={pageUrl} dir="ltr"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none font-mono text-xs" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">النبذة التعريفية</label>
+              <textarea value={profile.bio} onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))} rows={4}
+                placeholder="اكتب نبذة مختصرة عنك ومسيرتك المهنية وشغفك في مجال STEAM..."
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none resize-none" />
+            </div>
+          </div>
+
+          {/* السيرة الذاتية */}
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-2 block">السيرة الذاتية (PDF)</label>
+            <div onClick={() => cvRef.current?.click()}
+              className={`border-2 border-dashed rounded-xl p-3 cursor-pointer flex items-center gap-2 transition-colors ${profile.cvFile ? "border-indigo-400 bg-indigo-50" : "border-gray-300 bg-gray-50 hover:border-indigo-300"}`}>
+              <AwardIcon className={`w-5 h-5 flex-shrink-0 ${profile.cvFile ? "text-indigo-600" : "text-gray-400"}`} />
+              <span className={`text-sm truncate ${profile.cvFile ? "text-indigo-700 font-medium" : "text-gray-400"}`}>
+                {profile.cvName || "اضغط لرفع السيرة الذاتية (PDF)"}
+              </span>
+            </div>
+            <input ref={cvRef} type="file" accept=".pdf,.doc,.docx" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) toBase64(f, v => setProfile(p => ({ ...p, cvFile: v, cvName: f.name }))); e.target.value = ""; }} />
+          </div>
+
+          {/* المهارات */}
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-2 block">المهارات والتخصصات</label>
+            <div className="flex gap-2 mb-2">
+              <input value={skillInput} onChange={e => setSkillInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && addSkill()}
+                placeholder="أضف مهارة..." className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" />
+              <button onClick={addSkill} className="bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-600">
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {profile.skills.map((s, i) => (
+                <span key={i} className="flex items-center gap-1 bg-indigo-50 border border-indigo-200 text-indigo-800 px-3 py-1 rounded-xl text-sm">
+                  {s}
+                  <button onClick={() => setProfile(p => ({ ...p, skills: p.skills.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-red-600 mr-1">×</button>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== التعليم ===== */}
+      {activeSection === "edu" && (
+        <div className="card p-5 space-y-4">
+          <h3 className="font-bold text-gray-800">المؤهلات العلمية</h3>
+          <div className="grid grid-cols-2 gap-2 p-4 bg-emerald-50 rounded-xl">
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">الدرجة العلمية *</label>
+              <input value={newEdu.degree} onChange={e => setNewEdu(p => ({ ...p, degree: e.target.value }))}
+                placeholder="بكالوريوس، ماجستير..." className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">الجامعة / المعهد *</label>
+              <input value={newEdu.institution} onChange={e => setNewEdu(p => ({ ...p, institution: e.target.value }))}
+                placeholder="اسم الجامعة" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">السنة</label>
+              <input value={newEdu.year} onChange={e => setNewEdu(p => ({ ...p, year: e.target.value }))}
+                placeholder="مثال: 2018" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">الأيقونة</label>
+              <input value={newEdu.emoji} onChange={e => setNewEdu(p => ({ ...p, emoji: e.target.value }))}
+                placeholder="🎓" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none text-center text-lg" maxLength={2} />
+            </div>
+            <div className="col-span-2">
+              <button onClick={() => {
+                if (!newEdu.degree || !newEdu.institution) return;
+                setProfile(p => ({ ...p, education: [...p.education, newEdu] }));
+                setNewEdu({ degree: "", institution: "", year: "", emoji: "🎓" });
+              }} className="w-full bg-emerald-700 text-white py-2 rounded-xl text-sm font-medium hover:bg-emerald-600 flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" /> إضافة مؤهل
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {profile.education.map((e, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+                <span className="text-2xl">{e.emoji}</span>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800 text-sm">{e.degree}</p>
+                  <p className="text-gray-500 text-xs">{e.institution} {e.year ? `• ${e.year}` : ""}</p>
+                </div>
+                <button onClick={() => setProfile(p => ({ ...p, education: p.education.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+              </div>
+            ))}
+            {profile.education.length === 0 && <p className="text-center text-gray-400 text-sm py-4">لم تُضَف مؤهلات بعد</p>}
+          </div>
+        </div>
+      )}
+
+      {/* ===== الخبرات ===== */}
+      {activeSection === "exp" && (
+        <div className="card p-5 space-y-4">
+          <h3 className="font-bold text-gray-800">الخبرات المهنية</h3>
+          <div className="grid grid-cols-2 gap-2 p-4 bg-violet-50 rounded-xl">
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">المسمى الوظيفي *</label>
+              <input value={newExp.role} onChange={e => setNewExp(p => ({ ...p, role: e.target.value }))}
+                placeholder="مثال: منسق برامج STEAM" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">المؤسسة *</label>
+              <input value={newExp.org} onChange={e => setNewExp(p => ({ ...p, org: e.target.value }))}
+                placeholder="اسم المدرسة / الجهة" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">الفترة</label>
+              <input value={newExp.period} onChange={e => setNewExp(p => ({ ...p, period: e.target.value }))}
+                placeholder="2020 — حتى الآن" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">وصف مختصر</label>
+              <input value={newExp.desc} onChange={e => setNewExp(p => ({ ...p, desc: e.target.value }))}
+                placeholder="أبرز المهام..." className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none" />
+            </div>
+            <div className="col-span-2">
+              <button onClick={() => {
+                if (!newExp.role || !newExp.org) return;
+                setProfile(p => ({ ...p, experience: [...p.experience, newExp] }));
+                setNewExp({ role: "", org: "", period: "", desc: "" });
+              }} className="w-full bg-violet-700 text-white py-2 rounded-xl text-sm font-medium hover:bg-violet-600 flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" /> إضافة خبرة
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {profile.experience.map((ex, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+                <Briefcase className="w-5 h-5 text-violet-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800 text-sm">{ex.role}</p>
+                  <p className="text-gray-500 text-xs">{ex.org} {ex.period ? `• ${ex.period}` : ""}</p>
+                  {ex.desc && <p className="text-gray-400 text-xs mt-0.5">{ex.desc}</p>}
+                </div>
+                <button onClick={() => setProfile(p => ({ ...p, experience: p.experience.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+              </div>
+            ))}
+            {profile.experience.length === 0 && <p className="text-center text-gray-400 text-sm py-4">لم تُضَف خبرات بعد</p>}
+          </div>
+        </div>
+      )}
+
+      {/* ===== الشهادات ===== */}
+      {activeSection === "certs" && (
+        <div className="card p-5 space-y-4">
+          <h3 className="font-bold text-gray-800">الشهادات والدورات</h3>
+          <div className="grid grid-cols-2 gap-2 p-4 bg-yellow-50 rounded-xl">
+            <div className="col-span-2">
+              <label className="text-xs text-gray-600 mb-1 block">اسم الشهادة *</label>
+              <input value={newCert.title} onChange={e => setNewCert(p => ({ ...p, title: e.target.value }))}
+                placeholder="مثال: شهادة Google AI Fundamentals" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">الجهة المانحة</label>
+              <input value={newCert.issuer} onChange={e => setNewCert(p => ({ ...p, issuer: e.target.value }))}
+                placeholder="Google, Coursera, وزارة..." className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">السنة</label>
+              <input value={newCert.year} onChange={e => setNewCert(p => ({ ...p, year: e.target.value }))}
+                placeholder="2024" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white outline-none" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs text-gray-600 mb-1 block">صورة الشهادة <span className="font-normal text-gray-400">(اختياري)</span></label>
+              <div onClick={() => certImgRef.current?.click()}
+                className={`border-2 border-dashed rounded-xl p-3 cursor-pointer flex items-center gap-2 transition-colors ${newCert.image ? "border-yellow-400 bg-yellow-100" : "border-gray-300 bg-white"}`}>
+                {newCert.image
+                  ? <img src={newCert.image} alt="" className="w-12 h-12 object-cover rounded-lg" />
+                  : <span className="text-gray-400 text-sm">اضغط لرفع صورة الشهادة</span>
+                }
+              </div>
+              <input ref={certImgRef} type="file" accept="image/*" className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) toBase64(f, v => setNewCert(p => ({ ...p, image: v }))); e.target.value = ""; }} />
+            </div>
+            <div className="col-span-2">
+              <button onClick={() => {
+                if (!newCert.title) return;
+                setProfile(p => ({ ...p, certificates: [...p.certificates, newCert] }));
+                setNewCert({ title: "", issuer: "", year: "", image: "" });
+              }} className="w-full bg-yellow-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-yellow-500 flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" /> إضافة شهادة
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {profile.certificates.map((c, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                {c.image ? <img src={c.image} alt="" className="w-12 h-12 object-cover rounded-lg flex-shrink-0" /> : <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center text-2xl flex-shrink-0">🏅</div>}
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800 text-sm">{c.title}</p>
+                  <p className="text-gray-500 text-xs">{c.issuer} {c.year ? `• ${c.year}` : ""}</p>
+                </div>
+                <button onClick={() => setProfile(p => ({ ...p, certificates: p.certificates.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+              </div>
+            ))}
+            {profile.certificates.length === 0 && <p className="text-center text-gray-400 text-sm py-4">لم تُضَف شهادات بعد</p>}
+          </div>
+        </div>
+      )}
+
+      {/* Save Button */}
+      <button onClick={save}
+        className="w-full bg-indigo-700 text-white py-3 rounded-xl font-bold hover:bg-indigo-600 flex items-center justify-center gap-2 text-base">
+        {saved ? "✅ تم حفظ الملف الشخصي!" : "💾 حفظ جميع التغييرات"}
+      </button>
     </div>
   );
 }
