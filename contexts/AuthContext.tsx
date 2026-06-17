@@ -21,6 +21,7 @@ export type AnyUser = StudentProfile | CoordinatorProfile;
 export interface ChatGroup {
   id: string; name: string; type: "general" | "team";
   emoji: string; color: string; description: string; createdAt: string;
+  members?: string[];
 }
 
 export interface LiveStreamSettings {

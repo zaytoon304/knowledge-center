@@ -4,7 +4,7 @@ import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
-  Layers, Trophy, Archive, Cpu, BarChart3
+  Layers, Trophy, Archive, Cpu, BarChart3, Video
 } from "lucide-react";
 import dynamic from "next/dynamic";
 const KnowledgeAdmin = dynamic(() => import("@/components/admin/KnowledgeAdmin"), { ssr: false });
@@ -230,6 +230,7 @@ export default function AdminPage() {
     { id: "project_bank_cms", label: "بنك المشاريع", icon: Archive },
     { id: "emerging_tech_cms", label: "التقنيات الناشئة", icon: Cpu },
     { id: "indicators_cms", label: "المؤشرات", icon: BarChart3 },
+    { id: "meetings_admin", label: "الاجتماعات", icon: Video },
     { id: "permissions", label: "الصلاحيات", icon: Shield },
   ];
 
@@ -1059,6 +1060,24 @@ export default function AdminPage() {
             <div><h3 className="font-bold text-gray-800">إدارة مؤشرات الأداء</h3><p className="text-xs text-gray-400">عدّل مؤشرات الأداء الرئيسية KPIs</p></div>
           </div>
           <SectionCMS config={INDICATORS_CONFIG} />
+        </div>
+      )}
+
+      {/* الاجتماعات */}
+      {tab === "meetings_admin" && (
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center"><Video className="w-5 h-5 text-violet-700" /></div>
+              <div><h3 className="font-bold text-gray-800">إدارة الاجتماعات</h3><p className="text-xs text-gray-400">انتقل لصفحة الاجتماعات للإدارة الكاملة</p></div>
+            </div>
+            <a href="/meetings" className="bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-violet-600 flex items-center gap-2">
+              <Video className="w-4 h-4" /> فتح صفحة الاجتماعات
+            </a>
+          </div>
+          <p className="text-sm text-gray-500 bg-violet-50 rounded-xl p-4">
+            يمكنك إدارة الاجتماعات بالكامل من صفحة الاجتماعات — إنشاء اجتماعات، تحديد محاور، تسجيل النقاش، التصويت، وكتابة المحضر الرسمي.
+          </p>
         </div>
       )}
 

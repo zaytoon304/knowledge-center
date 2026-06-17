@@ -4,10 +4,12 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
-  Archive, Settings, ChevronLeft, Sparkles, X, LogOut, LogIn, Briefcase, Eye, CalendarDays
+  Archive, Settings, X, LogOut, LogIn, Briefcase, CalendarDays,
+  MessageSquare, Video, ChevronLeft, Eye
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/contexts/AuthContext";
+import CenterLogo from "@/components/icons/CenterLogo";
 
 const adminNavItems = [
   { href: "/", label: "الرئيسية", icon: Home },
@@ -23,6 +25,8 @@ const adminNavItems = [
   { href: "/student-portal", label: "بوابة الطلاب", icon: Users },
   { href: "/project-bank", label: "بنك المشاريع", icon: Archive },
   { href: "/daily-log", label: "يوميات المركز", icon: CalendarDays },
+  { href: "/groups", label: "الجروبات", icon: MessageSquare },
+  { href: "/meetings", label: "الاجتماعات", icon: Video },
   { href: "/admin", label: "لوحة الإدارة", icon: Settings },
 ];
 
@@ -59,15 +63,14 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
 
       <aside className={clsx("sidebar", isOpen ? "open" : "")}>
         {/* Logo */}
-        <div className="p-5 border-b border-white/10">
+        <div className="p-4 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-7 h-7 text-yellow-300" />
-              </div>
+              <CenterLogo className="w-14 h-14 flex-shrink-0 drop-shadow-lg" />
               <div>
-                <div className="text-white font-bold text-base leading-tight">مركز المعرفة والابتكار STEAM</div>
-                <div className="text-blue-200 text-sm">بمدارس الأرقم</div>
+                <div className="text-white font-bold text-sm leading-snug">مركز المعرفة والابتكار</div>
+                <div className="text-yellow-300 text-xs font-semibold tracking-wide">STEAM</div>
+                <div className="text-blue-300 text-xs">بمدارس الأرقم</div>
               </div>
             </div>
             <button onClick={onClose} className="md:hidden text-white/70 hover:text-white">
