@@ -4,18 +4,18 @@ import { Settings, Users, Shield, Plus, Edit, Trash2, Eye, BarChart3, CheckCircl
 import Badge from "@/components/ui/Badge";
 
 const users = [
-  { id: 1, name: "م. خالد الشمري", role: "قائد الوحدة", school: "الإدارة المركزية", email: "k.shammari@edu.sa", status: "نشط", permissions: ["كل الصلاحيات"] },
-  { id: 2, name: "أ. عمر الزهراني", role: "منسق", school: "ثانوية الملك فهد", email: "o.zahrani@edu.sa", status: "نشط", permissions: ["رفع مشاريع", "تقارير", "تسجيل طلاب"] },
-  { id: 3, name: "م. سعد العتيبي", role: "معلم", school: "ثانوية الفيصل", email: "s.otaibi@edu.sa", status: "نشط", permissions: ["رفع مواد", "تسجيل طلاب"] },
-  { id: 4, name: "أ. فاطمة المطيري", role: "معلمة", school: "متوسطة الأميرة نورة", email: "f.mutairi@edu.sa", status: "نشط", permissions: ["رفع مواد", "تسجيل طلاب"] },
-  { id: 5, name: "أحمد العتيبي", role: "طالب", school: "ثانوية الملك فهد", email: "a.otaibi@student.sa", status: "نشط", permissions: ["مشاهدة", "تسجيل في دورات"] },
+  { id: 1, name: "قائد الوحدة", role: "قائد الوحدة", school: "الإدارة المركزية", email: "leader@edu.sa", status: "نشط", permissions: ["كل الصلاحيات"] },
+  { id: 2, name: "اسم المنسق", role: "منسق", school: "اسم المدرسة", email: "coordinator@edu.sa", status: "نشط", permissions: ["رفع مشاريع", "تقارير", "تسجيل طلاب"] },
+  { id: 3, name: "اسم المعلم", role: "معلم", school: "اسم المدرسة", email: "teacher@edu.sa", status: "نشط", permissions: ["رفع مواد", "تسجيل طلاب"] },
+  { id: 4, name: "اسم المعلمة", role: "معلمة", school: "اسم المدرسة", email: "teacher2@edu.sa", status: "نشط", permissions: ["رفع مواد", "تسجيل طلاب"] },
+  { id: 5, name: "اسم الطالب", role: "طالب", school: "اسم المدرسة", email: "student@student.sa", status: "نشط", permissions: ["مشاهدة", "تسجيل في دورات"] },
 ];
 
 const recentActivity = [
-  { action: "تم رفع مشروع جديد: المساعد الذكي", user: "أ. عمر الزهراني", time: "منذ 30 دقيقة", type: "project" },
-  { action: "تم اعتماد مشروع: النفق الذكي", user: "م. خالد الشمري", time: "منذ ساعتين", type: "approval" },
-  { action: "تسجيل طالب جديد في دورة Arduino", user: "م. سعد العتيبي", time: "منذ 3 ساعات", type: "enrollment" },
-  { action: "رفع خطة برنامج STEAM", user: "أ. فاطمة المطيري", time: "أمس", type: "document" },
+  { action: "تم رفع مشروع جديد", user: "المنسق", time: "منذ 30 دقيقة", type: "project" },
+  { action: "تم اعتماد مشروع", user: "قائد الوحدة", time: "منذ ساعتين", type: "approval" },
+  { action: "تسجيل طالب جديد في دورة Arduino", user: "المعلم", time: "منذ 3 ساعات", type: "enrollment" },
+  { action: "رفع خطة برنامج STEAM", user: "المعلمة", time: "أمس", type: "document" },
   { action: "إصدار شهادة: مقدمة AI", user: "النظام التلقائي", time: "أمس", type: "certificate" },
 ];
 

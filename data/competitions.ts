@@ -6,7 +6,6 @@ export interface Competition {
   targetAge: string;
   deadline: string;
   eventDate: string;
-  registrationLink?: string;
   coach: string;
   teams: number;
   status: "مفتوح" | "مغلق" | "قادم" | "منتهي";
@@ -24,7 +23,7 @@ export const competitions: Competition[] = [
     targetAge: "8-19 سنة",
     deadline: "2025-03-15",
     eventDate: "2025-05-20",
-    coach: "م. سعد العتيبي",
+    coach: "منسق الروبوت",
     teams: 4,
     status: "مفتوح",
     achievements: ["المركز الأول وطنياً 2024", "التأهل للعالمية 2024"],
@@ -39,7 +38,7 @@ export const competitions: Competition[] = [
     targetAge: "5-18 سنة",
     deadline: "2025-04-01",
     eventDate: "2025-06-10",
-    coach: "م. عبدالله الحربي",
+    coach: "منسق الروبوت",
     teams: 3,
     status: "مفتوح",
     achievements: ["المركز الثالث إقليمياً 2023"],
@@ -54,10 +53,10 @@ export const competitions: Competition[] = [
     targetAge: "12-18 سنة",
     deadline: "2025-02-28",
     eventDate: "2025-04-15",
-    coach: "م. خالد الشمري",
+    coach: "منسق الابتكار",
     teams: 6,
     status: "مغلق",
-    achievements: ["المركز الأول 2024 - النفق الذكي", "المركز الثاني 2023"],
+    achievements: ["المركز الأول 2024", "المركز الثاني 2023"],
     requirements: ["مشروع مبتكر", "ورقة بحثية", "نموذج أولي"],
     field: "الابتكار",
   },
@@ -69,11 +68,11 @@ export const competitions: Competition[] = [
     targetAge: "8-18 سنة",
     deadline: "2025-10-01",
     eventDate: "2025-11-15",
-    coach: "أ. عمر الزهراني",
+    coach: "منسق التقنية",
     teams: 0,
     status: "قادم",
     achievements: ["مشاركة 45 طالب 2024", "3 جوائز تميز"],
-    requirements: ["اختبار إلكتروني", "التسجيل الفردي", "إتقان اللغة الإنجليزية"],
+    requirements: ["اختبار إلكتروني", "التسجيل الفردي"],
     field: "المعلوماتية",
   },
   {
@@ -84,7 +83,7 @@ export const competitions: Competition[] = [
     targetAge: "14-18 سنة",
     deadline: "2025-03-01",
     eventDate: "2025-03-15",
-    coach: "م. ياسر البشري",
+    coach: "منسق الذكاء الاصطناعي",
     teams: 8,
     status: "قادم",
     achievements: [],

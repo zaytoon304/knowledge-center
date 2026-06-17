@@ -34,30 +34,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile overlay */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={onClose} />
       )}
 
-      <aside
-        className={clsx(
-          "sidebar",
-          isOpen ? "open" : ""
-        )}
-      >
+      <aside className={clsx("sidebar", isOpen ? "open" : "")}>
         {/* Logo */}
         <div className="p-5 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-yellow-300" />
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-7 h-7 text-yellow-300" />
               </div>
               <div>
-                <div className="text-white font-bold text-sm leading-tight">مركز المعرفة</div>
-                <div className="text-blue-200 text-xs">والابتكار</div>
+                <div className="text-white font-bold text-base leading-tight">مركز المعرفة</div>
+                <div className="text-blue-200 text-sm">والابتكار</div>
               </div>
             </div>
             <button onClick={onClose} className="md:hidden text-white/70 hover:text-white">
@@ -77,14 +68,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 href={item.href}
                 onClick={onClose}
                 className={clsx(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
                   isActive
                     ? "bg-white/20 text-white shadow-sm"
                     : "text-blue-100 hover:bg-white/10 hover:text-white"
                 )}
               >
                 <Icon className={clsx("w-5 h-5 flex-shrink-0", isActive ? "text-yellow-300" : "text-blue-200 group-hover:text-white")} />
-                <span className="text-sm font-medium">{item.label}</span>
+                <span className="text-base font-medium">{item.label}</span>
                 {isActive && <ChevronLeft className="w-4 h-4 mr-auto text-yellow-300" />}
               </Link>
             );
@@ -93,7 +84,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
-          <div className="text-center text-blue-200 text-xs">
+          <div className="text-center text-blue-200 text-sm">
             وحدة الموهبة والابتكار والذكاء الاصطناعي
           </div>
           <div className="text-center text-blue-300 text-xs mt-1">

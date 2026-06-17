@@ -41,14 +41,14 @@ const gallery = [
 ];
 
 const studentData = {
-  name: "عبدالله محمد الغامدي",
-  school: "ثانوية الملك فهد",
-  grade: "الصف الثالث الثانوي",
+  name: "اسم الطالب",
+  school: "اسم المدرسة",
+  grade: "الصف الدراسي",
   points: 850,
   badges: ["مبتكر", "مبرمج", "روبوتيكس"],
   completedCourses: 3,
   competitions: 4,
-  achievements: ["المركز الثاني - WRO 2024", "تميز - هاكاثون AI"],
+  achievements: ["اسم الإنجاز الأول", "اسم الإنجاز الثاني"],
 };
 
 export default function StudentPortalPage() {
@@ -96,7 +96,7 @@ export default function StudentPortalPage() {
           <div className="card p-5">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-gradient-to-br from-emerald-600 to-green-400 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
-                ع
+                <Users className="w-8 h-8" />
               </div>
               <div className="flex-1">
                 <h2 className="font-bold text-gray-800 text-lg">{studentData.name}</h2>

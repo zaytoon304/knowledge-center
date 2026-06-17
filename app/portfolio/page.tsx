@@ -3,34 +3,34 @@ import { useState } from "react";
 import { UserSquare, Award, BookOpen, Briefcase, Star, QrCode, Download, Edit, Plus } from "lucide-react";
 
 const profileData = {
-  name: "م. خالد عبدالله الشمري",
-  school: "ثانوية الملك فهد",
-  role: "قائد وحدة الموهبة والابتكار",
-  specialization: "هندسة البرمجيات والذكاء الاصطناعي",
-  email: "k.alshammari@edu.sa",
-  phone: "0512345678",
-  bio: "قائد وحدة موهبة وابتكار وذكاء اصطناعي بخبرة 8 سنوات في التعليم التقني، متخصص في تأهيل الطلاب الموهوبين وقيادة مشاريع الذكاء الاصطناعي والروبوت.",
+  name: "اسم صاحب الملف",
+  school: "اسم المدرسة",
+  role: "الدور الوظيفي",
+  specialization: "التخصص",
+  email: "البريد الإلكتروني",
+  phone: "رقم الجوال",
+  bio: "نبذة مختصرة عن صاحب الملف المهني، خبراته وتخصصاته ومجالات عمله.",
 };
 
 const qualifications = [
-  { degree: "ماجستير علوم الحاسوب", institution: "جامعة الملك عبدالعزيز", year: "2018" },
-  { degree: "بكالوريوس هندسة البرمجيات", institution: "جامعة الملك فهد للبترول", year: "2015" },
-  { degree: "دبلوم التعليم التقني", institution: "كلية التربية", year: "2016" },
+  { degree: "الدرجة العلمية", institution: "اسم الجامعة أو المؤسسة", year: "السنة" },
+  { degree: "الدرجة العلمية", institution: "اسم الجامعة أو المؤسسة", year: "السنة" },
+  { degree: "الدرجة العلمية", institution: "اسم الجامعة أو المؤسسة", year: "السنة" },
 ];
 
 const courses = [
-  { title: "الذكاء الاصطناعي في التعليم", provider: "Google Educators", year: "2024", cert: true },
-  { title: "قيادة المدارس المبتكرة", provider: "MIT OpenCourseWare", year: "2023", cert: true },
-  { title: "تدريب المدربين التوت", provider: "وزارة التعليم", year: "2022", cert: true },
-  { title: "أساسيات الروبوتيكس", provider: "Coursera", year: "2021", cert: true },
+  { title: "اسم الدورة التدريبية", provider: "الجهة المانحة", year: "2024", cert: true },
+  { title: "اسم الدورة التدريبية", provider: "الجهة المانحة", year: "2023", cert: true },
+  { title: "اسم الدورة التدريبية", provider: "الجهة المانحة", year: "2022", cert: true },
+  { title: "اسم الدورة التدريبية", provider: "الجهة المانحة", year: "2021", cert: true },
 ];
 
 const achievements = [
-  { title: "جائزة المعلم المتميز الوطنية", year: "2024", type: "جائزة" },
-  { title: "المركز الأول - أفضل وحدة موهبة وطنياً", year: "2024", type: "مسابقة" },
-  { title: "إطلاق برنامج AI في 8 مدارس", year: "2023", type: "مبادرة" },
-  { title: "تأهيل 3 فرق لـ WRO العالمية", year: "2023", type: "إنجاز" },
-  { title: "نشر ورقة بحثية في التعليم التقني", year: "2022", type: "بحث" },
+  { title: "اسم الجائزة أو الإنجاز", year: "2024", type: "جائزة" },
+  { title: "اسم الجائزة أو الإنجاز", year: "2024", type: "مسابقة" },
+  { title: "اسم المبادرة أو المشروع", year: "2023", type: "مبادرة" },
+  { title: "اسم الإنجاز أو الإسهام", year: "2023", type: "إنجاز" },
+  { title: "اسم البحث أو الورقة العلمية", year: "2022", type: "بحث" },
 ];
 
 const works = [
@@ -91,7 +91,7 @@ export default function PortfolioPage() {
           <div className="card p-6">
             <div className="flex items-start gap-5">
               <div className="w-24 h-24 bg-gradient-to-br from-pink-700 to-rose-500 rounded-2xl flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
-                خ
+                <UserSquare className="w-12 h-12" />
               </div>
               <div className="flex-1">
                 <div className="flex items-start justify-between">
@@ -128,11 +128,11 @@ export default function PortfolioPage() {
               <div className="space-y-2">
                 <div className="bg-blue-50 rounded-xl p-3">
                   <p className="text-xs text-blue-500 mb-1">ملف الإنجاز الرقمي</p>
-                  <p className="text-sm font-medium text-blue-800 truncate">edu.sa/portfolio/khalid</p>
+                  <p className="text-sm font-medium text-blue-800 truncate">رابط الملف المهني</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-500 mb-1">LinkedIn</p>
-                  <p className="text-sm font-medium text-gray-700">linkedin.com/in/k-alshammari</p>
+                  <p className="text-sm font-medium text-gray-700">رابط LinkedIn</p>
                 </div>
               </div>
               <div className="flex flex-col gap-2">

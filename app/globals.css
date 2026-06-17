@@ -12,11 +12,16 @@
   box-sizing: border-box;
 }
 
+html {
+  font-size: 17px;
+}
+
 body {
   font-family: 'Noto Sans Arabic', 'Segoe UI', Arial, sans-serif;
   direction: rtl;
   background-color: #f0f4f8;
   color: #1e293b;
+  line-height: 1.7;
 }
 
 /* Custom scrollbar */
