@@ -221,9 +221,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const all = getAllCoordinators();
     if (all.find(c => c.email === data.email))
       return { success: false, message: "البريد الإلكتروني مسجل مسبقاً" };
-    const coord: CoordinatorProfile = { ...data, id: Date.now().toString(), role: "coordinator", registeredAt: new Date().toISOString(), status: "pending" };
-    save(KEYS.coordinators, [...all, coord]);
-    setUser(coord); save(KEYS.currentUser, coord);
+    const baseId = Date.now().toString();
+    // نسخة خفيفة بدون ملفات ثقيلة (تُحفظ في قائمة المنسقين لتجنب تجاوز حد localStorage)
+    const coord: CoordinatorProfile = {
+      ...data,
+      photo: "",
+      cv: "",
+      id: baseId,
+      role: "coordinator",
+      registeredAt: new Date().toISOString(),
+      status: "pending",
+    };
+    const saved = [...all, coord];
+    try {
+      localStorage.setItem(KEYS.coordinators, JSON.stringify(saved));
+    } catch {
+      return { success: false, message: "فشل الحفظ — مساحة المتصفح ممتلئة، حاول مرة أخرى" };
+    }
+    // الجلسة الحالية تحتفظ بالبيانات الكاملة (صورة + CV)
+    const fullCoord: CoordinatorProfile = { ...data, id: baseId, role: "coordinator", registeredAt: new Date().toISOString(), status: "pending" };
+    setUser(fullCoord); save(KEYS.currentUser, fullCoord);
     return { success: true, message: "pending" };
   };
 

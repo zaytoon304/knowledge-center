@@ -300,7 +300,7 @@ export default function AdminPage() {
         {navTabs.map(t => {
           const Icon = t.icon;
           return (
-            <button key={t.id} onClick={() => setTab(t.id)}
+            <button key={t.id} onClick={() => { setTab(t.id); refresh(); }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all relative ${tab === t.id ? "bg-red-700 text-white shadow-md" : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"}`}>
               <Icon className="w-4 h-4" /> {t.label}
               {t.badge ? <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 text-gray-800 text-xs rounded-full flex items-center justify-center font-bold">{t.badge}</span> : null}
@@ -1053,9 +1053,17 @@ export default function AdminPage() {
       {/* Coordinators */}
       {tab === "coordinators" && (
         <div className="space-y-3">
-          <h2 className="font-bold text-gray-800">طلبات المنسقين ({pendingCoords.length})</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-gray-800">طلبات المنسقين ({pendingCoords.length})</h2>
+            <button onClick={refresh} className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-500">
+              🔄 تحديث
+            </button>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700">
+            ⚠️ <strong>ملاحظة:</strong> يجب أن يسجّل المنسق من <strong>نفس المتصفح والجهاز</strong> الذي تستخدمه للإدارة. البيانات محفوظة محلياً في هذا المتصفح فقط.
+          </div>
           {pendingCoords.length === 0
-            ? <div className="card p-10 text-center text-gray-400"><Briefcase className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا توجد طلبات معلقة من المنسقين</p></div>
+            ? <div className="card p-10 text-center text-gray-400"><Briefcase className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا توجد طلبات معلقة من المنسقين</p><p className="text-xs mt-2">اضغط "تحديث" إذا سجّل منسق جديد للتو</p></div>
             : pendingCoords.map(c => (
               <div key={c.id} className="card p-4">
                 <div className="flex items-start gap-4">
