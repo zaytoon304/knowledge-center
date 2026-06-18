@@ -100,7 +100,6 @@ export default function LoginPage() {
   const handleCoordRegister = (e: React.FormEvent) => {
     e.preventDefault(); setError("");
     if (!coordData.name || !coordData.email || !coordData.phone || !coordData.school || !coordData.subject) { setError("يرجى تعبئة الحقول المطلوبة"); return; }
-    if (!coordData.cv) { setError("يرجى رفع السيرة الذاتية"); return; }
     if (coordData.password.length < 6) { setError("كلمة المرور 6 أحرف على الأقل"); return; }
     if (coordData.password !== coordData.confirmPassword) { setError("كلمة المرور غير متطابقة"); return; }
     const { confirmPassword, regCode, ...data } = coordData;
@@ -316,10 +315,10 @@ export default function LoginPage() {
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">المدرسة *</label><input value={coordData.school} onChange={e => setCoordData(p => ({ ...p, school: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
                 <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-0.5 block">التخصص / المادة *</label><input value={coordData.subject} onChange={e => setCoordData(p => ({ ...p, subject: e.target.value }))} placeholder="مثال: علوم الحاسب، روبوتيك" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
                 <div className="col-span-2">
-                  <label className="text-xs font-semibold text-gray-600 mb-0.5 block">السيرة الذاتية (PDF) *</label>
+                  <label className="text-xs font-semibold text-gray-600 mb-0.5 block">السيرة الذاتية (PDF) <span className="text-gray-400 font-normal">— اختياري</span></label>
                   <div onClick={() => cvRef.current?.click()} className={`w-full border-2 border-dashed rounded-xl px-3 py-3 cursor-pointer flex items-center gap-2 ${coordData.cv ? "border-violet-400 bg-violet-50" : "border-gray-300 bg-gray-50"}`}>
                     <FileText className={`w-5 h-5 flex-shrink-0 ${coordData.cv ? "text-violet-600" : "text-gray-400"}`} />
-                    <span className={`text-sm truncate ${coordData.cv ? "text-violet-700 font-medium" : "text-gray-400"}`}>{coordData.cvName || "اضغط لرفع السيرة الذاتية"}</span>
+                    <span className={`text-sm truncate ${coordData.cv ? "text-violet-700 font-medium" : "text-gray-400"}`}>{coordData.cvName || "اضغط لرفع السيرة الذاتية (اختياري)"}</span>
                   </div>
                   <input ref={cvRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleCV} />
                 </div>
