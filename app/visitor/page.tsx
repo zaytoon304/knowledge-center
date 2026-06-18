@@ -121,9 +121,7 @@ export default function VisitorPage() {
                       <span className="text-3xl">{c.emoji}</span>
                       <div className="flex-1">
                         <h3 className="font-bold text-gray-800">{c.title}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.type === "free" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                          {c.type === "free" ? "مجاني" : "مدفوع"}
-                        </span>
+                        {c.instructor && <p className="text-xs text-blue-600">{c.instructor}</p>}
                       </div>
                     </div>
                     <p className="text-sm text-gray-500 mb-3">{c.description}</p>

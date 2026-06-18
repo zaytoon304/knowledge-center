@@ -182,18 +182,14 @@ export default function StudentPortalPage() {
                       <span className="text-3xl">{c.emoji}</span>
                       <div className="flex-1">
                         <h3 className="font-bold text-gray-800">{c.title}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.type === "free" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                          {c.type === "free" ? "مجاني" : "مدفوع"}
-                        </span>
+                        {c.instructor && <p className="text-xs text-blue-600">{c.instructor}</p>}
                       </div>
                     </div>
                     <p className="text-sm text-gray-500 mb-3">{c.description}</p>
-                    {c.link && (
-                      <a href={c.link} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors w-full justify-center">
-                        <ExternalLink className="w-4 h-4" /> الدخول للدورة
-                      </a>
-                    )}
+                    <a href="/training"
+                      className="flex items-center gap-2 bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors w-full justify-center">
+                      <ExternalLink className="w-4 h-4" /> الدخول للدورة
+                    </a>
                   </div>
                 ))}
               </div>

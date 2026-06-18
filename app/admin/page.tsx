@@ -193,7 +193,7 @@ export default function AdminPage() {
   const [showLessonForm, setShowLessonForm] = useState<string | null>(null);
   const [vForm, setVForm] = useState({ title: "", description: "", link: "", emoji: "🎬" });
   const [showVForm, setShowVForm] = useState(false);
-  const EMPTY_PFORM = { title: "", description: "", field: "", level: "متوسط", emoji: "💡", image: "", imageName: "", students: "", division: "", components: "", code: "", codeFile: "", codeFileName: "" };
+  const EMPTY_PFORM = { title: "", description: "", field: "", level: "متوسط", emoji: "💡", image: "", imageName: "", students: "", division: "", components: "", code: "", codeFile: "", codeFileName: "", videos: [] as import("@/contexts/AuthContext").ProjectVideo[] };
   const [pForm, setPForm] = useState(EMPTY_PFORM);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [showPForm, setShowPForm] = useState(false);
@@ -744,6 +744,7 @@ export default function AdminPage() {
             students: p.students || "", division: p.division || "",
             components: p.components || "", code: p.code || "",
             codeFile: p.codeFile || "", codeFileName: p.codeFileName || "",
+            videos: p.videos || [],
           });
           setEditingProjectId(p.id);
           setShowPForm(true);
@@ -1506,19 +1507,76 @@ export default function AdminPage() {
 
       {/* الاجتماعات */}
       {tab === "meetings_admin" && (
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center"><Video className="w-5 h-5 text-violet-700" /></div>
-              <div><h3 className="font-bold text-gray-800">إدارة الاجتماعات</h3><p className="text-xs text-gray-400">انتقل لصفحة الاجتماعات للإدارة الكاملة</p></div>
+        <div className="space-y-4">
+          <div className="card p-5 bg-gradient-to-l from-violet-800 to-indigo-700 text-white">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><Video className="w-6 h-6" /></div>
+                <div>
+                  <h3 className="font-bold text-lg">إدارة الاجتماعات</h3>
+                  <p className="text-indigo-200 text-xs">إنشاء واستعراض وإدارة اجتماعات المنسقين</p>
+                </div>
+              </div>
+              <a href="/meetings" className="bg-white text-violet-800 px-4 py-2 rounded-xl text-sm font-bold hover:bg-violet-50 flex items-center gap-2 flex-shrink-0">
+                <Video className="w-4 h-4" /> فتح إدارة الاجتماعات
+              </a>
             </div>
-            <a href="/meetings" className="bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-violet-600 flex items-center gap-2">
-              <Video className="w-4 h-4" /> فتح صفحة الاجتماعات
-            </a>
+            {(() => {
+              try {
+                const ms: {status:string;agenda:{status:string}[];discussions:{id:string}[];title:string;date:string}[] = JSON.parse(localStorage.getItem("kc_meetings") || "[]");
+                const total = ms.length;
+                const active = ms.filter(m=>m.status==="active").length;
+                const upcoming = ms.filter(m=>m.status==="upcoming").length;
+                const completed = ms.filter(m=>m.status==="completed").length;
+                return (
+                  <div className="grid grid-cols-4 gap-2 mt-4">
+                    {[{n:total,l:"إجمالي",e:"📊"},{n:active,l:"جارٍ",e:"🟢"},{n:upcoming,l:"قادم",e:"⏳"},{n:completed,l:"منتهي",e:"✅"}].map(s=>(
+                      <div key={s.l} className="bg-white/10 rounded-xl p-2 text-center">
+                        <div className="text-lg">{s.e}</div>
+                        <div className="text-xl font-bold">{s.n}</div>
+                        <div className="text-indigo-200 text-[10px]">{s.l}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              } catch { return null; }
+            })()}
           </div>
-          <p className="text-sm text-gray-500 bg-violet-50 rounded-xl p-4">
-            يمكنك إدارة الاجتماعات بالكامل من صفحة الاجتماعات — إنشاء اجتماعات، تحديد محاور، تسجيل النقاش، التصويت، وكتابة المحضر الرسمي.
-          </p>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {[
+              { emoji: "📌", title: "المحاور", desc: "حدد محاور الاجتماع مسبقاً وتابع حالة كل محور" },
+              { emoji: "💬", title: "النقاش المفتوح", desc: "كل منسق يضيف رأيه ومداخلته على كل محور" },
+              { emoji: "🗳️", title: "التصويت", desc: "صوّت على قرارات الاجتماع مع بار تقدم مرئي" },
+              { emoji: "📄", title: "المحضر الرسمي", desc: "توليد المحضر تلقائياً من النقاش والقرارات" },
+            ].map(f=>(
+              <div key={f.emoji} className="card p-4 flex items-start gap-3">
+                <div className="text-3xl flex-shrink-0">{f.emoji}</div>
+                <div>
+                  <p className="font-bold text-gray-800 text-sm">{f.title}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="card p-5 bg-amber-50 border border-amber-100">
+            <p className="font-bold text-amber-800 text-sm mb-2">📋 دليل سريع — مراحل الاجتماع</p>
+            <div className="space-y-2">
+              {[
+                { step: "١", text: "إنشاء اجتماع: أضف العنوان، التاريخ، الوقت، المعنيين" },
+                { step: "٢", text: "المحاور: أضف نقاط جدول الأعمال قبل الاجتماع" },
+                { step: "٣", text: "النقاش: كل منسق يكتب رأيه على كل محور" },
+                { step: "٤", text: "التصويت: اضغط 👍 أو 👎 لكل محور ثم اكتب القرار" },
+                { step: "٥", text: "المحضر: اضغط «توليد تلقائي» أو اكتب يدوياً ثم اطبع" },
+              ].map(s=>(
+                <div key={s.step} className="flex items-start gap-2">
+                  <span className="w-6 h-6 rounded-full bg-amber-200 text-amber-800 text-xs flex items-center justify-center font-bold flex-shrink-0">{s.step}</span>
+                  <p className="text-amber-700 text-xs leading-relaxed">{s.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
