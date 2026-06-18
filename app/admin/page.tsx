@@ -193,11 +193,9 @@ export default function AdminPage() {
   const [showLessonForm, setShowLessonForm] = useState<string | null>(null);
   const [vForm, setVForm] = useState({ title: "", description: "", link: "", emoji: "🎬" });
   const [showVForm, setShowVForm] = useState(false);
-  const [pForm, setPForm] = useState({
-    title: "", description: "", field: "", level: "متوسط", emoji: "💡",
-    image: "", imageName: "",
-    students: "", division: "", components: "", code: "", codeFile: "", codeFileName: "",
-  });
+  const EMPTY_PFORM = { title: "", description: "", field: "", level: "متوسط", emoji: "💡", image: "", imageName: "", students: "", division: "", components: "", code: "", codeFile: "", codeFileName: "" };
+  const [pForm, setPForm] = useState(EMPTY_PFORM);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [showPForm, setShowPForm] = useState(false);
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [dailyLog, setDailyLog] = useState<DailyLogEntry[]>([]);
@@ -720,100 +718,217 @@ export default function AdminPage() {
       )}
 
       {/* Projects */}
-      {tab === "projects" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-gray-800">المشاريع ({projects.length})</h2>
-            <button onClick={() => setShowPForm(!showPForm)} className="flex items-center gap-2 bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700"><Plus className="w-4 h-4" /> مشروع جديد</button>
-          </div>
-          {showPForm && (
-            <div className="card p-5 space-y-3">
-              <h3 className="font-bold text-gray-700">إضافة مشروع جديد</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">اسم المشروع *</label><input value={pForm.title} onChange={e => setPForm(p => ({ ...p, title: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" /></div>
-                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">فكرة المشروع</label><textarea value={pForm.description} onChange={e => setPForm(p => ({ ...p, description: e.target.value }))} rows={2} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none resize-none" placeholder="اشرح فكرة المشروع..." /></div>
-                <div><label className="text-xs font-semibold text-gray-600 mb-1 block">المجال</label><input value={pForm.field} onChange={e => setPForm(p => ({ ...p, field: e.target.value }))} placeholder="AI, روبوت, إلكترونيات..." className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" /></div>
-                <div><label className="text-xs font-semibold text-gray-600 mb-1 block">المستوى</label><select value={pForm.level} onChange={e => setPForm(p => ({ ...p, level: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none"><option>مبتدئ</option><option>متوسط</option><option>متقدم</option></select></div>
-                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">أسماء الطلاب</label><input value={pForm.students} onChange={e => setPForm(p => ({ ...p, students: e.target.value }))} placeholder="مثال: أحمد محمد، علي عبدالله، خالد سعد" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" /></div>
-                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">القسم / الجهة</label><input value={pForm.division} onChange={e => setPForm(p => ({ ...p, division: e.target.value }))} placeholder="مثال: مدرسة الأرقم المتوسطة - نادي الروبوت" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" /></div>
-                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">مكونات المشروع</label><textarea value={pForm.components} onChange={e => setPForm(p => ({ ...p, components: e.target.value }))} rows={2} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none resize-none" placeholder="مثال: Arduino UNO, محرك Servo, حساس مسافة..." /></div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1 block">صورة المشروع</label>
-                  <label className={`border-2 border-dashed rounded-xl px-3 py-2.5 cursor-pointer text-sm flex items-center gap-2 ${pForm.image ? "border-blue-400 bg-blue-50 text-blue-700" : "border-gray-300 text-gray-400 hover:border-blue-400"}`}>
-                    <ImageIcon className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">{pForm.imageName || "اختر صورة"}</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={e => {
-                      const f = e.target.files?.[0]; if (!f) return;
-                      const r = new FileReader(); r.onload = ev => setPForm(p => ({ ...p, image: ev.target?.result as string, imageName: f.name })); r.readAsDataURL(f); e.target.value = "";
-                    }} />
-                  </label>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1 block">ملف الكود</label>
-                  <label className={`border-2 border-dashed rounded-xl px-3 py-2.5 cursor-pointer text-sm flex items-center gap-2 ${pForm.codeFile ? "border-green-400 bg-green-50 text-green-700" : "border-gray-300 text-gray-400 hover:border-green-400"}`}>
-                    <Code className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">{pForm.codeFileName || "ملف الكود (.ino/.py)"}</span>
-                    <input type="file" accept=".ino,.py,.cpp,.c,.js,.txt" className="hidden" onChange={e => {
-                      const f = e.target.files?.[0]; if (!f) return;
-                      const r = new FileReader(); r.onload = ev => setPForm(p => ({ ...p, codeFile: ev.target?.result as string, codeFileName: f.name })); r.readAsDataURL(f); e.target.value = "";
-                    }} />
-                  </label>
-                </div>
-                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">الكود (نص مباشر)</label><textarea value={pForm.code} onChange={e => setPForm(p => ({ ...p, code: e.target.value }))} rows={4} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none resize-none font-mono text-xs" placeholder="الصق الكود هنا مباشرة..." /></div>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => {
-                  if (!pForm.title.trim()) return;
-                  addProject(pForm);
-                  setShowPForm(false);
-                  setPForm({ title: "", description: "", field: "", level: "متوسط", emoji: "💡", image: "", imageName: "", students: "", division: "", components: "", code: "", codeFile: "", codeFileName: "" });
-                  refresh();
-                }} className="bg-blue-800 text-white px-6 py-2 rounded-xl text-sm font-semibold">إضافة</button>
-                <button onClick={() => setShowPForm(false)} className="bg-gray-100 text-gray-600 px-6 py-2 rounded-xl text-sm">إلغاء</button>
-              </div>
-            </div>
-          )}
-          {projects.length === 0
-            ? <div className="card p-10 text-center text-gray-400"><Lightbulb className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا توجد مشاريع بعد</p></div>
-            : <div className="space-y-3">
-                {projects.map(p => (
-                  <div key={p.id} className="card overflow-hidden">
-                    <div className="flex items-center gap-3 p-4">
-                      {p.image
-                        ? <img src={p.image} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
-                        : <span className="text-3xl w-14 h-14 flex items-center justify-center flex-shrink-0">{p.emoji}</span>
-                      }
-                      <div className="flex-1">
-                        <p className="font-bold text-gray-800">{p.title}</p>
-                        <div className="flex gap-2 mt-0.5 flex-wrap">
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{p.field}</span>
-                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{p.level}</span>
-                          {p.division && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{p.division}</span>}
-                        </div>
-                        {p.students && <p className="text-xs text-gray-500 mt-1">👥 {p.students}</p>}
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => setExpandedProject(expandedProject === p.id ? null : p.id)}
-                          className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl">
-                          {expandedProject === p.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        </button>
-                        <button onClick={() => { if(confirm("حذف هذا المشروع؟")) { deleteProject(p.id); refresh(); } }} className="p-2 text-red-400 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    </div>
-                    {expandedProject === p.id && (
-                      <div className="px-4 pb-4 space-y-3 border-t border-gray-50 pt-3">
-                        {p.description && <div><p className="text-xs font-semibold text-gray-500 mb-1">فكرة المشروع</p><p className="text-sm text-gray-700 leading-relaxed">{p.description}</p></div>}
-                        {p.components && <div><p className="text-xs font-semibold text-gray-500 mb-1">المكونات</p><p className="text-sm text-gray-700">{p.components}</p></div>}
-                        {p.code && <div><p className="text-xs font-semibold text-gray-500 mb-1">الكود</p><pre className="bg-gray-900 text-green-400 rounded-xl p-3 text-xs overflow-x-auto">{p.code}</pre></div>}
-                        {p.codeFile && <div><button onClick={() => { const a = document.createElement("a"); a.href = p.codeFile; a.download = p.codeFileName || "code"; a.click(); }} className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-xl text-sm hover:bg-green-100"><Code className="w-4 h-4" /> تحميل {p.codeFileName}</button></div>}
-                      </div>
-                    )}
-                  </div>
+      {tab === "projects" && (() => {
+        const PROJECT_EMOJIS = ["💡", "🤖", "🔬", "⚡", "🚀", "🧠", "🌱", "🔧", "📡", "💻", "🎯", "🏆", "🌟", "🔩", "🛠️"];
+        const PROJECT_FIELDS = ["الذكاء الاصطناعي", "إنترنت الأشياء", "الروبوت", "STEAM", "برمجة", "إلكترونيات", "بيئة", "ابتكار", "أخرى"];
+        const PROJECT_LEVELS = ["ابتدائي", "متوسط", "ثانوي", "متقدم"];
+
+        const saveEditedProject = () => {
+          if (!pForm.title.trim()) return;
+          const all: ProjectItem[] = JSON.parse(localStorage.getItem("kc_projects") || "[]");
+          const updated = all.map(p => p.id === editingProjectId ? { ...p, ...pForm } : p);
+          localStorage.setItem("kc_projects", JSON.stringify(updated));
+          setEditingProjectId(null);
+          setShowPForm(false);
+          setPForm(EMPTY_PFORM);
+          refresh();
+        };
+
+        const startEdit = (p: ProjectItem) => {
+          setPForm({
+            title: p.title, description: p.description, field: p.field, level: p.level,
+            emoji: p.emoji || "💡", image: p.image || "", imageName: p.imageName || "",
+            students: p.students || "", division: p.division || "",
+            components: p.components || "", code: p.code || "",
+            codeFile: p.codeFile || "", codeFileName: p.codeFileName || "",
+          });
+          setEditingProjectId(p.id);
+          setShowPForm(true);
+          setExpandedProject(null);
+        };
+
+        const ProjectForm = () => (
+          <div className="card p-5 space-y-4 border-2 border-blue-100">
+            <h3 className="font-bold text-gray-700">{editingProjectId ? "✏️ تعديل المشروع" : "➕ مشروع جديد"}</h3>
+
+            {/* الأيقونة */}
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-2 block">الأيقونة</label>
+              <div className="flex gap-2 flex-wrap">
+                {PROJECT_EMOJIS.map(em => (
+                  <button key={em} onClick={() => setPForm(p => ({ ...p, emoji: em }))}
+                    className={`text-2xl w-10 h-10 rounded-xl flex items-center justify-center transition-all ${pForm.emoji === em ? "bg-blue-100 border-2 border-blue-500 scale-110" : "bg-gray-50 hover:bg-gray-100 border border-gray-200"}`}>
+                    {em}
+                  </button>
                 ))}
               </div>
-          }
-        </div>
-      )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">اسم المشروع *</label>
+                <input value={pForm.title} onChange={e => setPForm(p => ({ ...p, title: e.target.value }))}
+                  placeholder="مثال: روبوت تجنب العقبات"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" />
+              </div>
+
+              <div className="col-span-2">
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">فكرة المشروع ووصفه</label>
+                <textarea value={pForm.description} onChange={e => setPForm(p => ({ ...p, description: e.target.value }))}
+                  rows={3} placeholder="اشرح فكرة المشروع وأهدافه..."
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none resize-none" />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">المجال</label>
+                <select value={pForm.field} onChange={e => setPForm(p => ({ ...p, field: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none">
+                  <option value="">-- اختر المجال --</option>
+                  {PROJECT_FIELDS.map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">المرحلة الدراسية</label>
+                <select value={pForm.level} onChange={e => setPForm(p => ({ ...p, level: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none">
+                  {PROJECT_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+              </div>
+
+              <div className="col-span-2">
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">أسماء الطلاب</label>
+                <input value={pForm.students} onChange={e => setPForm(p => ({ ...p, students: e.target.value }))}
+                  placeholder="مثال: أحمد محمد، علي عبدالله، خالد سعد"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" />
+              </div>
+
+              <div className="col-span-2">
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">الشعبة / الفصل</label>
+                <input value={pForm.division} onChange={e => setPForm(p => ({ ...p, division: e.target.value }))}
+                  placeholder="مثال: الصف الثاني المتوسط - 2أ"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" />
+              </div>
+
+              <div className="col-span-2">
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">المكونات والأدوات</label>
+                <textarea value={pForm.components} onChange={e => setPForm(p => ({ ...p, components: e.target.value }))}
+                  rows={2} placeholder="مثال: Arduino UNO, محرك Servo x2, حساس مسافة HC-SR04..."
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none resize-none" />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">صورة المشروع</label>
+                <label className={`border-2 border-dashed rounded-xl px-3 py-2.5 cursor-pointer text-sm flex items-center gap-2 ${pForm.image ? "border-blue-400 bg-blue-50 text-blue-700" : "border-gray-300 text-gray-400 hover:border-blue-400"}`}>
+                  <ImageIcon className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{pForm.imageName || "اختر صورة"}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={e => {
+                    const f = e.target.files?.[0]; if (!f) return;
+                    const r = new FileReader(); r.onload = ev => setPForm(p => ({ ...p, image: ev.target?.result as string, imageName: f.name })); r.readAsDataURL(f); e.target.value = "";
+                  }} />
+                </label>
+                {pForm.image && <button onClick={() => setPForm(p => ({ ...p, image: "", imageName: "" }))} className="text-xs text-red-400 mt-1 hover:underline">إزالة الصورة</button>}
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">ملف الكود (.ino / .py)</label>
+                <label className={`border-2 border-dashed rounded-xl px-3 py-2.5 cursor-pointer text-sm flex items-center gap-2 ${pForm.codeFile ? "border-green-400 bg-green-50 text-green-700" : "border-gray-300 text-gray-400 hover:border-green-400"}`}>
+                  <Code className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{pForm.codeFileName || "اختر ملف الكود"}</span>
+                  <input type="file" accept=".ino,.py,.cpp,.c,.js,.txt" className="hidden" onChange={e => {
+                    const f = e.target.files?.[0]; if (!f) return;
+                    const r = new FileReader(); r.onload = ev => setPForm(p => ({ ...p, codeFile: ev.target?.result as string, codeFileName: f.name })); r.readAsDataURL(f); e.target.value = "";
+                  }} />
+                </label>
+              </div>
+
+              <div className="col-span-2">
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">الكود البرمجي (نص مباشر)</label>
+                <textarea value={pForm.code} onChange={e => setPForm(p => ({ ...p, code: e.target.value }))}
+                  rows={5} placeholder="الصق الكود هنا مباشرة..."
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none resize-none font-mono text-xs" dir="ltr" />
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2 border-t border-gray-100">
+              <button onClick={() => {
+                if (!pForm.title.trim()) { alert("أدخل اسم المشروع أولاً"); return; }
+                if (editingProjectId) { saveEditedProject(); }
+                else { addProject(pForm); setShowPForm(false); setPForm(EMPTY_PFORM); refresh(); }
+              }} className="bg-blue-800 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700">
+                {editingProjectId ? "💾 حفظ التعديلات" : "➕ إضافة المشروع"}
+              </button>
+              <button onClick={() => { setShowPForm(false); setEditingProjectId(null); setPForm(EMPTY_PFORM); }}
+                className="bg-gray-100 text-gray-600 px-6 py-2.5 rounded-xl text-sm hover:bg-gray-200">إلغاء</button>
+            </div>
+          </div>
+        );
+
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-gray-800 flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-yellow-500" /> مركز المشاريع ({projects.length})
+              </h2>
+              <button onClick={() => { setEditingProjectId(null); setPForm(EMPTY_PFORM); setShowPForm(!showPForm); }}
+                className="flex items-center gap-2 bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700">
+                <Plus className="w-4 h-4" /> مشروع جديد
+              </button>
+            </div>
+
+            {showPForm && <ProjectForm />}
+
+            {projects.length === 0
+              ? <div className="card p-12 text-center text-gray-400">
+                  <Lightbulb className="w-14 h-14 mx-auto mb-4 opacity-20" />
+                  <p className="font-semibold text-gray-500">لا توجد مشاريع بعد</p>
+                  <p className="text-sm mt-1">اضغط "مشروع جديد" لإضافة أول مشروع</p>
+                </div>
+              : <div className="space-y-3">
+                  {projects.map(p => (
+                    <div key={p.id} className="card overflow-hidden">
+                      <div className="flex items-center gap-3 p-4">
+                        {p.image
+                          ? <img src={p.image} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                          : <span className="text-3xl w-14 h-14 flex items-center justify-center bg-blue-50 rounded-xl flex-shrink-0">{p.emoji || "💡"}</span>
+                        }
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-800 truncate">{p.title}</p>
+                          <div className="flex gap-1.5 mt-0.5 flex-wrap">
+                            {p.field && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{p.field}</span>}
+                            {p.level && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{p.level}</span>}
+                            {p.division && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full truncate max-w-[120px]">{p.division}</span>}
+                          </div>
+                          {p.students && <p className="text-xs text-gray-400 mt-1 truncate">👥 {p.students}</p>}
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <button onClick={() => startEdit(p)}
+                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl" title="تعديل">
+                            ✏️
+                          </button>
+                          <button onClick={() => setExpandedProject(expandedProject === p.id ? null : p.id)}
+                            className="p-2 text-gray-400 hover:bg-gray-50 rounded-xl">
+                            {expandedProject === p.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </button>
+                          <button onClick={() => { if(confirm("حذف هذا المشروع نهائياً؟")) { deleteProject(p.id); refresh(); } }}
+                            className="p-2 text-red-400 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </div>
+                      {expandedProject === p.id && (
+                        <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3 bg-gray-50/50">
+                          {p.description && <div><p className="text-xs font-semibold text-gray-500 mb-1">فكرة المشروع</p><p className="text-sm text-gray-700 leading-relaxed">{p.description}</p></div>}
+                          {p.components && <div><p className="text-xs font-semibold text-gray-500 mb-1">المكونات</p><p className="text-sm text-gray-700">{p.components}</p></div>}
+                          {p.code && <div><p className="text-xs font-semibold text-gray-500 mb-1">الكود</p><pre className="bg-gray-900 text-green-400 rounded-xl p-3 text-xs overflow-x-auto whitespace-pre-wrap">{p.code}</pre></div>}
+                          {p.codeFile && <button onClick={() => { const a = document.createElement("a"); a.href = p.codeFile; a.download = p.codeFileName || "code"; a.click(); }} className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-xl text-sm hover:bg-green-100"><Code className="w-4 h-4" /> تحميل {p.codeFileName}</button>}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+            }
+          </div>
+        );
+      })()}
 
       {/* Coordinators */}
       {tab === "coordinators" && (
