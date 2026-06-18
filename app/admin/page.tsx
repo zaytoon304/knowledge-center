@@ -1055,8 +1055,17 @@ export default function AdminPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-gray-800">طلبات المنسقين ({pendingCoords.length})</h2>
-            <button onClick={refresh} className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-500">
-              🔄 تحديث
+            <button onClick={async () => {
+              const { cloudGet } = await import("@/lib/cloud");
+              const [coords, students] = await Promise.all([
+                cloudGet<import("@/contexts/AuthContext").CoordinatorProfile[]>("kc_coordinators"),
+                cloudGet<import("@/contexts/AuthContext").StudentProfile[]>("kc_students"),
+              ]);
+              if (Array.isArray(coords) && coords.length > 0) localStorage.setItem("kc_coordinators", JSON.stringify(coords));
+              if (Array.isArray(students) && students.length > 0) localStorage.setItem("kc_students", JSON.stringify(students));
+              refresh();
+            }} className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-500">
+              ☁️ مزامنة من الإنترنت
             </button>
           </div>
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700">

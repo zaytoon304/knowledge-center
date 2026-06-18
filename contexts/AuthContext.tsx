@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 export interface StudentProfile {
   id: string; name: string; nationalId: string; school: string; grade: string;
@@ -164,6 +165,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AnyUser | null>(null);
 
   useEffect(() => {
+    // مزامنة البيانات من Firebase عند فتح التطبيق
+    cloudGet<CoordinatorProfile[]>("kc_coordinators").then(data => {
+      if (Array.isArray(data) && data.length > 0)
+        localStorage.setItem(KEYS.coordinators, JSON.stringify(data));
+    });
+    cloudGet<StudentProfile[]>("kc_students").then(data => {
+      if (Array.isArray(data) && data.length > 0)
+        localStorage.setItem(KEYS.students, JSON.stringify(data));
+    });
+
     const stored = load<AnyUser | null>(KEYS.currentUser, null);
     if (stored) {
       const all = stored.role === "coordinator"
@@ -209,7 +220,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (all.find(s => s.nationalId === data.nationalId))
       return { success: false, message: "رقم الهوية مسجل مسبقاً" };
     const student: StudentProfile = { ...data, id: Date.now().toString(), role: "student", registeredAt: new Date().toISOString(), status: "pending" };
-    save(KEYS.students, [...all, student]);
+    const savedStudents = [...all, student];
+    save(KEYS.students, savedStudents);
+    cloudSet("kc_students", savedStudents);
     setUser(student); save(KEYS.currentUser, student);
     return { success: true, message: "pending" };
   };
@@ -238,6 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       return { success: false, message: "فشل الحفظ — مساحة المتصفح ممتلئة، حاول مرة أخرى" };
     }
+    cloudSet("kc_coordinators", saved);
     // الجلسة الحالية تحتفظ بالبيانات الكاملة (صورة + CV)
     const fullCoord: CoordinatorProfile = { ...data, id: baseId, role: "coordinator", registeredAt: new Date().toISOString(), status: "pending" };
     setUser(fullCoord); save(KEYS.currentUser, fullCoord);
@@ -259,27 +273,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const approveStudent = (id: string) => {
     const all = getAllStudents().map(s => s.id === id ? { ...s, status: "approved" as const } : s);
-    save(KEYS.students, all);
+    save(KEYS.students, all); cloudSet("kc_students", all);
     if (user?.id === id) { const u = { ...user, status: "approved" as const }; setUser(u); save(KEYS.currentUser, u); }
   };
   const rejectStudent = (id: string) => {
-    save(KEYS.students, getAllStudents().map(s => s.id === id ? { ...s, status: "rejected" as const } : s));
+    const all = getAllStudents().map(s => s.id === id ? { ...s, status: "rejected" as const } : s);
+    save(KEYS.students, all); cloudSet("kc_students", all);
   };
   const deleteStudent = (id: string) => {
-    save(KEYS.students, getAllStudents().filter(s => s.id !== id));
+    const all = getAllStudents().filter(s => s.id !== id);
+    save(KEYS.students, all); cloudSet("kc_students", all);
     if (user?.id === id) logout();
   };
 
   const approveCoordinator = (id: string) => {
     const all = getAllCoordinators().map(c => c.id === id ? { ...c, status: "approved" as const } : c);
-    save(KEYS.coordinators, all);
+    save(KEYS.coordinators, all); cloudSet("kc_coordinators", all);
     if (user?.id === id) { const u = { ...user, status: "approved" as const }; setUser(u); save(KEYS.currentUser, u); }
   };
   const rejectCoordinator = (id: string) => {
-    save(KEYS.coordinators, getAllCoordinators().map(c => c.id === id ? { ...c, status: "rejected" as const } : c));
+    const all = getAllCoordinators().map(c => c.id === id ? { ...c, status: "rejected" as const } : c);
+    save(KEYS.coordinators, all); cloudSet("kc_coordinators", all);
   };
   const deleteCoordinator = (id: string) => {
-    save(KEYS.coordinators, getAllCoordinators().filter(c => c.id !== id));
+    const all = getAllCoordinators().filter(c => c.id !== id);
+    save(KEYS.coordinators, all); cloudSet("kc_coordinators", all);
     if (user?.id === id) logout();
   };
 
