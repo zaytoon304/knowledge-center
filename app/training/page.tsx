@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import {
   GraduationCap, Play, FileText, CheckCircle, Circle, ChevronRight,
-  Award, Download, Search, BookOpen, User
+  Award, Download, Search, BookOpen, User, PenLine
 } from "lucide-react";
 
 interface Lesson {
@@ -364,6 +365,17 @@ export default function TrainingPage() {
             <div className="text-green-200 text-xs">دورة</div>
           </div>
         </div>
+      </div>
+
+      {/* السبورة الذكية */}
+      <div className="card p-4 flex items-center justify-between bg-gradient-to-l from-indigo-50 to-blue-50 border border-indigo-100">
+        <div>
+          <p className="font-bold text-indigo-800 text-sm">🖊️ السبورة الذكية</p>
+          <p className="text-indigo-500 text-xs mt-0.5">ارسم واشرح وأضف صور أثناء الشرح</p>
+        </div>
+        <Link href="/whiteboard" className="flex items-center gap-2 bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-600 transition-colors">
+          <PenLine className="w-4 h-4" /> افتح السبورة
+        </Link>
       </div>
 
       <div className="card p-4">

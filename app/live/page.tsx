@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Radio, Calendar, Eye, AlertCircle, Video, ExternalLink } from "lucide-react";
+import { Radio, Calendar, Eye, AlertCircle, ExternalLink, PenLine } from "lucide-react";
+import Link from "next/link";
 
 type StreamType = "youtube" | "meet" | "zoom";
 
@@ -83,6 +84,17 @@ export default function LivePage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* زر السبورة الذكية */}
+      <div className="card p-4 flex items-center justify-between bg-gradient-to-l from-indigo-50 to-blue-50 border border-indigo-100">
+        <div>
+          <p className="font-bold text-indigo-800 text-sm">🖊️ السبورة الذكية</p>
+          <p className="text-indigo-500 text-xs mt-0.5">ارسم وشرح واكتب أثناء البث</p>
+        </div>
+        <Link href="/whiteboard" className="flex items-center gap-2 bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-600 transition-colors">
+          <PenLine className="w-4 h-4" /> افتح السبورة
+        </Link>
       </div>
 
       {config.isLive && config.url ? (

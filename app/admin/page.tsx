@@ -259,6 +259,7 @@ export default function AdminPage() {
     { id: "meetings_admin", label: "الاجتماعات", icon: Video },
     { id: "monthly_report", label: "التقرير الشهري", icon: BarChart3 },
     { id: "visitors", label: "طلبات الزوار", icon: Globe, badge: visitorRequests.filter(v => v.status === "pending").length || undefined },
+    { id: "whiteboard_admin", label: "السبورة الذكية", icon: BookOpen },
     { id: "supervisor_profile", label: "ملفي الشخصي", icon: UserSquare2 },
     { id: "permissions", label: "الصلاحيات", icon: Shield },
   ];
@@ -1523,6 +1524,63 @@ export default function AdminPage() {
 
       {/* التقرير الشهري */}
       {tab === "monthly_report" && <MonthlyReport />}
+
+      {/* السبورة الذكية */}
+      {tab === "whiteboard_admin" && (
+        <div className="space-y-4 max-w-lg">
+          <div className="card p-6 bg-gradient-to-l from-indigo-800 to-blue-700 text-white">
+            <div className="flex items-center gap-3">
+              <div className="text-4xl">🖊️</div>
+              <div>
+                <h2 className="text-xl font-bold">السبورة الذكية</h2>
+                <p className="text-blue-200 text-sm">أداة رسم وشرح تفاعلية للمعلم والطالب</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card p-5 space-y-4">
+            <h3 className="font-bold text-gray-700">مزايا السبورة</h3>
+            {[
+              { emoji: "✏️", title: "الرسم الحر", desc: "قلم بأحجام وألوان متعددة مع ممحاة" },
+              { emoji: "📐", title: "الأشكال الهندسية", desc: "مستطيل، دائرة، خط، سهم" },
+              { emoji: "🔤", title: "إضافة نصوص", desc: "اكتب تعليقات وشروحات بالعربية" },
+              { emoji: "🖼️", title: "رفع الصور", desc: "ارفع صورة وارسم عليها توضيحات" },
+              { emoji: "↩️", title: "التراجع والإعادة", desc: "تراجع عن أي خطأ بسهولة" },
+              { emoji: "💾", title: "تحميل كصورة", desc: "احفظ السبورة كملف PNG" },
+              { emoji: "🖥️", title: "ملء الشاشة", desc: "وضع العرض التقديمي للشرح" },
+              { emoji: "🎨", title: "ألوان ومقاسات", desc: "10 ألوان جاهزة + منتقي لون مخصص" },
+            ].map(f => (
+              <div key={f.emoji} className="flex items-start gap-3">
+                <span className="text-2xl flex-shrink-0">{f.emoji}</span>
+                <div>
+                  <p className="font-semibold text-gray-700 text-sm">{f.title}</p>
+                  <p className="text-gray-400 text-xs">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="card p-5 space-y-3">
+            <h3 className="font-bold text-gray-700">أين تظهر السبورة؟</h3>
+            {[
+              { page: "صفحة البث المباشر", path: "/live", color: "bg-red-50 text-red-700 border-red-100" },
+              { page: "صفحة الدورات التدريبية", path: "/training", color: "bg-green-50 text-green-700 border-green-100" },
+              { page: "صفحة السبورة المستقلة", path: "/whiteboard", color: "bg-indigo-50 text-indigo-700 border-indigo-100" },
+            ].map(p => (
+              <div key={p.path} className={`flex items-center justify-between p-3 rounded-xl border ${p.color}`}>
+                <span className="text-sm font-medium">{p.page}</span>
+                <a href={p.path} target="_blank" rel="noopener noreferrer"
+                  className="text-xs underline opacity-70 hover:opacity-100">{p.path}</a>
+              </div>
+            ))}
+          </div>
+
+          <a href="/whiteboard" target="_blank" rel="noopener noreferrer"
+            className="card p-4 flex items-center justify-center gap-3 bg-indigo-700 text-white hover:bg-indigo-600 transition-colors cursor-pointer text-lg font-bold rounded-2xl">
+            🖊️ فتح السبورة الذكية
+          </a>
+        </div>
+      )}
 
       {/* ملف المشرف الشخصي */}
       {tab === "supervisor_profile" && <SupervisorProfileEditor />}
