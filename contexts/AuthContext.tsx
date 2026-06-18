@@ -49,6 +49,14 @@ export interface VideoItem {
   id: string; title: string; link: string; description: string; emoji: string;
 }
 
+export interface ProjectVideo {
+  id: string;
+  title: string;
+  url: string;
+  type: "journey" | "presentation" | "problems" | "other";
+  description: string;
+}
+
 export interface ProjectItem {
   id: string; title: string; description: string; field: string; level: string; emoji: string;
   image: string; imageName: string;
@@ -57,6 +65,7 @@ export interface ProjectItem {
   components: string;
   code: string;
   codeFile: string; codeFileName: string;
+  videos: ProjectVideo[];
 }
 
 export interface DailyLogEntry {
