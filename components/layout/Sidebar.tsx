@@ -76,7 +76,7 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <CenterLogo className="w-14 h-14 flex-shrink-0 drop-shadow-lg" />
+              <img src="/arqam-logo.png" alt="شعار مدارس الأرقم" className="w-14 h-14 flex-shrink-0 object-contain drop-shadow-lg" />
               <div>
                 <div className="text-white font-bold text-sm leading-snug">مركز المعرفة والابتكار</div>
                 <div className="text-yellow-300 text-xs font-semibold tracking-wide">STEAM</div>
