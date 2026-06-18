@@ -202,6 +202,11 @@ export default function AdminPage() {
   const [videoForm, setVideoForm] = useState({ title: "", url: "", type: "journey" as ProjectVideo["type"], description: "" });
   const [dailyLog, setDailyLog] = useState<DailyLogEntry[]>([]);
   const [showDForm, setShowDForm] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [coordSearch, setCoordSearch] = useState("");
+  const [studentNoteInputs, setStudentNoteInputs] = useState<Record<string, string>>({});
+  const [coordNoteInputs, setCoordNoteInputs] = useState<Record<string, string>>({});
+  const [notesRefresh, setNotesRefresh] = useState(0);
   const [dForm, setDForm] = useState({
     title: "", date: "", description: "", category: "نشاط",
     images: [] as Array<{ data: string; name: string }>,
@@ -381,131 +386,105 @@ export default function AdminPage() {
       )}
 
       {/* متابعة الطلاب */}
-      {tab === "student_tracking" && (() => {
-        const approvedStudents = students.filter(s => s.status === "approved");
-        const [search, setSearch] = React.useState("");
-        const [noteInputs, setNoteInputs] = React.useState<Record<string, string>>({});
-        const getNotes = (id: string): string[] => { try { return JSON.parse(localStorage.getItem("kc_snotes_" + id) || "[]"); } catch { return []; } };
-        const addNote = (id: string) => {
-          const txt = (noteInputs[id] || "").trim(); if (!txt) return;
-          const notes = [...getNotes(id), `${new Date().toLocaleDateString("ar-SA")} — ${txt}`];
-          localStorage.setItem("kc_snotes_" + id, JSON.stringify(notes));
-          setNoteInputs(p => ({ ...p, [id]: "" })); refresh();
-        };
-        const filtered = approvedStudents.filter(s =>
-          s.name.includes(search) || s.school.includes(search) || s.grade.includes(search)
-        );
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <h2 className="font-bold text-gray-800 text-lg">متابعة الطلاب ({approvedStudents.length})</h2>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 ابحث بالاسم أو المدرسة..." className="input w-64 text-sm" />
-            </div>
-            {filtered.length === 0
-              ? <div className="card p-10 text-center text-gray-400"><Users className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا يوجد طلاب</p></div>
-              : filtered.map(s => {
-                const notes = getNotes(s.id);
-                return (
-                  <div key={s.id} className="card p-4 space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg flex-shrink-0">
-                        {s.photo ? <img src={s.photo} className="w-full h-full object-cover rounded-xl" alt="" /> : s.name[0]}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-gray-800">{s.name}</p>
-                        <p className="text-sm text-gray-500">{s.school} • {s.grade}</p>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {s.phone && <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg">📞 {s.phone}</span>}
-                          {s.email && <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-lg">✉️ {s.email}</span>}
-                          <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg">📅 {new Date(s.registeredAt).toLocaleDateString("ar-SA")}</span>
-                        </div>
-                      </div>
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-semibold">معتمد ✓</span>
-                    </div>
-                    {notes.length > 0 && (
-                      <div className="bg-yellow-50 rounded-xl p-3 space-y-1">
-                        <p className="text-xs font-bold text-yellow-700 mb-1">📝 الملاحظات:</p>
-                        {notes.map((n, i) => <p key={i} className="text-xs text-yellow-800">• {n}</p>)}
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <input value={noteInputs[s.id] || ""} onChange={e => setNoteInputs(p => ({ ...p, [s.id]: e.target.value }))}
-                        onKeyDown={e => e.key === "Enter" && addNote(s.id)}
-                        placeholder="أضف ملاحظة..." className="input flex-1 text-sm" />
-                      <button onClick={() => addNote(s.id)} className="bg-yellow-500 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-400">إضافة</button>
-                    </div>
-                  </div>
-                );
-              })
-            }
+      {tab === "student_tracking" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h2 className="font-bold text-gray-800 text-lg">متابعة الطلاب ({students.filter(s => s.status === "approved").length})</h2>
+            <input value={studentSearch} onChange={e => setStudentSearch(e.target.value)} placeholder="🔍 ابحث بالاسم أو المدرسة..." className="input w-64 text-sm" />
           </div>
-        );
-      })()}
+          {students.filter(s => s.status === "approved" && (s.name.includes(studentSearch) || s.school.includes(studentSearch) || s.grade.includes(studentSearch))).length === 0
+            ? <div className="card p-10 text-center text-gray-400"><Users className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا يوجد طلاب</p></div>
+            : students.filter(s => s.status === "approved" && (s.name.includes(studentSearch) || s.school.includes(studentSearch) || s.grade.includes(studentSearch))).map(s => {
+              const notes: string[] = (() => { try { return JSON.parse(localStorage.getItem("kc_snotes_" + s.id) || "[]"); } catch { return []; } })();
+              return (
+                <div key={s.id + notesRefresh} className="card p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg flex-shrink-0">
+                      {s.photo ? <img src={s.photo} className="w-full h-full object-cover rounded-xl" alt="" /> : s.name[0]}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-800">{s.name}</p>
+                      <p className="text-sm text-gray-500">{s.school} • {s.grade}</p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {s.phone && <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg">📞 {s.phone}</span>}
+                        {s.email && <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-lg">✉️ {s.email}</span>}
+                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg">📅 {new Date(s.registeredAt).toLocaleDateString("ar-SA")}</span>
+                      </div>
+                    </div>
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-semibold">معتمد ✓</span>
+                  </div>
+                  {notes.length > 0 && (
+                    <div className="bg-yellow-50 rounded-xl p-3 space-y-1">
+                      <p className="text-xs font-bold text-yellow-700 mb-1">📝 الملاحظات:</p>
+                      {notes.map((n, i) => <p key={i} className="text-xs text-yellow-800">• {n}</p>)}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input value={studentNoteInputs[s.id] || ""}
+                      onChange={e => setStudentNoteInputs(p => ({ ...p, [s.id]: e.target.value }))}
+                      onKeyDown={e => { if (e.key === "Enter") { const txt = (studentNoteInputs[s.id] || "").trim(); if (!txt) return; const ns = [...notes, `${new Date().toLocaleDateString("ar-SA")} — ${txt}`]; localStorage.setItem("kc_snotes_" + s.id, JSON.stringify(ns)); setStudentNoteInputs(p => ({ ...p, [s.id]: "" })); setNotesRefresh(r => r + 1); } }}
+                      placeholder="أضف ملاحظة..." className="input flex-1 text-sm" />
+                    <button onClick={() => { const txt = (studentNoteInputs[s.id] || "").trim(); if (!txt) return; const ns = [...notes, `${new Date().toLocaleDateString("ar-SA")} — ${txt}`]; localStorage.setItem("kc_snotes_" + s.id, JSON.stringify(ns)); setStudentNoteInputs(p => ({ ...p, [s.id]: "" })); setNotesRefresh(r => r + 1); }}
+                      className="bg-yellow-500 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-400">إضافة</button>
+                  </div>
+                </div>
+              );
+            })
+          }
+        </div>
+      )}
 
       {/* متابعة المنسقين */}
-      {tab === "coord_tracking" && (() => {
-        const approvedCoords = coordinators.filter(c => c.status === "approved");
-        const [search, setSearch] = React.useState("");
-        const [noteInputs, setNoteInputs] = React.useState<Record<string, string>>({});
-        const getNotes = (id: string): string[] => { try { return JSON.parse(localStorage.getItem("kc_cnotes_" + id) || "[]"); } catch { return []; } };
-        const addNote = (id: string) => {
-          const txt = (noteInputs[id] || "").trim(); if (!txt) return;
-          const notes = [...getNotes(id), `${new Date().toLocaleDateString("ar-SA")} — ${txt}`];
-          localStorage.setItem("kc_cnotes_" + id, JSON.stringify(notes));
-          setNoteInputs(p => ({ ...p, [id]: "" })); refresh();
-        };
-        const coordProjects = (() => { try { return JSON.parse(localStorage.getItem("kc_projects") || "[]"); } catch { return []; } })();
-        const filtered = approvedCoords.filter(c =>
-          c.name.includes(search) || c.school.includes(search) || c.subject.includes(search)
-        );
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <h2 className="font-bold text-gray-800 text-lg">متابعة المنسقين ({approvedCoords.length})</h2>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 ابحث بالاسم أو المدرسة..." className="input w-64 text-sm" />
-            </div>
-            {filtered.length === 0
-              ? <div className="card p-10 text-center text-gray-400"><Briefcase className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا يوجد منسقون معتمدون</p></div>
-              : filtered.map(c => {
-                const notes = getNotes(c.id);
-                const projCount = coordProjects.filter((p: {coordinator?: string}) => p.coordinator === c.name).length;
-                return (
-                  <div key={c.id} className="card p-4 space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg flex-shrink-0">
-                        {c.name[0]}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-gray-800">{c.name}</p>
-                        <p className="text-sm text-gray-500">{c.school} • {c.subject}</p>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {c.phone && <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg">📞 {c.phone}</span>}
-                          {c.email && <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-lg">✉️ {c.email}</span>}
-                          <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg">💡 {projCount} مشروع</span>
-                          <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg">📅 {new Date(c.registeredAt).toLocaleDateString("ar-SA")}</span>
-                        </div>
-                      </div>
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-semibold">معتمد ✓</span>
-                    </div>
-                    {notes.length > 0 && (
-                      <div className="bg-yellow-50 rounded-xl p-3 space-y-1">
-                        <p className="text-xs font-bold text-yellow-700 mb-1">📝 الملاحظات:</p>
-                        {notes.map((n, i) => <p key={i} className="text-xs text-yellow-800">• {n}</p>)}
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <input value={noteInputs[c.id] || ""} onChange={e => setNoteInputs(p => ({ ...p, [c.id]: e.target.value }))}
-                        onKeyDown={e => e.key === "Enter" && addNote(c.id)}
-                        placeholder="أضف ملاحظة..." className="input flex-1 text-sm" />
-                      <button onClick={() => addNote(c.id)} className="bg-yellow-500 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-400">إضافة</button>
-                    </div>
-                  </div>
-                );
-              })
-            }
+      {tab === "coord_tracking" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h2 className="font-bold text-gray-800 text-lg">متابعة المنسقين ({coordinators.filter(c => c.status === "approved").length})</h2>
+            <input value={coordSearch} onChange={e => setCoordSearch(e.target.value)} placeholder="🔍 ابحث بالاسم أو المدرسة..." className="input w-64 text-sm" />
           </div>
-        );
-      })()}
+          {coordinators.filter(c => c.status === "approved" && (c.name.includes(coordSearch) || c.school.includes(coordSearch) || c.subject.includes(coordSearch))).length === 0
+            ? <div className="card p-10 text-center text-gray-400"><Briefcase className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا يوجد منسقون معتمدون</p></div>
+            : coordinators.filter(c => c.status === "approved" && (c.name.includes(coordSearch) || c.school.includes(coordSearch) || c.subject.includes(coordSearch))).map(c => {
+              const notes: string[] = (() => { try { return JSON.parse(localStorage.getItem("kc_cnotes_" + c.id) || "[]"); } catch { return []; } })();
+              const coordProjects: {coordinator?: string}[] = (() => { try { return JSON.parse(localStorage.getItem("kc_projects") || "[]"); } catch { return []; } })();
+              const projCount = coordProjects.filter(p => p.coordinator === c.name).length;
+              return (
+                <div key={c.id + notesRefresh} className="card p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg flex-shrink-0">
+                      {c.name[0]}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-800">{c.name}</p>
+                      <p className="text-sm text-gray-500">{c.school} • {c.subject}</p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {c.phone && <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg">📞 {c.phone}</span>}
+                        {c.email && <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-lg">✉️ {c.email}</span>}
+                        <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg">💡 {projCount} مشروع</span>
+                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg">📅 {new Date(c.registeredAt).toLocaleDateString("ar-SA")}</span>
+                      </div>
+                    </div>
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-semibold">معتمد ✓</span>
+                  </div>
+                  {notes.length > 0 && (
+                    <div className="bg-yellow-50 rounded-xl p-3 space-y-1">
+                      <p className="text-xs font-bold text-yellow-700 mb-1">📝 الملاحظات:</p>
+                      {notes.map((n, i) => <p key={i} className="text-xs text-yellow-800">• {n}</p>)}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input value={coordNoteInputs[c.id] || ""}
+                      onChange={e => setCoordNoteInputs(p => ({ ...p, [c.id]: e.target.value }))}
+                      onKeyDown={e => { if (e.key === "Enter") { const txt = (coordNoteInputs[c.id] || "").trim(); if (!txt) return; const ns = [...notes, `${new Date().toLocaleDateString("ar-SA")} — ${txt}`]; localStorage.setItem("kc_cnotes_" + c.id, JSON.stringify(ns)); setCoordNoteInputs(p => ({ ...p, [c.id]: "" })); setNotesRefresh(r => r + 1); } }}
+                      placeholder="أضف ملاحظة..." className="input flex-1 text-sm" />
+                    <button onClick={() => { const txt = (coordNoteInputs[c.id] || "").trim(); if (!txt) return; const ns = [...notes, `${new Date().toLocaleDateString("ar-SA")} — ${txt}`]; localStorage.setItem("kc_cnotes_" + c.id, JSON.stringify(ns)); setCoordNoteInputs(p => ({ ...p, [c.id]: "" })); setNotesRefresh(r => r + 1); }}
+                      className="bg-yellow-500 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-400">إضافة</button>
+                  </div>
+                </div>
+              );
+            })
+          }
+        </div>
+      )}
 
       {/* Groups */}
       {tab === "groups" && (
