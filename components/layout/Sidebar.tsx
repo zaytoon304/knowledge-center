@@ -73,19 +73,20 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
 
       <aside className={clsx("sidebar", isOpen ? "open" : "")}>
         {/* Logo */}
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src="/arqam-logo.png" alt="شعار مدارس الأرقم" className="w-14 h-14 flex-shrink-0 object-contain drop-shadow-lg" />
-              <div>
-                <div className="text-white font-bold text-sm leading-snug">مركز المعرفة والابتكار</div>
-                <div className="text-yellow-300 text-xs font-semibold tracking-wide">STEAM</div>
-                <div className="text-blue-300 text-xs">بمدارس الأرقم</div>
-              </div>
-            </div>
+        <div className="px-4 pt-4 pb-3 border-b border-white/10">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-yellow-300 text-xs font-bold tracking-wide">مركز المعرفة والابتكار STEAM</span>
             <button onClick={onClose} className="md:hidden text-white/70 hover:text-white">
               <X className="w-5 h-5" />
             </button>
+          </div>
+          <div className="flex justify-center">
+            <img
+              src="/arqam-logo.png"
+              alt="شعار مدارس الأرقم"
+              className="w-full max-w-[200px] object-contain"
+              style={{ filter: "brightness(0) invert(1)" }}
+            />
           </div>
         </div>
 
