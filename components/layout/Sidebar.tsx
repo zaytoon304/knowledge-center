@@ -73,7 +73,7 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
 
       <aside className={clsx("sidebar", isOpen ? "open" : "")}>
         {/* Logo */}
-        <div className="px-4 pt-4 pb-3 border-b border-white/10">
+        <div className="px-3 pt-3 pb-3 border-b border-white/10">
           <div className="flex items-center justify-between mb-2">
             <span className="text-yellow-300 text-xs font-bold tracking-wide">مركز المعرفة والابتكار STEAM</span>
             <button onClick={onClose} className="md:hidden text-white/70 hover:text-white">
@@ -81,12 +81,13 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
             </button>
           </div>
           <div className="flex justify-center">
-            <img
-              src="/arqam-logo.png"
-              alt="شعار مدارس الأرقم"
-              className="w-full max-w-[200px] object-contain"
-              style={{ filter: "brightness(0) invert(1)" }}
-            />
+            <div className="bg-white rounded-2xl px-3 py-2 shadow-lg">
+              <img
+                src="/arqam-logo.png"
+                alt="شعار مدارس الأرقم"
+                className="w-44 object-contain"
+              />
+            </div>
           </div>
         </div>
 
