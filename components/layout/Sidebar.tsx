@@ -5,7 +5,7 @@ import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
   Archive, Settings, X, LogOut, LogIn, Briefcase, CalendarDays,
-  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode, Radio, PenLine
+  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode, Radio, PenLine, Gamepad2, Brain
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +19,8 @@ const adminNavItems = [
   { href: "/live", label: "البث المباشر", icon: Radio },
   { href: "/training", label: "مركز التدريب", icon: GraduationCap },
   { href: "/whiteboard", label: "السبورة الذكية", icon: PenLine },
+  { href: "/play", label: "نلعب ونتعلم", icon: Gamepad2 },
+  { href: "/iq-test", label: "اختبار الذكاء IQ", icon: Brain },
   { href: "/indicators", label: "مركز المؤشرات", icon: BarChart3 },
   { href: "/emerging-tech", label: "التقنيات الناشئة", icon: Cpu },
   { href: "/ai-assistant", label: "المساعد الذكي", icon: Bot },

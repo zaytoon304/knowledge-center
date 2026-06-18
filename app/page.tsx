@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   BookOpen, Layers, FolderOpen, GraduationCap, BarChart3,
   Cpu, Bot, UserSquare, Trophy, Users, Archive, Settings,
-  Sparkles, CalendarDays, Eye, ChevronLeft, Briefcase
+  Sparkles, CalendarDays, Eye, ChevronLeft, Briefcase, Gamepad2, Brain
 } from "lucide-react";
 
 const sections = [
@@ -12,6 +12,8 @@ const sections = [
   { href: "/programs", label: "مركز البرامج", desc: "الموهبة، الابتكار، STEAM", icon: Layers, gradient: "from-purple-600 to-purple-400" },
   { href: "/projects", label: "مركز المشاريع", desc: "مشاريع الطلاب والمعلمين", icon: FolderOpen, gradient: "from-indigo-600 to-indigo-400" },
   { href: "/training", label: "مركز التدريب", desc: "الدورات والشهادات", icon: GraduationCap, gradient: "from-green-600 to-teal-400" },
+  { href: "/play", label: "نلعب ونتعلم", desc: "ألعاب تعليمية تفاعلية ممتعة", icon: Gamepad2, gradient: "from-purple-700 to-pink-500" },
+  { href: "/iq-test", label: "اختبار الذكاء IQ", desc: "اكتشف نسبة ذكائك — 20 سؤالاً", icon: Brain, gradient: "from-violet-700 to-indigo-500" },
   { href: "/indicators", label: "مركز المؤشرات", desc: "لوحة KPI والتقارير", icon: BarChart3, gradient: "from-orange-600 to-yellow-400" },
   { href: "/emerging-tech", label: "التقنيات الناشئة", desc: "AI، IoT، الروبوت، AR", icon: Cpu, gradient: "from-cyan-600 to-sky-400" },
   { href: "/ai-assistant", label: "المساعد الذكي", desc: "اقتراح أفكار ودعم المنسقين", icon: Bot, gradient: "from-violet-600 to-purple-400" },
