@@ -25,11 +25,24 @@ export interface ChatGroup {
 }
 
 export interface LiveStreamSettings {
-  enabled: boolean; zoomLink: string; title: string; description: string;
+  enabled: boolean;
+  streamType: "youtube" | "meet" | "zoom";
+  url: string;
+  zoomLink: string;
+  title: string;
+  description: string;
+  scheduledAt: string;
+}
+
+export interface LessonItem {
+  id: string; title: string; videoUrl: string; pdfUrl: string; pdfName: string; duration: string;
 }
 
 export interface CourseItem {
-  id: string; title: string; description: string; type: "free" | "paid"; link: string; emoji: string;
+  id: string; title: string; description: string;
+  emoji: string; instructor: string; duration: string;
+  lessons: LessonItem[];
+  createdAt: string;
 }
 
 export interface VideoItem {
@@ -135,7 +148,7 @@ function save(key: string, val: unknown) {
 }
 
 const defaultLiveStream: LiveStreamSettings = {
-  enabled: false, zoomLink: "", title: "البث المباشر", description: "لا يوجد بث مباشر الآن"
+  enabled: false, streamType: "youtube", url: "", zoomLink: "", title: "", description: "", scheduledAt: ""
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {

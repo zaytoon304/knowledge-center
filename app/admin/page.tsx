@@ -86,7 +86,7 @@ const INDICATORS_CONFIG = {
   ],
 };
 
-import { useAuth, StudentProfile, CoordinatorProfile, ChatGroup, CourseItem, VideoItem, ProjectItem, ShopItem, PlatformAchievement, DailyLogEntry } from "@/contexts/AuthContext";
+import { useAuth, StudentProfile, CoordinatorProfile, ChatGroup, CourseItem, LessonItem, VideoItem, ProjectItem, ShopItem, PlatformAchievement, DailyLogEntry } from "@/contexts/AuthContext";
 
 interface VisitorRequest {
   id: string; name: string; phone: string; email: string;
@@ -186,8 +186,11 @@ export default function AdminPage() {
   const [showAForm, setShowAForm] = useState(false);
   const [gForm, setGForm] = useState({ name: "", description: "", emoji: "🤖", color: GROUP_COLORS[0].value, type: "team" as "general" | "team" });
   const [showGForm, setShowGForm] = useState(false);
-  const [cForm, setCForm] = useState({ title: "", description: "", type: "free" as "free" | "paid", link: "", emoji: "📚" });
+  const [cForm, setCForm] = useState({ title: "", description: "", emoji: "📚", instructor: "", duration: "" });
   const [showCForm, setShowCForm] = useState(false);
+  const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
+  const [lessonForm, setLessonForm] = useState({ title: "", videoUrl: "", pdfUrl: "", pdfName: "", duration: "" });
+  const [showLessonForm, setShowLessonForm] = useState<string | null>(null);
   const [vForm, setVForm] = useState({ title: "", description: "", link: "", emoji: "🎬" });
   const [showVForm, setShowVForm] = useState(false);
   const [pForm, setPForm] = useState({
@@ -447,29 +450,88 @@ export default function AdminPage() {
 
       {/* Live Stream */}
       {tab === "live" && (
-        <div className="card p-6 max-w-lg space-y-4">
+        <div className="card p-6 max-w-xl space-y-4">
           <h2 className="font-bold text-gray-800 flex items-center gap-2"><Radio className="w-5 h-5 text-red-500" /> التحكم في البث المباشر</h2>
+
+          {/* اختيار منصة البث */}
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">عنوان البث</label>
-            <input value={live.title} onChange={e => setLive(p => ({ ...p, title: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" />
+            <label className="text-xs font-semibold text-gray-600 mb-2 block">منصة البث</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: "youtube", emoji: "▶", label: "YouTube Live" },
+                { id: "meet", emoji: "🎥", label: "Google Meet" },
+                { id: "zoom", emoji: "📹", label: "Zoom" },
+              ].map(p => (
+                <button key={p.id} onClick={() => setLive(prev => ({ ...prev, streamType: p.id as "youtube" | "meet" | "zoom" }))}
+                  className={`p-3 rounded-xl text-center border-2 transition-all ${(live.streamType || "youtube") === p.id ? "border-blue-500 bg-blue-50" : "border-gray-100 bg-gray-50 hover:border-gray-200"}`}>
+                  <div className="text-2xl mb-1">{p.emoji}</div>
+                  <div className="text-xs font-bold text-gray-700">{p.label}</div>
+                </button>
+              ))}
+            </div>
           </div>
+
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">وصف البث</label>
-            <input value={live.description} onChange={e => setLive(p => ({ ...p, description: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" />
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">عنوان الجلسة</label>
+            <input value={live.title} onChange={e => setLive(p => ({ ...p, title: e.target.value }))}
+              placeholder="مثال: درس الذكاء الاصطناعي - الجلسة الأولى"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" />
           </div>
+
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">رابط Zoom</label>
-            <input value={live.zoomLink} onChange={e => setLive(p => ({ ...p, zoomLink: e.target.value }))} placeholder="https://zoom.us/j/..." className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" />
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">
+              {(live.streamType || "youtube") === "youtube" ? "رابط YouTube Live" : (live.streamType === "meet" ? "رابط Google Meet" : "رابط Zoom")}
+            </label>
+            <input value={live.url || live.zoomLink || ""}
+              onChange={e => setLive(p => ({ ...p, url: e.target.value, zoomLink: e.target.value }))}
+              placeholder={(live.streamType || "youtube") === "youtube" ? "https://youtube.com/live/..." : (live.streamType === "meet" ? "https://meet.google.com/..." : "https://zoom.us/j/...")}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500 font-mono" dir="ltr" />
           </div>
+
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">وصف الجلسة (اختياري)</label>
+            <input value={live.description} onChange={e => setLive(p => ({ ...p, description: e.target.value }))}
+              placeholder="مثال: نتعلم اليوم أساسيات الذكاء الاصطناعي..."
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">موعد البث القادم (اختياري)</label>
+            <input value={live.scheduledAt || ""} onChange={e => setLive(p => ({ ...p, scheduledAt: e.target.value }))}
+              placeholder="مثال: الإثنين 10 ذي القعدة الساعة 10 صباحاً"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500" />
+          </div>
+
           <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-            <span className="text-sm font-semibold text-gray-700">تفعيل البث المباشر:</span>
+            <span className="text-sm font-semibold text-gray-700">البث نشط الآن:</span>
             <button onClick={() => setLive(p => ({ ...p, enabled: !p.enabled }))}
               className={`relative w-14 h-7 rounded-full transition-colors ${live.enabled ? "bg-green-500" : "bg-gray-300"}`}>
               <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all ${live.enabled ? "right-0.5" : "left-0.5"}`} />
             </button>
-            <span className={`text-sm font-bold ${live.enabled ? "text-green-600" : "text-gray-400"}`}>{live.enabled ? "مفعّل 🔴" : "مغلق"}</span>
+            <span className={`text-sm font-bold ${live.enabled ? "text-red-600" : "text-gray-400"}`}>
+              {live.enabled ? "🔴 مباشر الآن" : "مغلق"}
+            </span>
           </div>
-          <button onClick={() => updateLiveStream(live)} className="w-full bg-blue-800 text-white py-3 rounded-xl font-bold hover:bg-blue-700">حفظ الإعدادات</button>
+
+          <button onClick={() => {
+            const toSave = { ...live, url: live.url || live.zoomLink || "" };
+            updateLiveStream(toSave);
+            localStorage.setItem("kc_live_stream", JSON.stringify({
+              isLive: toSave.enabled,
+              streamType: toSave.streamType || "youtube",
+              title: toSave.title,
+              url: toSave.url || toSave.zoomLink || "",
+              description: toSave.description,
+              scheduledAt: toSave.scheduledAt || "",
+            }));
+            alert("✅ تم حفظ إعدادات البث!");
+          }} className="w-full bg-blue-800 text-white py-3 rounded-xl font-bold hover:bg-blue-700 flex items-center justify-center gap-2">
+            <Radio className="w-4 h-4" /> حفظ الإعدادات
+          </button>
+
+          <div className="p-3 bg-blue-50 rounded-xl text-xs text-blue-700">
+            <strong>ملاحظة:</strong> YouTube يُعرض داخل المنصة مباشرة • Google Meet وZoom يفتحان في نافذة جديدة
+          </div>
         </div>
       )}
 
@@ -477,32 +539,151 @@ export default function AdminPage() {
       {tab === "courses" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-gray-800">الدورات ({courses.length})</h2>
+            <h2 className="font-bold text-gray-800">الدورات التدريبية ({courses.length})</h2>
             <button onClick={() => setShowCForm(!showCForm)} className="flex items-center gap-2 bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700"><Plus className="w-4 h-4" /> دورة جديدة</button>
           </div>
+
+          {/* فورم إضافة دورة */}
           {showCForm && (
-            <div className="card p-5 space-y-3">
+            <div className="card p-5 space-y-3 border-2 border-blue-100">
+              <h3 className="font-bold text-gray-700 text-sm">دورة جديدة</h3>
               <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">اسم الدورة *</label><input value={cForm.title} onChange={e => setCForm(p => ({ ...p, title: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" /></div>
-                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">الوصف</label><input value={cForm.description} onChange={e => setCForm(p => ({ ...p, description: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" /></div>
-                <div><label className="text-xs font-semibold text-gray-600 mb-1 block">النوع</label><select value={cForm.type} onChange={e => setCForm(p => ({ ...p, type: e.target.value as "free" | "paid" }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none"><option value="free">مجاني</option><option value="paid">مدفوع</option></select></div>
-                <div><label className="text-xs font-semibold text-gray-600 mb-1 block">الإيموجي</label><select value={cForm.emoji} onChange={e => setCForm(p => ({ ...p, emoji: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none">{EMOJIS.map(e => <option key={e} value={e}>{e}</option>)}</select></div>
-                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-1 block">رابط الدورة</label><input value={cForm.link} onChange={e => setCForm(p => ({ ...p, link: e.target.value }))} placeholder="https://..." className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" /></div>
+                <div className="col-span-2">
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">اسم الدورة *</label>
+                  <input value={cForm.title} onChange={e => setCForm(p => ({ ...p, title: e.target.value }))} placeholder="مثال: دورة الذكاء الاصطناعي للمبتدئين" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" />
+                </div>
+                <div className="col-span-2">
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">الوصف</label>
+                  <textarea value={cForm.description} onChange={e => setCForm(p => ({ ...p, description: e.target.value }))} rows={2} placeholder="وصف مختصر للدورة..." className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none resize-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">المدرب</label>
+                  <input value={cForm.instructor} onChange={e => setCForm(p => ({ ...p, instructor: e.target.value }))} placeholder="اسم المدرب" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">المدة</label>
+                  <input value={cForm.duration} onChange={e => setCForm(p => ({ ...p, duration: e.target.value }))} placeholder="مثال: 5 ساعات" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">الأيقونة</label>
+                  <select value={cForm.emoji} onChange={e => setCForm(p => ({ ...p, emoji: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none">
+                    {["📚", "🤖", "🧠", "💡", "🔬", "🚀", "⭐", "🎯", "🌟", "🏆", "🎓", "💻", "🔧", "⚡", "🌐"].map(e => <option key={e} value={e}>{e}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { if (!cForm.title.trim()) return; addCourse(cForm); setShowCForm(false); setCForm({ title: "", description: "", type: "free", link: "", emoji: "📚" }); refresh(); }} className="bg-blue-800 text-white px-6 py-2 rounded-xl text-sm font-semibold">إضافة</button>
+                <button onClick={() => {
+                  if (!cForm.title.trim()) return;
+                  addCourse({ ...cForm, lessons: [], createdAt: new Date().toLocaleDateString("ar-SA") });
+                  setShowCForm(false);
+                  setCForm({ title: "", description: "", emoji: "📚", instructor: "", duration: "" });
+                  refresh();
+                }} className="bg-blue-800 text-white px-6 py-2 rounded-xl text-sm font-semibold">إضافة الدورة</button>
                 <button onClick={() => setShowCForm(false)} className="bg-gray-100 text-gray-600 px-6 py-2 rounded-xl text-sm">إلغاء</button>
               </div>
             </div>
           )}
-          {courses.length === 0 ? <div className="card p-10 text-center text-gray-400"><BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا توجد دورات بعد</p></div>
-            : <div className="grid md:grid-cols-2 gap-4">{courses.map(c => (
-                <div key={c.id} className="card p-4 flex items-center gap-3">
-                  <span className="text-3xl">{c.emoji}</span>
-                  <div className="flex-1"><p className="font-bold text-gray-800">{c.title}</p><p className="text-xs text-gray-400">{c.type === "free" ? "مجاني" : "مدفوع"}</p></div>
-                  <button onClick={() => { deleteCourse(c.id); refresh(); }} className="p-2 text-red-400 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4" /></button>
-                </div>
-              ))}</div>}
+
+          {/* قائمة الدورات */}
+          {courses.length === 0
+            ? <div className="card p-10 text-center text-gray-400"><GraduationCap className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا توجد دورات بعد</p></div>
+            : <div className="space-y-3">{courses.map(c => {
+                const cTyped = c as CourseItem & { lessons?: LessonItem[] };
+                const lessons: LessonItem[] = cTyped.lessons || [];
+                const isOpen = expandedCourse === c.id;
+                return (
+                  <div key={c.id} className="card overflow-hidden">
+                    <div className="p-4 flex items-center gap-3">
+                      <span className="text-3xl">{c.emoji}</span>
+                      <div className="flex-1">
+                        <p className="font-bold text-gray-800">{c.title}</p>
+                        <div className="flex items-center gap-3 mt-0.5">
+                          <span className="text-xs text-gray-400">{lessons.length} درس</span>
+                          {cTyped.instructor && <span className="text-xs text-gray-400">• {cTyped.instructor}</span>}
+                          {cTyped.duration && <span className="text-xs text-gray-400">• {cTyped.duration}</span>}
+                        </div>
+                      </div>
+                      <button onClick={() => setExpandedCourse(isOpen ? null : c.id)}
+                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100">
+                        <BookOpen className="w-3.5 h-3.5" /> {isOpen ? "إخفاء" : "الدروس"}
+                        {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      </button>
+                      <button onClick={() => { deleteCourse(c.id); refresh(); }} className="p-2 text-red-400 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+
+                    {isOpen && (
+                      <div className="border-t border-gray-100 bg-gray-50 p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-gray-600">الدروس ({lessons.length})</p>
+                          <button onClick={() => setShowLessonForm(showLessonForm === c.id ? null : c.id)}
+                            className="flex items-center gap-1 text-xs text-green-700 bg-green-100 hover:bg-green-200 px-3 py-1.5 rounded-lg">
+                            <Plus className="w-3 h-3" /> إضافة درس
+                          </button>
+                        </div>
+
+                        {showLessonForm === c.id && (
+                          <div className="bg-white rounded-xl p-4 space-y-3 border border-green-100">
+                            <p className="text-xs font-bold text-gray-600">درس جديد</p>
+                            <input value={lessonForm.title} onChange={e => setLessonForm(p => ({ ...p, title: e.target.value }))}
+                              placeholder="عنوان الدرس *"
+                              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" />
+                            <input value={lessonForm.videoUrl} onChange={e => setLessonForm(p => ({ ...p, videoUrl: e.target.value }))}
+                              placeholder="رابط فيديو YouTube (اختياري)"
+                              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none font-mono" dir="ltr" />
+                            <div className="grid grid-cols-2 gap-2">
+                              <input value={lessonForm.pdfName} onChange={e => setLessonForm(p => ({ ...p, pdfName: e.target.value }))}
+                                placeholder="اسم ملف PDF"
+                                className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" />
+                              <input value={lessonForm.duration} onChange={e => setLessonForm(p => ({ ...p, duration: e.target.value }))}
+                                placeholder="المدة (مثال: 20 دقيقة)"
+                                className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" />
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={() => {
+                                if (!lessonForm.title.trim()) return;
+                                const newLesson: LessonItem = { ...lessonForm, id: Date.now().toString() };
+                                const updatedLessons = [...lessons, newLesson];
+                                const allCourses = courses.map(cc => cc.id === c.id ? { ...cc, lessons: updatedLessons } : cc);
+                                localStorage.setItem("kc_courses", JSON.stringify(allCourses));
+                                setLessonForm({ title: "", videoUrl: "", pdfUrl: "", pdfName: "", duration: "" });
+                                setShowLessonForm(null);
+                                refresh();
+                              }} className="bg-green-700 text-white px-4 py-1.5 rounded-xl text-xs font-semibold">إضافة الدرس</button>
+                              <button onClick={() => setShowLessonForm(null)} className="bg-gray-100 text-gray-600 px-4 py-1.5 rounded-xl text-xs">إلغاء</button>
+                            </div>
+                          </div>
+                        )}
+
+                        {lessons.length === 0
+                          ? <p className="text-xs text-gray-400 text-center py-3">لا توجد دروس — أضف الدرس الأول</p>
+                          : <div className="space-y-1.5">
+                              {lessons.map((l, idx) => (
+                                <div key={l.id} className="flex items-center gap-2 bg-white rounded-lg p-2.5 border border-gray-100">
+                                  <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs flex items-center justify-center font-bold flex-shrink-0">{idx + 1}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-700 truncate">{l.title}</p>
+                                    <div className="flex gap-2">
+                                      {l.videoUrl && <span className="text-[10px] text-blue-500">▶ فيديو</span>}
+                                      {l.pdfName && <span className="text-[10px] text-red-400">📄 {l.pdfName}</span>}
+                                      {l.duration && <span className="text-[10px] text-gray-400">{l.duration}</span>}
+                                    </div>
+                                  </div>
+                                  <button onClick={() => {
+                                    const updatedLessons = lessons.filter(ll => ll.id !== l.id);
+                                    const allCourses = courses.map(cc => cc.id === c.id ? { ...cc, lessons: updatedLessons } : cc);
+                                    localStorage.setItem("kc_courses", JSON.stringify(allCourses));
+                                    refresh();
+                                  }} className="p-1 text-red-300 hover:text-red-500 flex-shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
+                                </div>
+                              ))}
+                            </div>
+                        }
+                      </div>
+                    )}
+                  </div>
+                );
+              })}</div>
+          }
         </div>
       )}
 
