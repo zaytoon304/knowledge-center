@@ -411,7 +411,10 @@ export default function AdminPage() {
                         <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg">📅 {new Date(s.registeredAt).toLocaleDateString("ar-SA")}</span>
                       </div>
                     </div>
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-semibold">معتمد ✓</span>
+                    <div className="flex flex-col gap-1 items-end">
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-semibold">معتمد ✓</span>
+                      <a href={`/admin/student/${s.id}`} className="text-xs bg-blue-600 text-white px-2 py-1 rounded-lg font-semibold hover:bg-blue-500">عرض الملف ←</a>
+                    </div>
                   </div>
                   {notes.length > 0 && (
                     <div className="bg-yellow-50 rounded-xl p-3 space-y-1">
@@ -463,7 +466,10 @@ export default function AdminPage() {
                         <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg">📅 {new Date(c.registeredAt).toLocaleDateString("ar-SA")}</span>
                       </div>
                     </div>
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-semibold">معتمد ✓</span>
+                    <div className="flex flex-col gap-1 items-end">
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-semibold">معتمد ✓</span>
+                      <a href={`/admin/coordinator/${c.id}`} className="text-xs bg-blue-600 text-white px-2 py-1 rounded-lg font-semibold hover:bg-blue-500">عرض الملف ←</a>
+                    </div>
                   </div>
                   {notes.length > 0 && (
                     <div className="bg-yellow-50 rounded-xl p-3 space-y-1">
