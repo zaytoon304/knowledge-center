@@ -1206,34 +1206,90 @@ export default function AdminPage() {
       {/* Permissions */}
       {tab === "permissions" && (
         <div className="card p-5">
-          <h3 className="font-bold text-gray-800 mb-4">مصفوفة الصلاحيات</h3>
+          <h3 className="font-bold text-gray-800 mb-1">مصفوفة الصلاحيات</h3>
+          <p className="text-xs text-gray-400 mb-4">جميع أقسام المنصة وصلاحيات كل دور</p>
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">الصلاحية</th>
-                  {["مدير النظام", "المنسق", "المعلم", "الطالب"].map(r => <th key={r} className="px-4 py-3 text-xs font-semibold text-gray-500 text-center">{r}</th>)}
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gradient-to-l from-blue-900 to-indigo-800 text-white">
+                  <th className="px-4 py-3 text-right rounded-r-xl font-semibold">القسم / الصلاحية</th>
+                  {[
+                    { label: "مدير النظام", emoji: "👑" },
+                    { label: "المنسق", emoji: "👨‍🏫" },
+                    { label: "الطالب", emoji: "👨‍🎓" },
+                    { label: "الزائر", emoji: "🌐" },
+                  ].map(r => (
+                    <th key={r.label} className="px-3 py-3 text-center font-semibold last:rounded-l-xl">
+                      <div>{r.emoji}</div>
+                      <div className="text-xs font-normal mt-0.5">{r.label}</div>
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody>
                 {[
-                  { perm: "اعتماد الطلاب", roles: [true, false, false, false] },
-                  { perm: "إنشاء جروبات", roles: [true, true, false, false] },
-                  { perm: "التحكم في البث", roles: [true, false, false, false] },
-                  { perm: "إضافة دورات/فيديوهات", roles: [true, true, false, false] },
-                  { perm: "عرض بطاقة الطالب", roles: [true, true, false, false] },
-                  { perm: "الدخول للجروبات", roles: [true, true, true, true] },
-                  { perm: "مشاهدة المحتوى", roles: [true, true, true, true] },
-                ].map(row => (
-                  <tr key={row.perm} className="hover:bg-gray-50/50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-700">{row.perm}</td>
-                    {row.roles.map((ok, i) => (
-                      <td key={i} className="px-4 py-3 text-center">
-                        <span className={`text-lg ${ok ? "text-green-500" : "text-gray-200"}`}>{ok ? "✓" : "✗"}</span>
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                  { section: "📋 الأقسام الرئيسية", header: true },
+                  { perm: "مركز المعرفة",           roles: [true,  true,  true,  false] },
+                  { perm: "مركز البرامج",            roles: [true,  true,  true,  false] },
+                  { perm: "مركز المشاريع",           roles: [true,  true,  true,  false] },
+                  { perm: "مركز التدريب",            roles: [true,  true,  true,  true]  },
+                  { perm: "مركز المؤشرات",           roles: [true,  true,  false, false] },
+                  { perm: "التقنيات الناشئة",        roles: [true,  true,  true,  false] },
+                  { perm: "بنك المشاريع",            roles: [true,  true,  true,  true]  },
+                  { perm: "يوميات المركز",           roles: [true,  true,  true,  true]  },
+                  { perm: "المسابقات والجوائز",      roles: [true,  true,  true,  true]  },
+
+                  { section: "👤 البوابات الشخصية", header: true },
+                  { perm: "بوابة الطلاب",            roles: [true,  true,  true,  false] },
+                  { perm: "بوابة المنسقين",          roles: [true,  true,  false, false] },
+                  { perm: "بوابة الأولياء",          roles: [true,  true,  false, false] },
+                  { perm: "بوابة الزوار",            roles: [true,  false, false, true]  },
+                  { perm: "الملف المهني",            roles: [true,  true,  true,  false] },
+                  { perm: "الملف الشخصي للمشرف",    roles: [true,  false, false, false] },
+
+                  { section: "🤝 التعاون والتواصل", header: true },
+                  { perm: "الجروبات والمحادثات",    roles: [true,  true,  true,  false] },
+                  { perm: "الاجتماعات",              roles: [true,  true,  false, false] },
+                  { perm: "البث المباشر",            roles: [true,  false, false, false] },
+                  { perm: "المساعد الذكي",           roles: [true,  true,  true,  false] },
+
+                  { section: "📊 المتابعة والإنجاز", header: true },
+                  { perm: "متابعة المشاريع (كانبان)", roles: [true, true,  true,  false] },
+                  { perm: "لوحة المتصدرين",          roles: [true,  true,  true,  false] },
+                  { perm: "الشهادات الرقمية",        roles: [true,  true,  true,  false] },
+                  { perm: "التقارير الشهرية",        roles: [true,  false, false, false] },
+
+                  { section: "⚙️ الإدارة والتحكم", header: true },
+                  { perm: "لوحة الإدارة الكاملة",   roles: [true,  false, false, false] },
+                  { perm: "اعتماد الطلاب والمنسقين", roles: [true,  false, false, false] },
+                  { perm: "إدارة المحتوى (CMS)",    roles: [true,  false, false, false] },
+                  { perm: "رموز التسجيل",            roles: [true,  false, false, false] },
+                  { perm: "إدارة المتجر",            roles: [true,  false, false, false] },
+                  { perm: "طلبات الزوار",            roles: [true,  false, false, false] },
+                  { perm: "مصفوفة الصلاحيات",       roles: [true,  false, false, false] },
+                ].map((row, idx) => {
+                  if ("header" in row) {
+                    return (
+                      <tr key={idx}>
+                        <td colSpan={5} className="px-4 py-2 text-xs font-bold text-gray-500 bg-gray-50 border-t border-b border-gray-100">
+                          {row.section}
+                        </td>
+                      </tr>
+                    );
+                  }
+                  return (
+                    <tr key={idx} className="hover:bg-blue-50/30 border-b border-gray-50">
+                      <td className="px-4 py-2.5 font-medium text-gray-700">{row.perm}</td>
+                      {row.roles.map((ok, i) => (
+                        <td key={i} className="px-3 py-2.5 text-center">
+                          <span className={`text-base font-bold ${ok ? "text-green-500" : "text-gray-200"}`}>
+                            {ok ? "✓" : "✗"}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
