@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowRight, Phone, Mail, School, BookOpen, Calendar, Briefcase, Image as ImageIcon, Trophy, Video, FileText, Plus, Trash2, Star } from "lucide-react";
 import type { CoordinatorProfile, ProjectItem, DailyLogEntry } from "@/contexts/AuthContext";
+import { cloudGet } from "@/lib/cloud";
 
 interface Meeting { id: string; title: string; date: string; participants: string[]; status: string; }
 
@@ -22,21 +23,34 @@ export default function CoordinatorProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-    const all = load<CoordinatorProfile[]>("kc_coordinators", []);
-    const found = all.find(c => c.id === id);
-    if (!found) { router.push("/admin"); return; }
-    setCoord(found);
+    async function loadData() {
+      let all = load<CoordinatorProfile[]>("kc_coordinators", []);
+      let found = all.find(c => c.id === id);
 
-    const allProjects = load<ProjectItem[]>("kc_projects", []);
-    setProjects(allProjects.filter(p => (p as any).coordinator === found.name || (p as any).coordinatorId === id));
+      // إذا لم يوجد محلياً، نجلب من Firebase مباشرة
+      if (!found) {
+        const cloudCoords = await cloudGet<CoordinatorProfile[]>("kc_coordinators");
+        if (Array.isArray(cloudCoords)) {
+          localStorage.setItem("kc_coordinators", JSON.stringify(cloudCoords));
+          found = cloudCoords.find(c => c.id === id);
+        }
+      }
 
-    const allMeetings = load<Meeting[]>("kc_meetings", []);
-    setMeetings(allMeetings.filter(m => m.participants?.includes(found.name) || m.participants?.includes(found.email)));
+      if (!found) { router.push("/admin"); return; }
+      setCoord(found);
 
-    const allLog = load<DailyLogEntry[]>("kc_daily_log", []);
-    setDailyLog(allLog);
+      const allProjects = load<ProjectItem[]>("kc_projects", []);
+      setProjects(allProjects.filter(p => (p as any).coordinator === found!.name || (p as any).coordinatorId === id));
 
-    setNotes(load<string[]>("kc_cnotes_" + id, []));
+      const allMeetings = load<Meeting[]>("kc_meetings", []);
+      setMeetings(allMeetings.filter(m => m.participants?.includes(found!.name) || m.participants?.includes(found!.email)));
+
+      const allLog = load<DailyLogEntry[]>("kc_daily_log", []);
+      setDailyLog(allLog);
+
+      setNotes(load<string[]>("kc_cnotes_" + id, []));
+    }
+    loadData();
   }, [id]);
 
   const addNote = () => {

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowRight, Phone, Mail, Calendar, Briefcase, Video, FileText, Plus, Trash2, Star, Trophy, BookOpen } from "lucide-react";
 import type { StudentProfile, ProjectItem } from "@/contexts/AuthContext";
+import { cloudGet } from "@/lib/cloud";
 
 interface Meeting { id: string; title: string; date: string; participants: string[]; status: string; }
 interface DailyLogEntry { id: string; title: string; date: string; description: string; category: string; images: Array<{ data: string; name: string }>; }
@@ -22,18 +23,31 @@ export default function StudentProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-    const all = load<StudentProfile[]>("kc_students", []);
-    const found = all.find(s => s.id === id);
-    if (!found) { router.push("/admin"); return; }
-    setStudent(found);
+    async function loadData() {
+      let all = load<StudentProfile[]>("kc_students", []);
+      let found = all.find(s => s.id === id);
 
-    const allProjects = load<ProjectItem[]>("kc_projects", []);
-    setProjects(allProjects.filter(p => (p as any).students?.includes(found.name) || (p as any).studentId === id));
+      // إذا لم يوجد محلياً، نجلب من Firebase مباشرة
+      if (!found) {
+        const cloudStudents = await cloudGet<StudentProfile[]>("kc_students");
+        if (Array.isArray(cloudStudents)) {
+          localStorage.setItem("kc_students", JSON.stringify(cloudStudents));
+          found = cloudStudents.find(s => s.id === id);
+        }
+      }
 
-    const allMeetings = load<Meeting[]>("kc_meetings", []);
-    setMeetings(allMeetings.filter(m => m.participants?.includes(found.name)));
+      if (!found) { router.push("/admin"); return; }
+      setStudent(found);
 
-    setNotes(load<string[]>("kc_snotes_" + id, []));
+      const allProjects = load<ProjectItem[]>("kc_projects", []);
+      setProjects(allProjects.filter(p => (p as any).students?.includes(found!.name) || (p as any).studentId === id));
+
+      const allMeetings = load<Meeting[]>("kc_meetings", []);
+      setMeetings(allMeetings.filter(m => m.participants?.includes(found!.name)));
+
+      setNotes(load<string[]>("kc_snotes_" + id, []));
+    }
+    loadData();
   }, [id]);
 
   const addNote = () => {
