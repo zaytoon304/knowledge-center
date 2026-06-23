@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Camera, LogIn, UserPlus, Briefcase, FileText, Globe, GraduationCap, ShoppingBag, Rss, CheckCircle } from "lucide-react";
 import CenterLogo from "@/components/icons/CenterLogo";
+import { cloudPush } from "@/lib/cloud";
 
 const grades = [
   "الصف الأول الابتدائي", "الصف الثاني الابتدائي", "الصف الثالث الابتدائي",
@@ -32,6 +33,7 @@ function saveVisitorRequest(req: VisitorRequest) {
   try {
     const existing = JSON.parse(localStorage.getItem("kc_visitor_requests") || "[]");
     localStorage.setItem("kc_visitor_requests", JSON.stringify([req, ...existing]));
+    cloudPush("kc_visitor_requests", req); // يرسل الطلب لـ Firebase حتى يصل للأدمن
   } catch {}
 }
 

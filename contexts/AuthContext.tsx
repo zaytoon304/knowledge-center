@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { cloudGet, cloudSet } from "@/lib/cloud";
+import { cloudGet, cloudSet, cloudPush } from "@/lib/cloud";
 
 export interface StudentProfile {
   id: string; name: string; nationalId: string; school: string; grade: string;
@@ -222,7 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const student: StudentProfile = { ...data, id: Date.now().toString(), role: "student", registeredAt: new Date().toISOString(), status: "pending" };
     const savedStudents = [...all, student];
     save(KEYS.students, savedStudents);
-    cloudSet("kc_students", savedStudents);
+    cloudPush("kc_students", student); // يضيف الطالب بدون حذف المسجلين قبله
     setUser(student); save(KEYS.currentUser, student);
     return { success: true, message: "pending" };
   };
@@ -251,7 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       return { success: false, message: "فشل الحفظ — مساحة المتصفح ممتلئة، حاول مرة أخرى" };
     }
-    cloudSet("kc_coordinators", saved);
+    cloudPush("kc_coordinators", coord); // يضيف المنسق بدون حذف المسجلين قبله
     // الجلسة الحالية تحتفظ بالبيانات الكاملة (صورة + CV)
     const fullCoord: CoordinatorProfile = { ...data, id: baseId, role: "coordinator", registeredAt: new Date().toISOString(), status: "pending" };
     setUser(fullCoord); save(KEYS.currentUser, fullCoord);

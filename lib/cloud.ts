@@ -18,3 +18,10 @@ export async function cloudSet(key: string, data: unknown): Promise<void> {
     });
   } catch {}
 }
+
+// يجلب القائمة الحالية من Firebase ثم يضيف العنصر الجديد بدون حذف الباقين
+export async function cloudPush<T>(key: string, item: T): Promise<void> {
+  const existing = await cloudGet<T[]>(key);
+  const arr = Array.isArray(existing) ? existing : [];
+  await cloudSet(key, [...arr, item]);
+}

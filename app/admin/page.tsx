@@ -7,6 +7,7 @@ import {
   Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 const KnowledgeAdmin = dynamic(() => import("@/components/admin/KnowledgeAdmin"), { ssr: false });
 const SectionCMS = dynamic(() => import("@/components/admin/SectionCMS"), { ssr: false });
 
@@ -107,6 +108,7 @@ function loadVisitorRequests(): VisitorRequest[] {
 }
 function saveVisitorRequests(data: VisitorRequest[]) {
   localStorage.setItem("kc_visitor_requests", JSON.stringify(data));
+  cloudSet("kc_visitor_requests", data); // مزامنة مع Firebase عند القبول/الرفض
 }
 
 const ADMIN_PASSWORD = "arqam2025";
@@ -228,11 +230,46 @@ export default function AdminPage() {
     setVisitorRequests(loadVisitorRequests());
   };
 
+  // يجلب أحدث البيانات من Firebase ثم يحدث الواجهة
+  const refreshFromCloud = async () => {
+    const [cloudStudents, cloudCoords, cloudVisitors] = await Promise.all([
+      cloudGet<StudentProfile[]>("kc_students"),
+      cloudGet<CoordinatorProfile[]>("kc_coordinators"),
+      cloudGet<VisitorRequest[]>("kc_visitor_requests"),
+    ]);
+    if (Array.isArray(cloudStudents) && cloudStudents.length > 0)
+      localStorage.setItem("kc_students", JSON.stringify(cloudStudents));
+    if (Array.isArray(cloudCoords) && cloudCoords.length > 0)
+      localStorage.setItem("kc_coordinators", JSON.stringify(cloudCoords));
+    if (Array.isArray(cloudVisitors))
+      localStorage.setItem("kc_visitor_requests", JSON.stringify(cloudVisitors));
+    refresh();
+  };
+
+  // يزامن من Firebase قبل أي قرار (قبول/رفض/حذف) لضمان عدم فقدان بيانات
+  const syncAndAct = async (fn: () => void) => {
+    const [cloudStudents, cloudCoords] = await Promise.all([
+      cloudGet<StudentProfile[]>("kc_students"),
+      cloudGet<CoordinatorProfile[]>("kc_coordinators"),
+    ]);
+    if (Array.isArray(cloudStudents) && cloudStudents.length > 0)
+      localStorage.setItem("kc_students", JSON.stringify(cloudStudents));
+    if (Array.isArray(cloudCoords) && cloudCoords.length > 0)
+      localStorage.setItem("kc_coordinators", JSON.stringify(cloudCoords));
+    fn();
+    refresh();
+  };
+
   useEffect(() => {
     if (localStorage.getItem("kc_admin_auth") === "1") setAuthed(true);
   }, []);
 
-  useEffect(() => { if (authed) refresh(); }, [authed]);
+  useEffect(() => {
+    if (!authed) return;
+    refreshFromCloud();
+    const interval = setInterval(refreshFromCloud, 30000); // تحديث تلقائي كل 30 ثانية
+    return () => clearInterval(interval);
+  }, [authed]);
 
   // --- الآن نتحقق من تسجيل الدخول ---
   if (!authed) return <AdminLogin onSuccess={() => setAuthed(true)} />;
@@ -334,11 +371,11 @@ export default function AdminPage() {
                     <p className="text-xs text-gray-400">{s.phone} • هوية: {s.nationalId}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => { approveStudent(s.id); refresh(); }}
+                    <button onClick={() => syncAndAct(() => approveStudent(s.id))}
                       className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-500">
                       <CheckCircle className="w-4 h-4" /> قبول
                     </button>
-                    <button onClick={() => { rejectStudent(s.id); refresh(); }}
+                    <button onClick={() => syncAndAct(() => rejectStudent(s.id))}
                       className="flex items-center gap-1.5 bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-200">
                       <XCircle className="w-4 h-4" /> رفض
                     </button>
@@ -375,7 +412,7 @@ export default function AdminPage() {
                         <td className="px-4 py-3 text-sm text-gray-600">{s.school}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{s.grade}</td>
                         <td className="px-4 py-3 text-sm text-gray-500">{s.phone}</td>
-                        <td className="px-4 py-3"><button onClick={() => { if(confirm("حذف هذا الطالب؟")) { deleteStudent(s.id); refresh(); } }} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button></td>
+                        <td className="px-4 py-3"><button onClick={() => { if(confirm("حذف هذا الطالب؟")) syncAndAct(() => deleteStudent(s.id)); }} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -1205,15 +1242,15 @@ export default function AdminPage() {
                     )}
                   </div>
                   <div className="flex flex-col gap-2">
-                    <button onClick={() => { approveCoordinator(c.id); refresh(); }}
+                    <button onClick={() => syncAndAct(() => approveCoordinator(c.id))}
                       className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-500">
                       <CheckCircle className="w-4 h-4" /> قبول
                     </button>
-                    <button onClick={() => { rejectCoordinator(c.id); refresh(); }}
+                    <button onClick={() => syncAndAct(() => rejectCoordinator(c.id))}
                       className="flex items-center gap-1.5 bg-orange-100 text-orange-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-orange-200">
                       <XCircle className="w-4 h-4" /> رفض
                     </button>
-                    <button onClick={() => { if(confirm("حذف هذا المنسق نهائياً؟")) { deleteCoordinator(c.id); refresh(); } }}
+                    <button onClick={() => { if(confirm("حذف هذا المنسق نهائياً؟")) syncAndAct(() => deleteCoordinator(c.id)); }}
                       className="flex items-center gap-1.5 bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-200">
                       <Trash2 className="w-4 h-4" /> حذف
                     </button>
@@ -1245,7 +1282,7 @@ export default function AdminPage() {
                         <td className="px-4 py-3 text-sm text-gray-600">{c.school}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{c.subject}</td>
                         <td className="px-4 py-3 text-sm text-gray-500">{c.email}</td>
-                        <td className="px-4 py-3"><button onClick={() => { if(confirm("حذف هذا المنسق؟")) { deleteCoordinator(c.id); refresh(); } }} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button></td>
+                        <td className="px-4 py-3"><button onClick={() => { if(confirm("حذف هذا المنسق؟")) syncAndAct(() => deleteCoordinator(c.id)); }} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button></td>
                       </tr>
                     ))}
                   </tbody>
