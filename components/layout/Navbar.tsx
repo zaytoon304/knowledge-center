@@ -4,12 +4,7 @@ import { Bell, Search, Menu, Moon, Sun, X, UserCircle } from "lucide-react";
 import CenterLogo from "@/components/icons/CenterLogo";
 import Link from "next/link";
 
-const notifications = [
-  { id: 1, text: "مسابقة جديدة مفتوحة للتسجيل", time: "منذ ساعتين", unread: true },
-  { id: 2, text: "تم اعتماد مشروع جديد", time: "منذ 5 ساعات", unread: true },
-  { id: 3, text: "دورة تدريبية تبدأ قريباً", time: "أمس", unread: false },
-  { id: 4, text: "شهادة جاهزة للتحميل", time: "منذ يومين", unread: false },
-];
+const notifications: { id: number; text: string; time: string; unread: boolean }[] = [];
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -98,17 +93,19 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                   <span className="text-sm text-blue-600 cursor-pointer hover:underline">تحديد الكل كمقروء</span>
                 </div>
                 <div className="divide-y divide-gray-50">
-                  {notifications.map(n => (
-                    <div key={n.id} className={`p-4 hover:bg-gray-50 cursor-pointer ${n.unread ? "bg-blue-50/30" : ""}`}>
-                      <div className="flex items-start gap-3">
-                        <div className={`w-2.5 h-2.5 rounded-full mt-2 flex-shrink-0 ${n.unread ? "bg-blue-500" : "bg-gray-200"}`} />
-                        <div>
-                          <p className="text-base text-gray-800">{n.text}</p>
-                          <p className="text-sm text-gray-400 mt-1">{n.time}</p>
+                  {notifications.length === 0
+                    ? <p className="p-6 text-center text-sm text-gray-400">لا توجد إشعارات</p>
+                    : notifications.map(n => (
+                      <div key={n.id} className={`p-4 hover:bg-gray-50 cursor-pointer ${n.unread ? "bg-blue-50/30" : ""}`}>
+                        <div className="flex items-start gap-3">
+                          <div className={`w-2.5 h-2.5 rounded-full mt-2 flex-shrink-0 ${n.unread ? "bg-blue-500" : "bg-gray-200"}`} />
+                          <div>
+                            <p className="text-base text-gray-800">{n.text}</p>
+                            <p className="text-sm text-gray-400 mt-1">{n.time}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}
