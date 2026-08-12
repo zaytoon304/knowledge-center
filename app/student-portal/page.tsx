@@ -7,6 +7,8 @@ import {
   MessageSquare, LogIn, Clock, XCircle, ExternalLink, ChevronDown, ChevronUp, Code
 } from "lucide-react";
 import GroupsSection from "@/components/student/GroupsSection";
+import { getDeviceId } from "@/lib/deviceCode";
+import { whatsappLink } from "@/lib/whatsapp";
 
 const tabs = [
   { id: "dashboard", label: "رئيسيتي", icon: Users },
@@ -80,7 +82,16 @@ export default function StudentPortalPage() {
           <p className="text-sm text-yellow-700 font-semibold">{user.name}</p>
           <p className="text-xs text-yellow-600">{(user as StudentProfile).school} • {(user as StudentProfile).grade}</p>
         </div>
-        <p className="text-xs text-gray-400">في انتظار موافقة الإدارة...</p>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 max-w-xs mx-auto space-y-2">
+          <p className="text-xs text-emerald-700">أرسل رمز جهازك للإدارة عشان يوصلك رمز الدخول:</p>
+          <p dir="ltr" className="font-mono font-bold text-emerald-900 text-lg tracking-wider">{getDeviceId()}</p>
+          <a href={whatsappLink(`مرحباً، أنا ${user.name} - ${(user as StudentProfile).grade} - رمز جهازي: ${getDeviceId()} - بانتظار رمز الدخول 🙏`)}
+            target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-green-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-green-500">
+            📱 أرسل عبر واتساب
+          </a>
+        </div>
+        <p className="text-xs text-gray-400">في انتظار رمز الدخول من الإدارة...</p>
       </div>
     );
   }

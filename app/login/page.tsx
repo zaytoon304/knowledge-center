@@ -6,6 +6,7 @@ import { Eye, EyeOff, Camera, LogIn, UserPlus, Briefcase, FileText, Globe, Gradu
 import CenterLogo from "@/components/icons/CenterLogo";
 import { cloudPush } from "@/lib/cloud";
 import { getDeviceId } from "@/lib/deviceCode";
+import { whatsappLink } from "@/lib/whatsapp";
 
 const grades = [
   "الصف الأول الابتدائي", "الصف الثاني الابتدائي", "الصف الثالث الابتدائي",
@@ -58,6 +59,7 @@ export default function LoginPage() {
   const [loginData, setLoginData] = useState({ identifier: "", password: "", accessCode: "", type: "student" as "student" | "coordinator" | "visitor" });
   const [regData, setRegData] = useState({ name: "", nationalId: "", school: "", grade: grades[0], phone: "", email: "", parentPhone: "", birthDate: "", photo: "", password: "", confirmPassword: "", teams: [] as string[], regCode: "" });
   const [copiedDeviceId, setCopiedDeviceId] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const [deviceId, setDeviceId] = useState(""); // يُملأ بعد التركيب لتفادي مشاكل SSR/hydration
   useEffect(() => { setDeviceId(getDeviceId()); }, []);
   const [coordData, setCoordData] = useState({ name: "", email: "", phone: "", school: "", subject: "", photo: "", cv: "", cvName: "", password: "", confirmPassword: "", regCode: "" });
@@ -110,7 +112,7 @@ export default function LoginPage() {
     if (coordData.password !== coordData.confirmPassword) { setError("كلمة المرور غير متطابقة"); return; }
     const { confirmPassword, regCode, ...data } = coordData;
     const result = registerCoordinator(data, regCode);
-    if (result.success) { setSuccess("تم إرسال طلبك! جارٍ التوجيه..."); setTimeout(() => router.push("/coordinator-portal"), 1200); }
+    if (result.success) { setSuccess("تم إرسال طلبك! بلّغ الإدارة عبر واتساب وانتظر الموافقة."); }
     else { setError(result.message); }
   };
 
@@ -150,6 +152,33 @@ export default function LoginPage() {
           <p className="text-blue-200 mt-1">بمدارس الأرقم</p>
         </div>
 
+        <button onClick={() => setShowGuide(!showGuide)}
+          className="w-full mb-3 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold py-2.5 rounded-xl border border-white/20">
+          📖 كيف أسجّل؟ اضغط هنا
+        </button>
+
+        {showGuide && (
+          <div className="bg-white rounded-2xl shadow-xl p-5 mb-3 space-y-3 text-sm">
+            <div>
+              <p className="font-bold text-emerald-700 mb-1">👨‍🎓 للطالب:</p>
+              <ol className="list-decimal pr-4 space-y-1 text-gray-600">
+                <li>اضغط "طالب جديد" وعبّي بياناتك كاملة</li>
+                <li>بعد الإرسال يظهر لك "رمز الجهاز" — اضغط زر واتساب وأرسله للإدارة</li>
+                <li>الإدارة ترسل لك "رمز الدخول" بعد المراجعة</li>
+                <li>ادخل الرمز من تبويب "دخول" وخلاص</li>
+              </ol>
+            </div>
+            <div>
+              <p className="font-bold text-violet-700 mb-1">👨‍🏫 للمنسّق:</p>
+              <ol className="list-decimal pr-4 space-y-1 text-gray-600">
+                <li>اضغط "منسق جديد" وعبّي بياناتك واختر كلمة مرور</li>
+                <li>اضغط زر واتساب لتبليغ الإدارة بطلبك</li>
+                <li>بعد موافقة الإدارة، ادخل من تبويب "دخول" بنفس الإيميل وكلمة المرور</li>
+              </ol>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-3xl shadow-2xl p-6">
           {/* Tabs */}
           <div className="grid grid-cols-4 gap-1 mb-5 bg-gray-100 rounded-2xl p-1">
@@ -167,6 +196,20 @@ export default function LoginPage() {
 
           {error && <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">{error}</div>}
           {success && <div className="mb-3 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm">{success}</div>}
+          {success && mode === "student" && (
+            <a href={whatsappLink(`مرحباً، أنا ${regData.name} - ${regData.grade} - رمز جهازي: ${deviceId} - بانتظار رمز الدخول 🙏`)}
+              target="_blank" rel="noopener noreferrer"
+              className="mb-3 flex items-center justify-center gap-2 bg-green-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-green-500">
+              📱 أرسل الرمز للإدارة عبر واتساب
+            </a>
+          )}
+          {success && mode === "coordinator" && (
+            <a href={whatsappLink(`مرحباً، أنا ${coordData.name} - منسّق ${coordData.subject} - سجّلت بالمنصة وبانتظار الموافقة 🙏`)}
+              target="_blank" rel="noopener noreferrer"
+              className="mb-3 flex items-center justify-center gap-2 bg-green-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-green-500">
+              📱 بلّغ الإدارة عبر واتساب
+            </a>
+          )}
 
           {/* ===== دخول ===== */}
           {mode === "login" && (

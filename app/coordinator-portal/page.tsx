@@ -7,6 +7,7 @@ import {
   LogIn, Clock, XCircle, Download, FileText, Camera, Users
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { whatsappLink } from "@/lib/whatsapp";
 
 const PlansSection = dynamic(() => import("@/components/coordinator/PlansSection"), { ssr: false });
 const ProgramsSection = dynamic(() => import("@/components/coordinator/ProgramsSection"), { ssr: false });
@@ -107,6 +108,13 @@ export default function CoordinatorPortalPage() {
         </div>
         <h2 className="text-2xl font-bold text-gray-800">{isRejected ? "تم رفض طلبك" : "طلبك قيد المراجعة"}</h2>
         <p className="text-gray-500 max-w-sm">{isRejected ? "نأسف، تم رفض طلبك. تواصل مع الإدارة لمعرفة السبب." : "شكراً للتسجيل! سيتم مراجعة طلبك والموافقة عليه قريباً."}</p>
+        {!isRejected && user && (
+          <a href={whatsappLink(`مرحباً، أنا ${user.name} - منسّق ${(user as CoordinatorProfile).subject} - سجّلت بالمنصة وبانتظار الموافقة 🙏`)}
+            target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-green-500">
+            📱 بلّغ الإدارة عبر واتساب
+          </a>
+        )}
         <button onClick={() => { logout(); router.push("/login"); }} className="bg-gray-100 text-gray-600 px-6 py-2.5 rounded-xl font-semibold hover:bg-gray-200">تسجيل الخروج</button>
       </div>
     );
