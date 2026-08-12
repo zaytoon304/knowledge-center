@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "firebase": "^12.17.1",
     "lucide-react": "^1.20.0",
     "next": "14.2.35",
     "qrcode.react": "^4.2.0",
