@@ -174,6 +174,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (Array.isArray(data) && data.length > 0)
         localStorage.setItem(KEYS.students, JSON.stringify(data));
     });
+    cloudGet<RegCodes>("kc_reg_codes").then(data => {
+      if (data) localStorage.setItem(KEYS.regCodes, JSON.stringify(data));
+    });
 
     const stored = load<AnyUser | null>(KEYS.currentUser, null);
     if (stored) {
@@ -188,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const getAllStudents = () => load<StudentProfile[]>(KEYS.students, []);
   const getAllCoordinators = () => load<CoordinatorProfile[]>(KEYS.coordinators, []);
   const getRegCodes = () => load<RegCodes>(KEYS.regCodes, { studentCode: "", coordCode: "" });
-  const setRegCodes = (codes: RegCodes) => save(KEYS.regCodes, codes);
+  const setRegCodes = (codes: RegCodes) => { save(KEYS.regCodes, codes); cloudSet("kc_reg_codes", codes); };
 
   const login = (identifier: string, pw: string) => {
     const s = getAllStudents().find(s => s.nationalId === identifier && s.password === pw);
