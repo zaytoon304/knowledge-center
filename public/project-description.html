@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>وصف مشروع مركز المعرفة والابتكار STEAM</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 40px; color: #1a1a2e; background: #fff; line-height: 1.9; font-size: 15px; }
+  h1 { color: #1e3a8a; font-size: 26px; border-bottom: 3px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 5px; }
+  h2 { color: #1e3a8a; font-size: 20px; margin-top: 35px; border-right: 4px solid #f59e0b; padding-right: 12px; }
+  h3 { color: #374151; font-size: 16px; margin-top: 20px; }
+  .subtitle { color: #6b7280; font-size: 14px; margin-bottom: 30px; }
+  .box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 18px 22px; margin: 20px 0; }
+  .box-yellow { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 18px 22px; margin: 20px 0; }
+  .box-green { background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; padding: 18px 22px; margin: 20px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th { background: #1e3a8a; color: white; padding: 10px 14px; text-align: right; font-size: 14px; }
+  td { padding: 10px 14px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+  tr:nth-child(even) { background: #f8fafc; }
+  .tag { display: inline-block; background: #dbeafe; color: #1e40af; border-radius: 6px; padding: 2px 10px; font-size: 13px; margin: 2px; }
+  .tag-green { background: #dcfce7; color: #166534; }
+  .tag-purple { background: #ede9fe; color: #6d28d9; }
+  .tag-orange { background: #ffedd5; color: #9a3412; }
+  ul { padding-right: 20px; }
+  li { margin-bottom: 6px; }
+  .section-num { color: #9ca3af; font-size: 13px; }
+  @media print { body { margin: 20px; padding: 20px; } }
+</style>
+</head>
+<body>
+
+<h1>🏛️ مركز المعرفة والابتكار STEAM بمدارس الأرقم</h1>
+<p class="subtitle">وصف شامل للمشروع — معد للعرض أمام لجنة التقنية</p>
+
+<!-- ===== فكرة المشروع ===== -->
+<h2>١. فكرة المشروع</h2>
+<div class="box">
+<p>
+مركز المعرفة والابتكار STEAM هو <strong>منصة إلكترونية تعليمية مؤسسية متكاملة</strong> صُمِّمت خصيصاً لمدارس الأرقم، بهدف توحيد إدارة برامج الموهبة والابتكار والذكاء الاصطناعي في مكان واحد على الإنترنت.
+</p>
+<p>
+المشكلة التي تحلها: كانت إدارة البرامج مشتتة بين ملفات منفصلة ورسائل واتساب وجداول بيانات — المنصة جمعت كل شيء في نظام واحد متكامل يمكن الوصول إليه من أي جهاز.
+</p>
+</div>
+
+<!-- ===== التقنيات المستخدمة ===== -->
+<h2>٢. التقنيات المستخدمة</h2>
+<table>
+  <tr><th>التقنية</th><th>الوصف</th><th>الغرض</th></tr>
+  <tr><td><strong>Next.js 14</strong></td><td>إطار عمل React من شركة Vercel</td><td>بناء واجهات المنصة وهيكلها الأساسي</td></tr>
+  <tr><td><strong>React 18</strong></td><td>مكتبة JavaScript من Meta (Facebook)</td><td>بناء المكونات التفاعلية</td></tr>
+  <tr><td><strong>TypeScript</strong></td><td>JavaScript مع أنواع بيانات محددة</td><td>كتابة كود أكثر أماناً وموثوقية</td></tr>
+  <tr><td><strong>Tailwind CSS</strong></td><td>إطار تصميم CSS حديث</td><td>تصميم الواجهة بالكامل باللون والشكل</td></tr>
+  <tr><td><strong>Firebase Realtime Database</strong></td><td>قاعدة بيانات سحابية من Google</td><td>حفظ بيانات المنسقين والطلاب ومزامنتها بين الأجهزة</td></tr>
+  <tr><td><strong>Vercel</strong></td><td>منصة نشر تطبيقات الويب</td><td>استضافة المنصة على الإنترنت مجاناً</td></tr>
+  <tr><td><strong>GitHub</strong></td><td>منصة إدارة الكود المصدري</td><td>حفظ الكود ونشره تلقائياً على Vercel</td></tr>
+  <tr><td><strong>Lucide React</strong></td><td>مكتبة أيقونات احترافية</td><td>الأيقونات المستخدمة في المنصة</td></tr>
+</table>
+
+<!-- ===== لغة البرمجة ===== -->
+<h2>٣. لغة البرمجة</h2>
+<div class="box-green">
+<p>المنصة مكتوبة بالكامل بلغة <strong>TypeScript</strong> — وهي نسخة متطورة من JavaScript تضيف أنواع البيانات لتجنب الأخطاء.</p>
+<ul>
+  <li>الواجهة الأمامية (Frontend): <span class="tag">React</span> <span class="tag">TypeScript</span> <span class="tag">Tailwind CSS</span></li>
+  <li>إطار العمل: <span class="tag">Next.js 14 App Router</span></li>
+  <li>قاعدة البيانات: <span class="tag-green">Firebase Realtime Database</span> <span class="tag-green">localStorage</span></li>
+  <li>الاستضافة: <span class="tag-purple">Vercel Cloud</span></li>
+  <li>إدارة الكود: <span class="tag-orange">GitHub</span></li>
+</ul>
+</div>
+
+<!-- ===== أقسام المنصة ===== -->
+<h2>٤. أقسام المنصة (٢٥ قسماً)</h2>
+<table>
+  <tr><th>#</th><th>القسم</th><th>الوظيفة</th></tr>
+  <tr><td>١</td><td>مركز المعرفة</td><td>رفع وتصفح الأدلة والنماذج والسياسات التعليمية</td></tr>
+  <tr><td>٢</td><td>مركز البرامج</td><td>إدارة برامج الموهبة والابتكار و STEAM</td></tr>
+  <tr><td>٣</td><td>مركز المشاريع</td><td>عرض مشاريع الطلاب والمنسقين بصور وفيديوهات وكود</td></tr>
+  <tr><td>٤</td><td>مركز التدريب</td><td>إنشاء دورات تدريبية كاملة بدروس وفيديوهات وملفات PDF</td></tr>
+  <tr><td>٥</td><td>مركز المؤشرات</td><td>لوحة KPI ومؤشرات الأداء والتقارير الإحصائية</td></tr>
+  <tr><td>٦</td><td>التقنيات الناشئة</td><td>محتوى تعليمي عن AI و IoT والروبوت و AR/VR</td></tr>
+  <tr><td>٧</td><td>المساعد الذكي</td><td>مساعد بالذكاء الاصطناعي لاقتراح الأفكار ودعم المنسقين</td></tr>
+  <tr><td>٨</td><td>الملف المهني</td><td>السيرة الذاتية الرقمية والإنجازات لكل منسق</td></tr>
+  <tr><td>٩</td><td>المسابقات والجوائز</td><td>إدارة المشاركة في WRO و Bebras وكانجارو وغيرها</td></tr>
+  <tr><td>١٠</td><td>بوابة الطلاب</td><td>الدورات والمشاريع والملف الشخصي للطالب</td></tr>
+  <tr><td>١١</td><td>بنك المشاريع</td><td>أفكار مشاريع جاهزة ومصنفة حسب المرحلة والمجال</td></tr>
+  <tr><td>١٢</td><td>يوميات المركز</td><td>توثيق الأنشطة اليومية بصور وفيديوهات</td></tr>
+  <tr><td>١٣</td><td>الجروبات</td><td>قنوات تواصل داخلية بين المنسقين والطلاب</td></tr>
+  <tr><td>١٤</td><td>البث المباشر</td><td>بث مباشر عبر YouTube أو Zoom أو Google Meet</td></tr>
+  <tr><td>١٥</td><td>نظام الاجتماعات</td><td>جدول أعمال + نقاش + تصويت + محضر اجتماع تلقائي</td></tr>
+  <tr><td>١٦</td><td>متابعة المشاريع</td><td>لوح Kanban لمتابعة حالة المشاريع (قيد التنفيذ / مكتمل)</td></tr>
+  <tr><td>١٧</td><td>لوحة المتصدرين</td><td>تصنيف الطلاب والمدارس حسب الإنجازات</td></tr>
+  <tr><td>١٨</td><td>الشهادات الرقمية</td><td>إصدار شهادات رقمية للطلاب قابلة للطباعة</td></tr>
+  <tr><td>١٩</td><td>بوابة الأولياء</td><td>متابعة أولياء الأمور لنشاط أبنائهم</td></tr>
+  <tr><td>٢٠</td><td>السبورة الذكية</td><td>سبورة تفاعلية للرسم والكتابة التعاونية</td></tr>
+  <tr><td>٢١</td><td>نلعب ونتعلم</td><td>٦ ألعاب تعليمية تفاعلية (ذاكرة، رياضيات، تسلسل، مصفوفات...)</td></tr>
+  <tr><td>٢٢</td><td>اختبار الذكاء IQ</td><td>اختبار ٢٠ سؤالاً يقيس نسبة الذكاء حسب العمر</td></tr>
+  <tr><td>٢٣</td><td>باركود المنصة</td><td>QR Code للوصول السريع للمنصة عبر الجوال</td></tr>
+  <tr><td>٢٤</td><td>متابعة المنسقين</td><td>ملف شامل لكل منسق: مشاريعه، اجتماعاته، ملاحظات الإدارة</td></tr>
+  <tr><td>٢٥</td><td>متابعة الطلاب</td><td>ملف شامل لكل طالب: مشاريعه، فرقه، ملاحظات الإدارة</td></tr>
+</table>
+
+<!-- ===== نظام المستخدمين ===== -->
+<h2>٥. نظام المستخدمين</h2>
+<table>
+  <tr><th>المستخدم</th><th>الصلاحيات</th></tr>
+  <tr><td><strong>المسؤول (Admin)</strong></td><td>كامل الصلاحيات — قبول/رفض الطلبات، إضافة محتوى، إدارة المستخدمين</td></tr>
+  <tr><td><strong>المنسق</strong></td><td>رفع مشاريع ودورات وإدارة طلابه والمشاركة في الاجتماعات</td></tr>
+  <tr><td><strong>الطالب</strong></td><td>عرض المحتوى والتسجيل في الدورات وعرض ملفه الشخصي</td></tr>
+  <tr><td><strong>الزائر</strong></td><td>تصفح المحتوى العام فقط بدون تسجيل دخول</td></tr>
+</table>
+
+<!-- ===== الميزات التقنية ===== -->
+<h2>٦. الميزات التقنية البارزة</h2>
+<div class="box-yellow">
+<ul>
+  <li><strong>تصميم RTL عربي كامل</strong> — المنصة مصممة من الأساس باللغة العربية</li>
+  <li><strong>متجاوب مع الجوال</strong> — تعمل على الجوال والتابلت والكمبيوتر</li>
+  <li><strong>قاعدة بيانات سحابية</strong> — Firebase من Google تتزامن بين جميع الأجهزة</li>
+  <li><strong>نشر تلقائي</strong> — أي تحديث على GitHub ينعكس فوراً على المنصة</li>
+  <li><strong>مجاناً بالكامل</strong> — الاستضافة والقاعدة البيانات بدون أي تكلفة</li>
+  <li><strong>أمان متعدد المستويات</strong> — كلمات مرور ورموز تسجيل وصلاحيات مختلفة</li>
+  <li><strong>شعار مدارس الأرقم</strong> — مدمج في واجهة المنصة بشكل احترافي</li>
+</ul>
+</div>
+
+<!-- ===== رابط المنصة ===== -->
+<h2>٧. رابط المنصة</h2>
+<div class="box">
+  <p style="font-size:18px; font-weight:bold; color:#1e3a8a; direction:ltr; text-align:center;">
+    https://knowledge-center-opal.vercel.app
+  </p>
+  <p style="text-align:center; color:#6b7280; font-size:13px;">متاحة على الإنترنت مباشرة — بدون تثبيت أي شيء</p>
+</div>
+
+<!-- ===== جمل للحفظ ===== -->
+<h2>٨. جمل جاهزة للعرض</h2>
+<div class="box-green">
+<h3>🎯 الجملة الافتتاحية:</h3>
+<p>
+<em>"أنشأت منصة إلكترونية متكاملة لإدارة مركز الموهبة والابتكار STEAM في مدارس الأرقم. المنصة تجمع ٢٥ قسماً في مكان واحد — من إدارة المشاريع والدورات والمسابقات إلى متابعة المنسقين والطلاب، مع قاعدة بيانات سحابية تعمل من أي جهاز."</em>
+</p>
+
+<h3>🔧 إذا سألوا: بأي تقنية بنيتها؟</h3>
+<p>
+<em>"المنصة مبنية بإطار عمل Next.js مع React و TypeScript في الواجهة، وTailwind CSS للتصميم، و Firebase من Google كقاعدة بيانات سحابية، وVercel للاستضافة. كل التقنيات المستخدمة مفتوحة المصدر ومجانية."</em>
+</p>
+
+<h3>💡 إذا سألوا: كم استغرق التطوير؟</h3>
+<p>
+<em>"المشروع مر بمراحل متعددة من التخطيط والتنفيذ والاختبار، وتم بناؤه بمنهجية Agile — قسم قسم حتى اكتملت المنصة."</em>
+</p>
+
+<h3>🌐 إذا سألوا: أين مستضافة؟</h3>
+<p>
+<em>"مستضافة على Vercel — وهي نفس المنصة التي تستضيف كثيراً من تطبيقات الشركات الكبرى. الاستضافة مجانية وتدعم النطاق العالمي."</em>
+</p>
+
+<h3>🔒 إذا سألوا: كيف تحمي البيانات؟</h3>
+<p>
+<em>"النظام يعمل بصلاحيات متعددة المستويات — المسؤول يوافق على كل تسجيل قبل منح الدخول. البيانات محفوظة على Firebase من Google التي تلتزم بأعلى معايير الأمان العالمية."</em>
+</p>
+</div>
+
+<!-- ===== مقارنة ===== -->
+<h2>٩. ما الذي يميز هذه المنصة؟</h2>
+<table>
+  <tr><th>المنصات التجارية العالمية</th><th>مركز المعرفة والابتكار</th></tr>
+  <tr><td>مكلفة (آلاف الريالات سنوياً)</td><td>مجانية بالكامل</td></tr>
+  <tr><td>باللغة الإنجليزية</td><td>عربية RTL من الأساس</td></tr>
+  <tr><td>عامة وغير مخصصة</td><td>مصممة لاحتياجات مدارس الأرقم تحديداً</td></tr>
+  <tr><td>تحتاج تدريباً طويلاً</td><td>واجهة بسيطة وسهلة للجميع</td></tr>
+  <tr><td>لا تدعم شعار المدرسة</td><td>شعار الأرقم مدمج في كل صفحة</td></tr>
+</table>
+
+<br>
+<hr>
+<p style="text-align:center; color:#9ca3af; font-size:12px;">
+  مركز المعرفة والابتكار STEAM • مدارس الأرقم • ١٤٤٨هـ
+</p>
+
+</body>
+</html>

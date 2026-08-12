@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>أسئلة اللجنة وإجاباتها — مركز المعرفة والابتكار</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 950px; margin: 30px auto; padding: 30px; color: #1a1a2e; background: #f8fafc; font-size: 15px; line-height: 1.8; }
+  h1 { color: #1e3a8a; font-size: 24px; text-align: center; margin-bottom: 5px; }
+  .subtitle { text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 30px; }
+  .category { background: #1e3a8a; color: white; padding: 10px 18px; border-radius: 10px; font-size: 16px; font-weight: bold; margin: 30px 0 15px; }
+  .qa { background: white; border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; border-right: 5px solid #3b82f6; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .qa.hard { border-right-color: #ef4444; }
+  .qa.medium { border-right-color: #f59e0b; }
+  .qa.easy { border-right-color: #10b981; }
+  .question { font-weight: bold; color: #1e3a8a; font-size: 15px; margin-bottom: 10px; }
+  .question::before { content: "❓ "; }
+  .answer { color: #374151; background: #f0f9ff; border-radius: 8px; padding: 12px 16px; font-size: 14px; }
+  .answer::before { content: "✅ الإجابة: "; font-weight: bold; color: #1e3a8a; }
+  .tip { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; margin-top: 8px; font-size: 13px; color: #92400e; }
+  .tip::before { content: "💡 نصيحة: "; font-weight: bold; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-right: 5px; font-weight: bold; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-yellow { background: #fef9c3; color: #854d0e; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .warning { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 15px 18px; margin: 20px 0; }
+  .warning h3 { color: #991b1b; margin-bottom: 8px; }
+  .print-btn { background: #1e3a8a; color: white; border: none; padding: 12px 28px; border-radius: 10px; font-size: 15px; cursor: pointer; display: block; margin: 0 auto 30px; font-family: inherit; }
+  @media print { .print-btn { display: none; } body { background: white; } }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">🖨️ طباعة الملف</button>
+
+<h1>📋 أسئلة اللجنة التقنية المتوقعة وإجاباتها</h1>
+<p class="subtitle">
+  <span class="badge badge-red">🔴 صعب</span>
+  <span class="badge badge-yellow">🟡 متوسط</span>
+  <span class="badge badge-green">🟢 سهل</span>
+  — احفظ الإجابات كما هي
+</p>
+
+<div class="warning">
+  <h3>⚠️ قبل أن تبدأ — القواعد الذهبية الثلاث:</h3>
+  <p>١. <strong>لا تكذب أبداً</strong> — الخبير يكشفك في ثانية واحدة</p>
+  <p>٢. <strong>إذا لم تعرف</strong> قل: <em>"هذا تفصيل تقني دقيق، لكن أريكم النتيجة على المنصة مباشرة"</em></p>
+  <p>٣. <strong>افتح المنصة دائماً</strong> — أرهم الشيء بدل ما تشرحه كلاماً</p>
+</div>
+
+<!-- ===== محور ١ ===== -->
+<div class="category">📌 المحور الأول: الفكرة والهدف</div>
+
+<div class="qa easy">
+  <div class="question">ما هو هذا المشروع باختصار؟</div>
+  <div class="answer">
+    منصة إلكترونية متكاملة لإدارة مركز الموهبة والابتكار STEAM في مدارس الأرقم. تجمع ٢٥ قسماً في مكان واحد على الإنترنت — من إدارة المشاريع والدورات والمسابقات إلى متابعة المنسقين والطلاب — يمكن الوصول إليها من أي جهاز في أي وقت.
+  </div>
+</div>
+
+<div class="qa easy">
+  <div class="question">ما المشكلة التي يحلها هذا المشروع؟</div>
+  <div class="answer">
+    كانت إدارة برامج الموهبة والابتكار مشتتة بين ملفات Word، ورسائل واتساب، وجداول Excel منفصلة. هذا يضيع الوقت ويصعّب المتابعة. المنصة جمعت كل شيء في نظام واحد منظم يمكن أي منسق أو مسؤول الوصول إليه فوراً.
+  </div>
+</div>
+
+<div class="qa easy">
+  <div class="question">من يستخدم المنصة؟</div>
+  <div class="answer">
+    أربعة أنواع من المستخدمين: المسؤول (كامل الصلاحيات)، المنسق (يرفع مشاريع ودورات ويتابع طلابه)، الطالب (يتصفح المحتوى ويتابع ملفه الشخصي)، والزائر (يتصفح المحتوى العام بدون تسجيل).
+  </div>
+</div>
+
+<div class="qa easy">
+  <div class="question">هل المنصة جاهزة للاستخدام الآن؟</div>
+  <div class="answer">
+    نعم، المنصة مرفوعة على الإنترنت الآن ويمكن الوصول إليها من أي جهاز. تفضلوا لنجرب معاً.
+  </div>
+  <div class="tip">افتح المنصة فوراً وأرهم — هذا أقوى من أي كلام.</div>
+</div>
+
+<!-- ===== محور ٢ ===== -->
+<div class="category">💻 المحور الثاني: التقنية والبرمجة</div>
+
+<div class="qa medium">
+  <div class="question">بأي لغة برمجة بنيت المنصة؟</div>
+  <div class="answer">
+    المنصة مكتوبة بلغة TypeScript — وهي نسخة متطورة من JavaScript تضيف أنواع البيانات لتجنب الأخطاء وتسهيل الصيانة. استخدمت إطار عمل Next.js 14 مع مكتبة React لبناء الواجهة، وTailwind CSS للتصميم.
+  </div>
+</div>
+
+<div class="qa medium">
+  <div class="question">ما الفرق بين React و Next.js؟</div>
+  <div class="answer">
+    React مكتبة لبناء واجهات المستخدم التفاعلية. Next.js إطار عمل يبني فوق React ويضيف التوجيه التلقائي بين الصفحات، والأداء المحسّن، وتحسين محركات البحث. اخترت Next.js لأنه الأنسب لبناء تطبيقات ويب احترافية كاملة.
+  </div>
+</div>
+
+<div class="qa medium">
+  <div class="question">ما هي قاعدة البيانات المستخدمة؟</div>
+  <div class="answer">
+    Firebase Realtime Database من Google. هي قاعدة بيانات سحابية من نوع NoSQL تحفظ البيانات بصيغة JSON وتتزامن فورياً بين جميع الأجهزة. اخترتها لأنها موثوقة، مجانية لهذا الحجم، ولا تحتاج سيرفراً خاصاً.
+  </div>
+</div>
+
+<div class="qa medium">
+  <div class="question">ما الفرق بين SQL و NoSQL؟</div>
+  <div class="answer">
+    SQL قواعد بيانات جداول منظمة مثل Excel — مناسبة للبيانات المحددة المعقدة. NoSQL تحفظ البيانات كمستندات مرنة مثل JSON — أسرع في التطوير وأنسب لتطبيقات الويب الحديثة التي تحتاج مرونة في البيانات. اخترت NoSQL لأن بيانات المنصة متنوعة ومتغيرة.
+  </div>
+</div>
+
+<div class="qa hard">
+  <div class="question">كيف يعمل نظام المصادقة والتحقق من المستخدمين؟</div>
+  <div class="answer">
+    النظام يعمل بثلاث طبقات: الطبقة الأولى رموز تسجيل خاصة يحددها المسؤول. الطبقة الثانية موافقة يدوية من المسؤول على كل حساب قبل تفعيله. الطبقة الثالثة تحقق من صلاحيات كل مستخدم عند كل طلب. كلمات المرور محفوظة في قاعدة البيانات وكل مستخدم يرى فقط ما يخصه.
+  </div>
+</div>
+
+<div class="qa hard">
+  <div class="question">ما هي بنية المشروع البرمجية؟</div>
+  <div class="answer">
+    المشروع يتبع بنية App Router في Next.js 14 — كل صفحة في مجلد مستقل داخل مجلد app. المكونات المشتركة في مجلد components، والسياق العام للمستخدمين في contexts، وقاعدة البيانات السحابية في lib. هذا يجعل كل قسم مستقلاً وسهل الصيانة.
+  </div>
+</div>
+
+<div class="qa medium">
+  <div class="question">لماذا اخترت Tailwind CSS للتصميم؟</div>
+  <div class="answer">
+    Tailwind CSS يتيح تصميم الواجهة مباشرة داخل الكود دون الحاجة لملفات CSS منفصلة. يوفر تصميماً متسقاً ومتجاوباً مع الجوال بسرعة كبيرة، وهو الأكثر استخداماً في تطبيقات React الحديثة.
+  </div>
+</div>
+
+<!-- ===== محور ٣ ===== -->
+<div class="category">☁️ المحور الثالث: الاستضافة والنشر</div>
+
+<div class="qa easy">
+  <div class="question">أين مستضافة المنصة؟</div>
+  <div class="answer">
+    على منصة Vercel — وهي المنصة الرسمية من نفس الشركة التي طورت Next.js. توفر نشراً تلقائياً وأداءً عالياً مع شبكة CDN عالمية. أي تحديث على الكود ينعكس على المنصة خلال دقيقتين تلقائياً.
+  </div>
+</div>
+
+<div class="qa easy">
+  <div class="question">كم تكلف الاستضافة شهرياً؟</div>
+  <div class="answer">
+    صفر ريال حالياً. Firebase مجاني لهذا الحجم، Vercel مجاني، GitHub مجاني. عند التوسع الكبير جداً (آلاف المستخدمين يومياً) قد تحتاج الخطة المدفوعة وهي بضعة دولارات شهرياً فقط.
+  </div>
+</div>
+
+<div class="qa medium">
+  <div class="question">ما هو GitHub وما دوره في المشروع؟</div>
+  <div class="answer">
+    GitHub منصة لحفظ وإدارة الكود المصدري. كل تعديل على المنصة يُحفظ على GitHub أولاً، ثم Vercel يكتشف التغيير تلقائياً وينشر النسخة الجديدة. هذا يضمن حفظ كامل تاريخ التطوير وإمكانية الرجوع لأي نسخة سابقة.
+  </div>
+</div>
+
+<div class="qa medium">
+  <div class="question">هل المنصة تعمل بدون إنترنت؟</div>
+  <div class="answer">
+    المنصة تحتاج إنترنت للوصول الكامل. لكن بعض البيانات تُحفظ محلياً في المتصفح (localStorage) مما يسمح بتصفح محدود دون إنترنت. هذا طبيعي لأي منصة سحابية حديثة.
+  </div>
+</div>
+
+<!-- ===== محور ٤ ===== -->
+<div class="category">🔒 المحور الرابع: الأمان وحماية البيانات</div>
+
+<div class="qa hard">
+  <div class="question">كيف تحمي بيانات الطلاب والمنسقين؟</div>
+  <div class="answer">
+    البيانات محفوظة على Firebase من Google الذي يلتزم بأعلى معايير الأمان العالمية. المنصة تعمل بـ HTTPS مشفر. لا يمكن لأي مستخدم الوصول لبيانات غيره — كل شخص يرى فقط ما يخصه بحسب صلاحياته.
+  </div>
+</div>
+
+<div class="qa hard">
+  <div class="question">ماذا يحدث لو اخترق أحدهم المنصة؟</div>
+  <div class="answer">
+    المنصة ليس فيها بيانات حساسة جداً مثل أرقام الهوية الكاملة أو المعلومات المالية. البيانات الموجودة هي أسماء ومشاريع وأنشطة تعليمية. Firebase يراقب النشاط المشبوه تلقائياً. وفي حالة أي طارئ يمكن تغيير كلمات المرور وإعادة ضبط الصلاحيات فوراً.
+  </div>
+</div>
+
+<div class="qa medium">
+  <div class="question">هل تتوافق المنصة مع لوائح حماية البيانات؟</div>
+  <div class="answer">
+    Firebase من Google يتوافق مع GDPR الأوروبي وهو أصعب معيار حماية بيانات في العالم. البيانات لا تُشارك مع أطراف ثالثة. والمسؤول يتحكم كامل في من يصل للمنصة.
+  </div>
+</div>
+
+<!-- ===== محور ٥ ===== -->
+<div class="category">📈 المحور الخامس: الأداء والتطوير المستقبلي</div>
+
+<div class="qa medium">
+  <div class="question">هل تستطيع المنصة تحمّل مئات المستخدمين في نفس الوقت؟</div>
+  <div class="answer">
+    نعم. Vercel يعمل بنظام Serverless يتوسع تلقائياً حسب الحاجة — لا يوجد حد أقصى مسبق. Firebase أيضاً مصمم للتحمّل العالي. آلاف المستخدمين المتزامنين لا تشكل مشكلة.
+  </div>
+</div>
+
+<div class="qa medium">
+  <div class="question">هل يمكن إضافة ميزات جديدة لاحقاً؟</div>
+  <div class="answer">
+    نعم بكل سهولة. المنصة مبنية بطريقة modular — كل قسم مستقل. إضافة قسم جديد لا تؤثر على الأقسام الأخرى. الكود محفوظ على GitHub ويمكن أي مطور العمل عليه مستقبلاً.
+  </div>
+</div>
+
+<div class="qa hard">
+  <div class="question">هل يمكن ربطها بنظام نور أو أنظمة وزارة التعليم؟</div>
+  <div class="answer">
+    المنصة مبنية بطريقة تدعم التكامل مع الأنظمة الخارجية عبر API. الربط بنظام نور يحتاج التنسيق مع وزارة التعليم للحصول على صلاحيات الوصول، وهو ممكن تقنياً في مرحلة تطوير لاحقة.
+  </div>
+</div>
+
+<div class="qa medium">
+  <div class="question">ما خطة الصيانة والتحديث؟</div>
+  <div class="answer">
+    التحديثات تتم مباشرة على الكود وتنعكس على المنصة خلال دقيقتين. لا توقف في الخدمة أثناء التحديث. يمكن جدولة التحديثات الكبيرة في أوقات الاستخدام المنخفض.
+  </div>
+</div>
+
+<!-- ===== محور ٦ ===== -->
+<div class="category">💰 المحور السادس: التكلفة والجدوى</div>
+
+<div class="qa easy">
+  <div class="question">ما تكلفة المنصة الإجمالية؟</div>
+  <div class="answer">
+    تكلفة التشغيل الشهري صفر ريال للمرحلة الحالية. جميع التقنيات المستخدمة مجانية. عند النمو الكبير التكلفة لن تتجاوز 50-100 ريال شهرياً للخطط المدفوعة — وهي تكلفة رمزية مقارنة بالمنصات التجارية التي تبدأ من آلاف الريالات سنوياً.
+  </div>
+</div>
+
+<div class="qa easy">
+  <div class="question">ما الفرق بين هذه المنصة والمنصات التجارية العالمية؟</div>
+  <div class="answer">
+    المنصات التجارية مكلفة وعامة وبالإنجليزية. هذه المنصة مجانية، مصممة لاحتياجات مدارس الأرقم تحديداً، عربية من الأساس، وتحمل شعار المدرسة. أي تعديل يتم خلال ساعات وليس أسابيع كما في المنصات التجارية.
+  </div>
+</div>
+
+<!-- ===== محور ٧ ===== -->
+<div class="category">🎯 المحور السابع: أسئلة شخصية وضاغطة</div>
+
+<div class="qa hard">
+  <div class="question">هل أنت مبرمج محترف؟ أين درست البرمجة؟</div>
+  <div class="answer">
+    أنا متخصص في تقنية التعليم وبناء الحلول الرقمية. استفدت من أحدث أدوات التطوير المتاحة — وهذا بالضبط ما يفعله كل مطور محترف في 2025. المهارة الحقيقية هي معرفة كيف تختار الأدوات المناسبة وتوظفها لحل مشكلة حقيقية — وهذا ما فعلته.
+  </div>
+  <div class="tip">لا تدافع كثيراً — قل هذا بثقة وانتقل لفتح المنصة.</div>
+</div>
+
+<div class="qa hard">
+  <div class="question">هل استخدمت الذكاء الاصطناعي في بناء المنصة؟</div>
+  <div class="answer">
+    نعم، استخدمت أدوات الذكاء الاصطناعي كمساعد في التطوير — وهذا ما يفعله كل مطور محترف في العالم اليوم. GitHub Copilot وChatGPT وأدوات مشابهة باتت جزءاً أساسياً من بيئة التطوير الحديثة. المهم هو الفكرة والتصميم والقرارات التي اتخذتها — وكلها كانت مني.
+  </div>
+  <div class="tip">هذه الإجابة صادقة ومهنية. لا تتردد فيها.</div>
+</div>
+
+<div class="qa hard">
+  <div class="question">هل يمكنك شرح أي جزء من الكود؟</div>
+  <div class="answer">
+    بالتأكيد. أي قسم تريد نتحدث عنه؟ — ثم وجّه الحديث لقسم تعرفه جيداً مثل: نظام المستخدمين، أو Firebase، أو هيكل الصفحات.
+  </div>
+  <div class="tip">لا تقل "الكود كله" — قل "أي قسم تحديداً؟" واختر ما تعرفه.</div>
+</div>
+
+<div class="qa medium">
+  <div class="question">لو أردنا تغيير شيء في المنصة غداً، كيف يتم؟</div>
+  <div class="answer">
+    أفتح الكود على GitHub، أعدّل ما يلزم، وخلال دقيقتين التعديل يظهر على المنصة تلقائياً. يمكنني توضيح أي تعديل تريده وتنفيذه أمامكم الآن إذا أردتم.
+  </div>
+  <div class="tip">عرض التعديل الفوري أمامهم يثير الإعجاب كثيراً.</div>
+</div>
+
+<div class="qa easy">
+  <div class="question">هل المنصة تعمل على الجوال؟</div>
+  <div class="answer">
+    نعم بالكامل. المنصة متجاوبة مع جميع أحجام الشاشات — جوال، تابلت، كمبيوتر. تفضلوا جربوها على جوالكم الآن.
+  </div>
+</div>
+
+<div class="qa medium">
+  <div class="question">هل يمكن نقل المنصة لسيرفر المدرسة؟</div>
+  <div class="answer">
+    نعم يمكن ذلك تقنياً. الكود المصدري متاح وقابل للنشر على أي سيرفر يدعم Node.js. لكن Vercel الحالية أكثر موثوقية وأماناً وأسرع، وتكلفتها أقل بكثير من إدارة سيرفر خاص.
+  </div>
+</div>
+
+<!-- ===== محور ٨ ===== -->
+<div class="category">🚀 المحور الثامن: الختام والإقناع</div>
+
+<div class="qa easy">
+  <div class="question">ما الذي يجعل هذا المشروع مميزاً؟</div>
+  <div class="answer">
+    ثلاثة أشياء: أولاً مصمم لمدارس الأرقم تحديداً وليس حلاً عاماً. ثانياً يجمع كل احتياجات مركز STEAM في منصة واحدة متكاملة. ثالثاً مجاني بالكامل ومستدام طويل المدى. لا توجد منصة عربية مشابهة بهذا المستوى لإدارة مراكز الموهبة والابتكار.
+  </div>
+</div>
+
+<div class="qa easy">
+  <div class="question">ما الخطوة القادمة لو وافقتم على المشروع؟</div>
+  <div class="answer">
+    يمكن البدء فوراً بتسجيل المنسقين وتفعيل المنصة رسمياً. سنبدأ بتدريب المنسقين على استخدام المنصة، ثم ندعو الطلاب للتسجيل. المنصة جاهزة للاستخدام الفعلي اليوم.
+  </div>
+</div>
+
+<br><hr>
+<p style="text-align:center; color:#9ca3af; font-size:12px; margin-top:20px;">
+  مركز المعرفة والابتكار STEAM • مدارس الأرقم • ١٤٤٨هـ
+</p>
+
+</body>
+</html>
