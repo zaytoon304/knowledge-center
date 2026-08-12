@@ -1,12 +1,14 @@
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { cloudGet, cloudSet, cloudPush } from "@/lib/cloud";
+import { getDeviceId, validateAccessCode, grantAccess, hasAccess as hasDeviceAccess, revokeAccess } from "@/lib/deviceCode";
 
 export interface StudentProfile {
   id: string; name: string; nationalId: string; school: string; grade: string;
   phone: string; email: string; parentPhone: string; birthDate: string;
   photo: string; password: string; role: "student"; teams: string[];
   registeredAt: string; status: "pending" | "approved" | "rejected";
+  deviceId?: string; // نفس رمز جهاز الطالب — يُستخدم لتوليد والتحقق من رمز الدخول (نظام أكاديمية زيتون)
 }
 
 export interface CoordinatorProfile {
@@ -99,6 +101,7 @@ interface AuthContextType {
   isCoordinator: boolean;
   isApproved: boolean;
   login: (id: string, pw: string) => { success: boolean; message: string };
+  loginWithAccessCode: (code: string) => { success: boolean; message: string };
   loginCoordinator: (email: string, pw: string) => { success: boolean; message: string };
   register: (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">, code: string) => { success: boolean; message: string };
   registerCoordinator: (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">, code: string) => { success: boolean; message: string };
@@ -183,8 +186,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const all = stored.role === "coordinator"
         ? load<CoordinatorProfile[]>(KEYS.coordinators, [])
         : load<StudentProfile[]>(KEYS.students, []);
-      const fresh = (all as AnyUser[]).find(u => u.id === stored.id);
-      setUser(fresh || stored);
+      const fresh = (all as AnyUser[]).find(u => u.id === stored.id) || stored;
+
+      // لو الطالب دخل بنظام رمز الجهاز الجديد وانتهت صلاحية رمزه، أخرجه
+      // تلقائياً (نفس فكرة أكاديمية زيتون) — لا يمس الحسابات القديمة
+      // (كلمة مرور) اللي أصلاً ما تستخدم هذا النظام
+      const isDeviceBoundStudent = fresh.role === "student" && (fresh as StudentProfile).deviceId === getDeviceId();
+      if (isDeviceBoundStudent && !hasDeviceAccess()) {
+        localStorage.removeItem(KEYS.currentUser);
+      } else {
+        setUser(fresh);
+      }
     }
   }, []);
 
@@ -202,6 +214,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true, message: "ok" };
     }
     return { success: false, message: "رقم الهوية أو كلمة المرور غير صحيحة" };
+  };
+
+  // دخول الطلاب برمز الجهاز (نفس آلية أكاديمية زيتون) — الطالب يسجّل بياناته
+  // مرة، محمد يعتمد طلبه ويرسله رمز دخول مربوط بجهازه تحديداً
+  const loginWithAccessCode = (code: string) => {
+    const deviceId = getDeviceId();
+    const result = validateAccessCode(code, deviceId);
+    if (result === null) return { success: false, message: "الرمز غير صحيح" };
+    if (result === "wrong-device") return { success: false, message: "هذا الرمز مخصص لجهاز آخر" };
+    if (result === "expired") return { success: false, message: "انتهت صلاحية هذا الرمز" };
+
+    const s = getAllStudents().find(s => s.deviceId === deviceId);
+    if (!s) return { success: false, message: "لم يُعثر على طلب تسجيل مرتبط بهذا الجهاز — سجّل بياناتك أولاً" };
+    if (s.status === "rejected") return { success: false, message: "تم رفض طلبك. تواصل مع الإدارة" };
+
+    grantAccess(result);
+    setUser(s); save(KEYS.currentUser, s);
+    return { success: true, message: "ok" };
   };
 
   const loginCoordinator = (email: string, pw: string) => {
@@ -222,7 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const all = getAllStudents();
     if (all.find(s => s.nationalId === data.nationalId))
       return { success: false, message: "رقم الهوية مسجل مسبقاً" };
-    const student: StudentProfile = { ...data, id: Date.now().toString(), role: "student", registeredAt: new Date().toISOString(), status: "pending" };
+    const student: StudentProfile = { ...data, deviceId: getDeviceId(), id: Date.now().toString(), role: "student", registeredAt: new Date().toISOString(), status: "pending" };
     const savedStudents = [...all, student];
     save(KEYS.students, savedStudents);
     cloudPush("kc_students", student); // يضيف الطالب بدون حذف المسجلين قبله
@@ -261,7 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: true, message: "pending" };
   };
 
-  const logout = () => { setUser(null); localStorage.removeItem(KEYS.currentUser); };
+  const logout = () => { setUser(null); localStorage.removeItem(KEYS.currentUser); revokeAccess(); };
 
   const updateProfile = (data: Partial<AnyUser>) => {
     if (!user) return;
@@ -345,7 +375,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user, isLoggedIn: !!user, isStudent: user?.role === "student",
       isCoordinator: user?.role === "coordinator",
       isApproved: user?.status === "approved",
-      login, loginCoordinator, register, registerCoordinator,
+      login, loginWithAccessCode, loginCoordinator, register, registerCoordinator,
       logout, updateProfile,
       getAllStudents, approveStudent, rejectStudent, deleteStudent,
       getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator,

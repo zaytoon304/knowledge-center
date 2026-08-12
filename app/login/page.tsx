@@ -1,10 +1,11 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Camera, LogIn, UserPlus, Briefcase, FileText, Globe, GraduationCap, ShoppingBag, Rss, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, Camera, LogIn, UserPlus, Briefcase, FileText, Globe, GraduationCap, ShoppingBag, Rss, CheckCircle, Copy, KeyRound } from "lucide-react";
 import CenterLogo from "@/components/icons/CenterLogo";
 import { cloudPush } from "@/lib/cloud";
+import { getDeviceId } from "@/lib/deviceCode";
 
 const grades = [
   "الصف الأول الابتدائي", "الصف الثاني الابتدائي", "الصف الثالث الابتدائي",
@@ -45,7 +46,7 @@ function loginVisitor(phone: string): VisitorRequest | null {
 }
 
 export default function LoginPage() {
-  const { login, loginCoordinator, register, registerCoordinator } = useAuth();
+  const { login, loginWithAccessCode, loginCoordinator, register, registerCoordinator } = useAuth();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
   const [showPass, setShowPass] = useState(false);
@@ -54,8 +55,11 @@ export default function LoginPage() {
   const photoRef = useRef<HTMLInputElement>(null);
   const cvRef = useRef<HTMLInputElement>(null);
 
-  const [loginData, setLoginData] = useState({ identifier: "", password: "", type: "student" as "student" | "coordinator" | "visitor" });
+  const [loginData, setLoginData] = useState({ identifier: "", password: "", accessCode: "", type: "student" as "student" | "coordinator" | "visitor" });
   const [regData, setRegData] = useState({ name: "", nationalId: "", school: "", grade: grades[0], phone: "", email: "", parentPhone: "", birthDate: "", photo: "", password: "", confirmPassword: "", teams: [] as string[], regCode: "" });
+  const [copiedDeviceId, setCopiedDeviceId] = useState(false);
+  const [deviceId, setDeviceId] = useState(""); // يُملأ بعد التركيب لتفادي مشاكل SSR/hydration
+  useEffect(() => { setDeviceId(getDeviceId()); }, []);
   const [coordData, setCoordData] = useState({ name: "", email: "", phone: "", school: "", subject: "", photo: "", cv: "", cvName: "", password: "", confirmPassword: "", regCode: "" });
   const [visitorData, setVisitorData] = useState({ name: "", phone: "", email: "", purpose: "" as "courses" | "shop" | "activities" | "", notes: "" });
   const [visitorDone, setVisitorDone] = useState(false);
@@ -83,7 +87,9 @@ export default function LoginPage() {
     }
     const result = loginData.type === "coordinator"
       ? loginCoordinator(loginData.identifier, loginData.password)
-      : login(loginData.identifier, loginData.password);
+      : loginData.type === "student"
+        ? loginWithAccessCode(loginData.accessCode)
+        : login(loginData.identifier, loginData.password);
     if (result.success) { router.push(loginData.type === "coordinator" ? "/coordinator-portal" : "/student-portal"); }
     else { setError(result.message); }
   };
@@ -91,11 +97,9 @@ export default function LoginPage() {
   const handleStudentRegister = (e: React.FormEvent) => {
     e.preventDefault(); setError("");
     if (!regData.name || !regData.nationalId || !regData.school || !regData.phone) { setError("يرجى تعبئة الحقول المطلوبة"); return; }
-    if (regData.password.length < 6) { setError("كلمة المرور 6 أحرف على الأقل"); return; }
-    if (regData.password !== regData.confirmPassword) { setError("كلمة المرور غير متطابقة"); return; }
     const { confirmPassword, regCode, ...data } = regData;
     const result = register(data, regCode);
-    if (result.success) { setSuccess("تم إنشاء حسابك! جارٍ التوجيه..."); setTimeout(() => router.push("/student-portal"), 1200); }
+    if (result.success) { setSuccess("تم إرسال بياناتك! أرسل رمز جهازك للإدارة عشان يعطونك رمز الدخول."); }
     else { setError(result.message); }
   };
 
@@ -175,27 +179,53 @@ export default function LoginPage() {
                   </button>
                 ))}
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">
-                  {loginData.type === "coordinator" ? "البريد الإلكتروني" : "رقم الجوال / الهوية"}
-                </label>
-                <input value={loginData.identifier} onChange={e => setLoginData(p => ({ ...p, identifier: e.target.value }))}
-                  placeholder={loginData.type === "visitor" ? "رقم الجوال المسجل" : loginData.type === "coordinator" ? "البريد الإلكتروني" : "رقم الهوية"}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 outline-none focus:border-blue-500" required />
-              </div>
-              {loginData.type !== "visitor" && (
-                <div className="relative">
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">كلمة المرور</label>
-                  <input type={showPass ? "text" : "password"} value={loginData.password} onChange={e => setLoginData(p => ({ ...p, password: e.target.value }))}
-                    placeholder="أدخل كلمة المرور"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 outline-none focus:border-blue-500" required />
-                  <button type="button" onClick={() => setShowPass(!showPass)} className="absolute left-3 bottom-3 text-gray-400">
-                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+              {loginData.type === "student" && (
+                <>
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+                    <p className="text-xs text-blue-700 mb-1">رمز جهازك</p>
+                    <span dir="ltr" className="font-mono font-bold text-blue-900 text-lg tracking-wider">{deviceId || "..."}</span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">رمز الدخول</label>
+                    <div className="relative">
+                      <KeyRound className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                      <input dir="ltr" value={loginData.accessCode} onChange={e => setLoginData(p => ({ ...p, accessCode: e.target.value }))}
+                        placeholder="ARQAM-XXXXXXX-XXXXXX"
+                        className="w-full border border-gray-200 rounded-xl pr-9 pl-4 py-3 text-sm bg-gray-50 outline-none focus:border-blue-500 font-mono" required />
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-1">ما عندك رمز؟ سجّل بياناتك من تبويب "طالب جديد" وأرسل رمز جهازك للإدارة</p>
+                  </div>
+                </>
+              )}
+              {loginData.type === "coordinator" && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">البريد الإلكتروني</label>
+                    <input value={loginData.identifier} onChange={e => setLoginData(p => ({ ...p, identifier: e.target.value }))}
+                      placeholder="البريد الإلكتروني"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 outline-none focus:border-blue-500" required />
+                  </div>
+                  <div className="relative">
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">كلمة المرور</label>
+                    <input type={showPass ? "text" : "password"} value={loginData.password} onChange={e => setLoginData(p => ({ ...p, password: e.target.value }))}
+                      placeholder="أدخل كلمة المرور"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 outline-none focus:border-blue-500" required />
+                    <button type="button" onClick={() => setShowPass(!showPass)} className="absolute left-3 bottom-3 text-gray-400">
+                      {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </>
               )}
               {loginData.type === "visitor" && (
-                <p className="text-xs text-teal-700 bg-teal-50 p-3 rounded-xl">بعد موافقة الإدارة على طلبك ستتمكن من الدخول برقم جوالك</p>
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">رقم الجوال / الهوية</label>
+                    <input value={loginData.identifier} onChange={e => setLoginData(p => ({ ...p, identifier: e.target.value }))}
+                      placeholder="رقم الجوال المسجل"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 outline-none focus:border-blue-500" required />
+                  </div>
+                  <p className="text-xs text-teal-700 bg-teal-50 p-3 rounded-xl">بعد موافقة الإدارة على طلبك ستتمكن من الدخول برقم جوالك</p>
+                </>
               )}
               <button type="submit" className="w-full bg-blue-800 text-white py-3 rounded-xl font-bold hover:bg-blue-700">دخول</button>
             </form>
@@ -284,6 +314,17 @@ export default function LoginPage() {
                 </div>
                 <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={e => handlePhoto(e, v => setRegData(p => ({ ...p, photo: v })))} />
               </div>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+                <p className="text-xs text-emerald-700 mb-1">رمز جهازك (بعد التسجيل أرسله للإدارة ليعطوك رمز الدخول)</p>
+                <div className="flex items-center justify-center gap-2">
+                  <span dir="ltr" className="font-mono font-bold text-emerald-900 text-lg tracking-wider">{deviceId || "..."}</span>
+                  <button type="button" onClick={() => { navigator.clipboard.writeText(deviceId); setCopiedDeviceId(true); setTimeout(() => setCopiedDeviceId(false), 1500); }}
+                    className="text-emerald-600 hover:text-emerald-800">
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+                {copiedDeviceId && <p className="text-[10px] text-emerald-600 mt-1">✓ تم النسخ</p>}
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-0.5 block">الاسم الكامل *</label><input value={regData.name} onChange={e => setRegData(p => ({ ...p, name: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">رقم الهوية *</label><input value={regData.nationalId} onChange={e => setRegData(p => ({ ...p, nationalId: e.target.value }))} maxLength={10} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
@@ -293,11 +334,9 @@ export default function LoginPage() {
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">الجوال *</label><input value={regData.phone} onChange={e => setRegData(p => ({ ...p, phone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">جوال ولي الأمر</label><input value={regData.parentPhone} onChange={e => setRegData(p => ({ ...p, parentPhone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" /></div>
                 <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-0.5 block">البريد الإلكتروني</label><input type="email" value={regData.email} onChange={e => setRegData(p => ({ ...p, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" /></div>
-                <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">كلمة المرور *</label><input type="password" value={regData.password} onChange={e => setRegData(p => ({ ...p, password: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
-                <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">تأكيد المرور *</label><input type="password" value={regData.confirmPassword} onChange={e => setRegData(p => ({ ...p, confirmPassword: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
               </div>
               <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">رمز التسجيل <span className="text-gray-400 font-normal">(إن وجد)</span></label><input value={regData.regCode} onChange={e => setRegData(p => ({ ...p, regCode: e.target.value }))} placeholder="أدخل الرمز إن طُلب منك" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" /></div>
-              <button type="submit" className="w-full bg-emerald-700 text-white py-3 rounded-xl font-bold hover:bg-emerald-600">إنشاء حساب طالب</button>
+              <button type="submit" className="w-full bg-emerald-700 text-white py-3 rounded-xl font-bold hover:bg-emerald-600">إرسال بياناتي للإدارة</button>
             </form>
           )}
 

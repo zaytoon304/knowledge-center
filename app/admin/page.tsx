@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
+import { generateAccessCode } from "@/lib/deviceCode";
 const KnowledgeAdmin = dynamic(() => import("@/components/admin/KnowledgeAdmin"), { ssr: false });
 const SectionCMS = dynamic(() => import("@/components/admin/SectionCMS"), { ssr: false });
 
@@ -182,6 +183,8 @@ export default function AdminPage() {
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [platformAchievements, setPlatformAchievements] = useState<PlatformAchievement[]>([]);
   const [regCodes, setRegCodesState] = useState(getRegCodes());
+  const [accessCodeFor, setAccessCodeFor] = useState<string | null>(null); // id الطالب اللي يعرض رمز دخوله حالياً
+  const [accessCodeCopied, setAccessCodeCopied] = useState(false);
   const [sForm, setSForm] = useState({ name: "", description: "", price: "", image: "", imageName: "", category: "كتب", contact: "" });
   const [showSForm, setShowSForm] = useState(false);
   const [aForm, setAForm] = useState({ title: "", description: "", date: "", image: "", imageName: "" });
@@ -369,8 +372,9 @@ export default function AdminPage() {
                     <p className="font-bold text-gray-800">{s.name}</p>
                     <p className="text-sm text-gray-500">{s.school} • {s.grade}</p>
                     <p className="text-xs text-gray-400">{s.phone} • هوية: {s.nationalId}</p>
+                    {s.deviceId && <p className="text-xs text-blue-500 font-mono mt-0.5" dir="ltr">جهاز: {s.deviceId}</p>}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap justify-end">
                     <button onClick={() => syncAndAct(() => approveStudent(s.id))}
                       className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-500">
                       <CheckCircle className="w-4 h-4" /> قبول
@@ -379,8 +383,30 @@ export default function AdminPage() {
                       className="flex items-center gap-1.5 bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-200">
                       <XCircle className="w-4 h-4" /> رفض
                     </button>
+                    {s.deviceId && (
+                      <button onClick={() => { setAccessCodeFor(accessCodeFor === s.id ? null : s.id); setAccessCodeCopied(false); }}
+                        className="flex items-center gap-1.5 bg-amber-100 text-amber-700 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-amber-200">
+                        <Key className="w-4 h-4" /> رمز الدخول
+                      </button>
+                    )}
                   </div>
                 </div>
+                {accessCodeFor === s.id && s.deviceId && (() => {
+                  const expiry = new Date(); expiry.setDate(expiry.getDate() + 300); // ~سنة دراسية كاملة
+                  const code = generateAccessCode(s.deviceId, expiry);
+                  return (
+                    <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                      <p className="text-xs text-amber-700 mb-1">أرسل هذا الرمز لـ{s.name} (صالح سنة دراسية كاملة):</p>
+                      <div className="flex items-center gap-2">
+                        <span dir="ltr" className="font-mono font-bold text-amber-900 flex-1 text-sm break-all">{code}</span>
+                        <button onClick={() => { navigator.clipboard.writeText(code); setAccessCodeCopied(true); }}
+                          className="text-amber-700 hover:text-amber-900 flex-shrink-0 text-xs font-semibold">
+                          {accessCodeCopied ? "✓ تم النسخ" : "نسخ"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ))
           }
@@ -396,11 +422,12 @@ export default function AdminPage() {
             : <div className="card overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-gray-50">
-                    <tr>{["الطالب", "المدرسة", "الصف", "الجوال", "حذف"].map(h => <th key={h} className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">{h}</th>)}</tr>
+                    <tr>{["الطالب", "المدرسة", "الصف", "الجوال", "رمز الدخول", "حذف"].map(h => <th key={h} className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">{h}</th>)}</tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {approved.map(s => (
-                      <tr key={s.id} className="hover:bg-gray-50/50">
+                      <React.Fragment key={s.id}>
+                      <tr className="hover:bg-gray-50/50">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full overflow-hidden bg-emerald-100 flex-shrink-0 flex items-center justify-center text-xs font-bold text-emerald-700">
@@ -412,8 +439,31 @@ export default function AdminPage() {
                         <td className="px-4 py-3 text-sm text-gray-600">{s.school}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{s.grade}</td>
                         <td className="px-4 py-3 text-sm text-gray-500">{s.phone}</td>
+                        <td className="px-4 py-3">
+                          {s.deviceId
+                            ? <button onClick={() => { setAccessCodeFor(accessCodeFor === s.id ? null : s.id); setAccessCodeCopied(false); }} className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg"><Key className="w-4 h-4" /></button>
+                            : <span className="text-xs text-gray-300">—</span>}
+                        </td>
                         <td className="px-4 py-3"><button onClick={() => { if(confirm("حذف هذا الطالب؟")) syncAndAct(() => deleteStudent(s.id)); }} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button></td>
                       </tr>
+                      {accessCodeFor === s.id && s.deviceId && (() => {
+                        const expiry = new Date(); expiry.setDate(expiry.getDate() + 300);
+                        const code = generateAccessCode(s.deviceId, expiry);
+                        return (
+                          <tr>
+                            <td colSpan={6} className="px-4 pb-3">
+                              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2">
+                                <span dir="ltr" className="font-mono font-bold text-amber-900 flex-1 text-sm break-all">{code}</span>
+                                <button onClick={() => { navigator.clipboard.writeText(code); setAccessCodeCopied(true); }}
+                                  className="text-amber-700 hover:text-amber-900 flex-shrink-0 text-xs font-semibold">
+                                  {accessCodeCopied ? "✓ تم النسخ" : "نسخ"}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })()}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
