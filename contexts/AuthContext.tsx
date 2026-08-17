@@ -103,8 +103,8 @@ interface AuthContextType {
   login: (id: string, pw: string) => { success: boolean; message: string };
   loginWithAccessCode: (code: string) => { success: boolean; message: string };
   loginCoordinator: (email: string, pw: string) => { success: boolean; message: string };
-  register: (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">, code: string) => { success: boolean; message: string };
-  registerCoordinator: (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">, code: string) => { success: boolean; message: string };
+  register: (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">, code: string) => Promise<{ success: boolean; message: string }>;
+  registerCoordinator: (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">, code: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   updateProfile: (data: Partial<AnyUser>) => void;
   getAllStudents: () => StudentProfile[];
@@ -166,20 +166,33 @@ const defaultLiveStream: LiveStreamSettings = {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AnyUser | null>(null);
+  // يتغيّر بعد وصول بيانات السحابة عشان يجبر كل الصفحات المشتركة (تقرأ localStorage مباشرة) تُعيد القراءة
+  const [cloudSyncTick, setCloudSyncTick] = useState(0);
 
   useEffect(() => {
     // مزامنة البيانات من Firebase عند فتح التطبيق
-    cloudGet<CoordinatorProfile[]>("kc_coordinators").then(data => {
-      if (Array.isArray(data) && data.length > 0)
-        localStorage.setItem(KEYS.coordinators, JSON.stringify(data));
-    });
-    cloudGet<StudentProfile[]>("kc_students").then(data => {
-      if (Array.isArray(data) && data.length > 0)
-        localStorage.setItem(KEYS.students, JSON.stringify(data));
-    });
-    cloudGet<RegCodes>("kc_reg_codes").then(data => {
-      if (data) localStorage.setItem(KEYS.regCodes, JSON.stringify(data));
-    });
+    const syncs: Promise<unknown>[] = [
+      cloudGet<CoordinatorProfile[]>("kc_coordinators").then(data => {
+        if (Array.isArray(data) && data.length > 0)
+          localStorage.setItem(KEYS.coordinators, JSON.stringify(data));
+      }),
+      cloudGet<StudentProfile[]>("kc_students").then(data => {
+        if (Array.isArray(data) && data.length > 0)
+          localStorage.setItem(KEYS.students, JSON.stringify(data));
+      }),
+      cloudGet<RegCodes>("kc_reg_codes").then(data => {
+        if (data) localStorage.setItem(KEYS.regCodes, JSON.stringify(data));
+      }),
+      cloudGet<ChatGroup[]>(KEYS.groups).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.groups, JSON.stringify(data)); }),
+      cloudGet<LiveStreamSettings>(KEYS.liveStream).then(data => { if (data) localStorage.setItem(KEYS.liveStream, JSON.stringify(data)); }),
+      cloudGet<CourseItem[]>(KEYS.courses).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.courses, JSON.stringify(data)); }),
+      cloudGet<VideoItem[]>(KEYS.videos).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.videos, JSON.stringify(data)); }),
+      cloudGet<ProjectItem[]>(KEYS.projects).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.projects, JSON.stringify(data)); }),
+      cloudGet<DailyLogEntry[]>(KEYS.dailyLog).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.dailyLog, JSON.stringify(data)); }),
+      cloudGet<ShopItem[]>(KEYS.shop).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.shop, JSON.stringify(data)); }),
+      cloudGet<PlatformAchievement[]>(KEYS.achievements).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.achievements, JSON.stringify(data)); }),
+    ];
+    Promise.all(syncs).then(() => setCloudSyncTick(t => t + 1));
 
     const stored = load<AnyUser | null>(KEYS.currentUser, null);
     if (stored) {
@@ -245,26 +258,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: false, message: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
   };
 
-  const register = (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">, code: string) => {
+  const register = async (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">, code: string) => {
     const codes = getRegCodes();
     if (codes.studentCode && code !== codes.studentCode)
       return { success: false, message: "رمز التسجيل غير صحيح" };
-    const all = getAllStudents();
+    // تحقق من السحابة الحقيقية مباشرة — مو من نسخة الجهاز المحلية اللي ممكن تكون قديمة أو فيها بقايا محاولة سابقة فشلت
+    const cloudStudents = await cloudGet<StudentProfile[]>("kc_students");
+    const all = Array.isArray(cloudStudents) ? cloudStudents : getAllStudents();
     if (all.find(s => s.nationalId === data.nationalId))
       return { success: false, message: "رقم الهوية مسجل مسبقاً" };
     const student: StudentProfile = { ...data, deviceId: getDeviceId(), id: Date.now().toString(), role: "student", registeredAt: new Date().toISOString(), status: "pending" };
-    const savedStudents = [...all, student];
-    save(KEYS.students, savedStudents);
-    cloudPush("kc_students", student); // يضيف الطالب بدون حذف المسجلين قبله
+    // يحفظ بالسحابة أولاً — لو فشل (لا يوجد إنترنت مثلاً) ما نقول للطالب "تم" وهو ما وصل فعلياً
+    const ok = await cloudPush("kc_students", student);
+    if (!ok) return { success: false, message: "تعذّر الاتصال بالإنترنت — تأكد من الشبكة/الواي فاي وحاول التسجيل مرة أخرى" };
+    save(KEYS.students, [...all, student]);
     setUser(student); save(KEYS.currentUser, student);
     return { success: true, message: "pending" };
   };
 
-  const registerCoordinator = (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">, code: string) => {
+  const registerCoordinator = async (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">, code: string) => {
     const codes = getRegCodes();
     if (codes.coordCode && code !== codes.coordCode)
       return { success: false, message: "رمز التسجيل غير صحيح" };
-    const all = getAllCoordinators();
+    // تحقق من السحابة الحقيقية مباشرة — مو من نسخة الجهاز المحلية اللي ممكن تكون قديمة أو فيها بقايا محاولة سابقة فشلت
+    const cloudCoords = await cloudGet<CoordinatorProfile[]>("kc_coordinators");
+    const all = Array.isArray(cloudCoords) ? cloudCoords : getAllCoordinators();
     if (all.find(c => c.email === data.email))
       return { success: false, message: "البريد الإلكتروني مسجل مسبقاً" };
     const baseId = Date.now().toString();
@@ -278,13 +296,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       registeredAt: new Date().toISOString(),
       status: "pending",
     };
+    // يحفظ بالسحابة أولاً — لو فشل (لا يوجد إنترنت مثلاً) ما نقول للمنسق "تم" وهو ما وصل فعلياً
+    const ok = await cloudPush("kc_coordinators", coord);
+    if (!ok) return { success: false, message: "تعذّر الاتصال بالإنترنت — تأكد من الشبكة/الواي فاي وحاول التسجيل مرة أخرى" };
     const saved = [...all, coord];
     try {
       localStorage.setItem(KEYS.coordinators, JSON.stringify(saved));
-    } catch {
-      return { success: false, message: "فشل الحفظ — مساحة المتصفح ممتلئة، حاول مرة أخرى" };
-    }
-    cloudPush("kc_coordinators", coord); // يضيف المنسق بدون حذف المسجلين قبله
+    } catch { /* التخزين المحلي ثانوي هنا — النسخة الأساسية وصلت للسحابة فعلاً */ }
     // الجلسة الحالية تحتفظ بالبيانات الكاملة (صورة + CV)
     const fullCoord: CoordinatorProfile = { ...data, id: baseId, role: "coordinator", registeredAt: new Date().toISOString(), status: "pending" };
     setUser(fullCoord); save(KEYS.currentUser, fullCoord);
@@ -335,40 +353,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const getGroups = () => load<ChatGroup[]>(KEYS.groups, []);
-  const createGroup = (g: Omit<ChatGroup, "id" | "createdAt">) =>
-    save(KEYS.groups, [...getGroups(), { ...g, id: Date.now().toString(), createdAt: new Date().toISOString() }]);
-  const deleteGroup = (id: string) => save(KEYS.groups, getGroups().filter(g => g.id !== id));
+  const createGroup = (g: Omit<ChatGroup, "id" | "createdAt">) => {
+    const all = [...getGroups(), { ...g, id: Date.now().toString(), createdAt: new Date().toISOString() }];
+    save(KEYS.groups, all); cloudSet(KEYS.groups, all);
+  };
+  const deleteGroup = (id: string) => {
+    const all = getGroups().filter(g => g.id !== id);
+    save(KEYS.groups, all); cloudSet(KEYS.groups, all);
+  };
 
   const getLiveStream = () => load<LiveStreamSettings>(KEYS.liveStream, defaultLiveStream);
-  const updateLiveStream = (s: Partial<LiveStreamSettings>) => save(KEYS.liveStream, { ...getLiveStream(), ...s });
+  const updateLiveStream = (s: Partial<LiveStreamSettings>) => {
+    const updated = { ...getLiveStream(), ...s };
+    save(KEYS.liveStream, updated); cloudSet(KEYS.liveStream, updated);
+  };
 
   const getCourses = () => load<CourseItem[]>(KEYS.courses, []);
-  const addCourse = (c: Omit<CourseItem, "id">) => save(KEYS.courses, [...getCourses(), { ...c, id: Date.now().toString() }]);
-  const deleteCourse = (id: string) => save(KEYS.courses, getCourses().filter(c => c.id !== id));
+  const addCourse = (c: Omit<CourseItem, "id">) => {
+    const all = [...getCourses(), { ...c, id: Date.now().toString() }];
+    save(KEYS.courses, all); cloudSet(KEYS.courses, all);
+  };
+  const deleteCourse = (id: string) => {
+    const all = getCourses().filter(c => c.id !== id);
+    save(KEYS.courses, all); cloudSet(KEYS.courses, all);
+  };
 
   const getVideos = () => load<VideoItem[]>(KEYS.videos, []);
-  const addVideo = (v: Omit<VideoItem, "id">) => save(KEYS.videos, [...getVideos(), { ...v, id: Date.now().toString() }]);
-  const deleteVideo = (id: string) => save(KEYS.videos, getVideos().filter(v => v.id !== id));
+  const addVideo = (v: Omit<VideoItem, "id">) => {
+    const all = [...getVideos(), { ...v, id: Date.now().toString() }];
+    save(KEYS.videos, all); cloudSet(KEYS.videos, all);
+  };
+  const deleteVideo = (id: string) => {
+    const all = getVideos().filter(v => v.id !== id);
+    save(KEYS.videos, all); cloudSet(KEYS.videos, all);
+  };
 
   const getProjects = () => load<ProjectItem[]>(KEYS.projects, []);
-  const addProject = (p: Omit<ProjectItem, "id">) => save(KEYS.projects, [...getProjects(), { ...p, id: Date.now().toString() }]);
-  const deleteProject = (id: string) => save(KEYS.projects, getProjects().filter(p => p.id !== id));
+  const addProject = (p: Omit<ProjectItem, "id">) => {
+    const all = [...getProjects(), { ...p, id: Date.now().toString() }];
+    save(KEYS.projects, all); cloudSet(KEYS.projects, all);
+  };
+  const deleteProject = (id: string) => {
+    const all = getProjects().filter(p => p.id !== id);
+    save(KEYS.projects, all); cloudSet(KEYS.projects, all);
+  };
 
   const getDailyLog = () => load<DailyLogEntry[]>(KEYS.dailyLog, []);
-  const addDailyLogEntry = (e: Omit<DailyLogEntry, "id" | "createdAt">) =>
-    save(KEYS.dailyLog, [...getDailyLog(), { ...e, id: Date.now().toString(), createdAt: new Date().toISOString() }]);
-  const deleteDailyLogEntry = (id: string) => save(KEYS.dailyLog, getDailyLog().filter(e => e.id !== id));
+  const addDailyLogEntry = (e: Omit<DailyLogEntry, "id" | "createdAt">) => {
+    const all = [...getDailyLog(), { ...e, id: Date.now().toString(), createdAt: new Date().toISOString() }];
+    save(KEYS.dailyLog, all); cloudSet(KEYS.dailyLog, all);
+  };
+  const deleteDailyLogEntry = (id: string) => {
+    const all = getDailyLog().filter(e => e.id !== id);
+    save(KEYS.dailyLog, all); cloudSet(KEYS.dailyLog, all);
+  };
 
   const getShopItems = () => load<ShopItem[]>(KEYS.shop, []);
-  const addShopItem = (s: Omit<ShopItem, "id" | "createdAt">) =>
-    save(KEYS.shop, [...getShopItems(), { ...s, id: Date.now().toString(), createdAt: new Date().toISOString() }]);
-  const deleteShopItem = (id: string) => save(KEYS.shop, getShopItems().filter(s => s.id !== id));
+  const addShopItem = (s: Omit<ShopItem, "id" | "createdAt">) => {
+    const all = [...getShopItems(), { ...s, id: Date.now().toString(), createdAt: new Date().toISOString() }];
+    save(KEYS.shop, all); cloudSet(KEYS.shop, all);
+  };
+  const deleteShopItem = (id: string) => {
+    const all = getShopItems().filter(s => s.id !== id);
+    save(KEYS.shop, all); cloudSet(KEYS.shop, all);
+  };
 
   const getPlatformAchievements = () => load<PlatformAchievement[]>(KEYS.achievements, []);
-  const addPlatformAchievement = (a: Omit<PlatformAchievement, "id" | "createdAt">) =>
-    save(KEYS.achievements, [...getPlatformAchievements(), { ...a, id: Date.now().toString(), createdAt: new Date().toISOString() }]);
-  const deletePlatformAchievement = (id: string) =>
-    save(KEYS.achievements, getPlatformAchievements().filter(a => a.id !== id));
+  const addPlatformAchievement = (a: Omit<PlatformAchievement, "id" | "createdAt">) => {
+    const all = [...getPlatformAchievements(), { ...a, id: Date.now().toString(), createdAt: new Date().toISOString() }];
+    save(KEYS.achievements, all); cloudSet(KEYS.achievements, all);
+  };
+  const deletePlatformAchievement = (id: string) => {
+    const all = getPlatformAchievements().filter(a => a.id !== id);
+    save(KEYS.achievements, all); cloudSet(KEYS.achievements, all);
+  };
 
   return (
     <AuthContext.Provider value={{

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Layers, Search, ChevronLeft, Users, Target, Clock } from "lucide-react";
+import { cloudGet } from "@/lib/cloud";
 
 interface Program {
   id: string; title: string; description: string; emoji: string;
@@ -16,7 +17,12 @@ export default function ProgramsPage() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [search, setSearch] = useState("");
 
-  useEffect(() => { setPrograms(load()); }, []);
+  useEffect(() => {
+    setPrograms(load());
+    cloudGet<Program[]>("kc_programs").then(data => {
+      if (Array.isArray(data)) { localStorage.setItem("kc_programs", JSON.stringify(data)); setPrograms(data); }
+    });
+  }, []);
 
   const filtered = programs.filter(p =>
     !search || p.title.includes(search) || p.description?.includes(search)

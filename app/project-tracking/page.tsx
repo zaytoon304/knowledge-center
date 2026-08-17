@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, ChevronRight, Kanban, User, Calendar, Flag, Edit3, Check, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 type Stage = "idea" | "design" | "prototype" | "testing" | "final";
 
@@ -33,7 +34,7 @@ const PRIORITY_LABELS = { low: "عادي", medium: "متوسط", high: "عاجل
 function load(): KanbanCard[] {
   try { const d = localStorage.getItem("kc_kanban"); return d ? JSON.parse(d) : []; } catch { return []; }
 }
-function save(cards: KanbanCard[]) { localStorage.setItem("kc_kanban", JSON.stringify(cards)); }
+function save(cards: KanbanCard[]) { localStorage.setItem("kc_kanban", JSON.stringify(cards)); cloudSet("kc_kanban", cards); }
 function isAdmin() { try { return typeof window !== "undefined" && localStorage.getItem("kc_admin_auth") === "1"; } catch { return false; } }
 
 const EMPTY_FORM = { title: "", description: "", studentName: "", studentId: "", field: "", priority: "medium" as "low"|"medium"|"high", notes: "" };
@@ -48,7 +49,12 @@ export default function ProjectTrackingPage() {
   const [editNotes, setEditNotes] = useState<{ [id: string]: string }>({});
   const [filterStage, setFilterStage] = useState<Stage | "all">("all");
 
-  useEffect(() => { setCards(load()); }, []);
+  useEffect(() => {
+    setCards(load());
+    cloudGet<KanbanCard[]>("kc_kanban").then(data => {
+      if (Array.isArray(data)) { localStorage.setItem("kc_kanban", JSON.stringify(data)); setCards(data); }
+    });
+  }, []);
 
   const students = getAllStudents().filter(s => s.status === "approved");
 

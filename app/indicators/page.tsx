@@ -6,6 +6,7 @@ import {
   PieChart, Pie, Cell, Legend, AreaChart, Area
 } from "recharts";
 import { monthlyData, programDistribution } from "@/data/stats";
+import { cloudGet } from "@/lib/cloud";
 
 const DEFAULT_KPI = [
   { id: "d1", label: "البرامج المنفذة", value: "6", total: "6", emoji: "📚", color: "bg-purple-600", note: "" },
@@ -52,7 +53,12 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 
 export default function IndicatorsPage() {
   const [kpis, setKpis] = useState<KPI[]>(DEFAULT_KPI);
-  useEffect(() => { setKpis(loadKPIs()); }, []);
+  useEffect(() => {
+    setKpis(loadKPIs());
+    cloudGet<KPI[]>("kc_indicators").then(data => {
+      if (Array.isArray(data) && data.length) { localStorage.setItem("kc_indicators", JSON.stringify(data)); setKpis(data); }
+    });
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Cpu, Brain, Wifi, Bot, Glasses, Printer, ChevronLeft, BookOpen, Play, Link2 } from "lucide-react";
+import { cloudGet } from "@/lib/cloud";
 
 /* التقنيات الافتراضية (تظهر دائماً) */
 const DEFAULT_TECHS = [
@@ -72,7 +73,12 @@ export default function EmergingTechPage() {
   const [custom, setCustom] = useState<Tech[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
 
-  useEffect(() => { setCustom(loadCustom()); }, []);
+  useEffect(() => {
+    setCustom(loadCustom());
+    cloudGet<Tech[]>("kc_emerging_tech").then(data => {
+      if (Array.isArray(data)) { localStorage.setItem("kc_emerging_tech", JSON.stringify(data)); setCustom(data); }
+    });
+  }, []);
 
   const allTechs: Tech[] = [...DEFAULT_TECHS, ...custom];
   const tech = allTechs.find(t => t.id === selected);

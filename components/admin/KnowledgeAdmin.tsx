@@ -5,6 +5,7 @@ import {
   Plus, Pencil, Trash2, X, Save, Upload, Link, Eye,
   Search, ChevronDown, ChevronUp
 } from "lucide-react";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 export interface KnowledgeItem {
   id: string;
@@ -57,6 +58,7 @@ function loadItems(type: string): KnowledgeItem[] {
 
 function saveItems(type: string, items: KnowledgeItem[]) {
   localStorage.setItem(KEYS[type], JSON.stringify(items));
+  cloudSet(KEYS[type], items);
 }
 
 const emptyItem = (type: KnowledgeItem["type"]): KnowledgeItem => ({
@@ -93,6 +95,13 @@ export default function KnowledgeAdmin() {
     setEditing(null);
     setExpandedId(null);
     setSearch("");
+    let cancelled = false;
+    cloudGet<KnowledgeItem[]>(KEYS[activeType]).then(data => {
+      if (cancelled || !Array.isArray(data)) return;
+      localStorage.setItem(KEYS[activeType], JSON.stringify(data));
+      setItems(data);
+    });
+    return () => { cancelled = true; };
   }, [activeType]);
 
   const openAdd = () => {

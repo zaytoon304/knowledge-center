@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { BookOpen, Download, Eye, Search, FileText, Shield, Calendar, ClipboardList, Filter, X, Link } from "lucide-react";
 import { type KnowledgeItem } from "@/components/admin/KnowledgeAdmin";
+import { cloudGet } from "@/lib/cloud";
 
 const KEYS: Record<string, string> = {
   guides: "kc_knowledge_guides",
@@ -135,6 +136,14 @@ export default function KnowledgePage() {
       data[key] = loadItems(storageKey);
     });
     setAllData(data);
+
+    Object.entries(KEYS).forEach(([key, storageKey]) => {
+      cloudGet<KnowledgeItem[]>(storageKey).then(cloudItems => {
+        if (!Array.isArray(cloudItems)) return;
+        localStorage.setItem(storageKey, JSON.stringify(cloudItems));
+        setAllData(prev => ({ ...prev, [key]: cloudItems }));
+      });
+    });
   }, []);
 
   const currentTab = TABS.find(t => t.id === activeTab)!;

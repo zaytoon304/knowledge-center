@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Award, Plus, Trash2, Printer, Eye, Star, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 interface Certificate {
   id: string;
@@ -23,7 +24,7 @@ const CERT_TYPES = [
 ];
 
 function load(): Certificate[] { try { const d = localStorage.getItem("kc_certificates"); return d ? JSON.parse(d) : []; } catch { return []; } }
-function save(cs: Certificate[]) { localStorage.setItem("kc_certificates", JSON.stringify(cs)); }
+function save(cs: Certificate[]) { localStorage.setItem("kc_certificates", JSON.stringify(cs)); cloudSet("kc_certificates", cs); }
 function isAdmin() { try { return typeof window !== "undefined" && localStorage.getItem("kc_admin_auth") === "1"; } catch { return false; } }
 
 export default function CertificatesPage() {
@@ -36,7 +37,12 @@ export default function CertificatesPage() {
   const [form, setForm] = useState({ studentId: "", studentName: "", type: "program" as Certificate["type"], title: "", description: "", date: new Date().toISOString().split("T")[0], issuedBy: "إدارة مركز المعرفة والابتكار STEAM" });
   const printRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setCerts(load()); }, []);
+  useEffect(() => {
+    setCerts(load());
+    cloudGet<Certificate[]>("kc_certificates").then(data => {
+      if (Array.isArray(data)) { localStorage.setItem("kc_certificates", JSON.stringify(data)); setCerts(data); }
+    });
+  }, []);
 
   const students = getAllStudents().filter(s => s.status === "approved");
   const myCerts = isStudent && user ? certs.filter(c => c.studentId === user.id) : certs;

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Archive, Search, Clock, Wrench, ChevronLeft } from "lucide-react";
+import { cloudGet } from "@/lib/cloud";
 
 interface BankProject {
   id: string; title: string; description: string; category: string;
@@ -29,7 +30,12 @@ export default function ProjectBankPage() {
   const [catFilter, setCatFilter] = useState("الكل");
   const [diffFilter, setDiffFilter] = useState("الكل");
 
-  useEffect(() => { setProjects(load()); }, []);
+  useEffect(() => {
+    setProjects(load());
+    cloudGet<BankProject[]>("kc_project_bank").then(data => {
+      if (Array.isArray(data)) { localStorage.setItem("kc_project_bank", JSON.stringify(data)); setProjects(data); }
+    });
+  }, []);
 
   const categories = ["الكل", ...Array.from(new Set(projects.map(p => p.category).filter(Boolean)))];
   const difficulties = ["الكل", "سهل", "متوسط", "صعب", "متقدم"];

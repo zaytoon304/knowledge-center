@@ -1,6 +1,7 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus, Pencil, Trash2, X, Save, Upload, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 export interface CMSField {
   key: string;
@@ -27,6 +28,7 @@ function loadData(key: string): CMSItem[] {
 }
 function saveData(key: string, data: CMSItem[]) {
   localStorage.setItem(key, JSON.stringify(data));
+  cloudSet(key, data);
 }
 
 const GRADIENTS = [
@@ -39,6 +41,18 @@ const GRADIENTS = [
 export default function SectionCMS({ config }: { config: CMSConfig }) {
   const [items, setItems] = useState<CMSItem[]>(() => loadData(config.storageKey));
   const [search, setSearch] = useState("");
+
+  // مزامنة أولية من Firebase — عشان لو أضاف أحد عنصراً من جهاز ثاني يظهر هنا
+  useEffect(() => {
+    let cancelled = false;
+    cloudGet<CMSItem[]>(config.storageKey).then(data => {
+      if (cancelled || !Array.isArray(data)) return;
+      localStorage.setItem(config.storageKey, JSON.stringify(data));
+      setItems(data);
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.storageKey]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<CMSItem | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);

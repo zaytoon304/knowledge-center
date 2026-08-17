@@ -47,6 +47,7 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
   const cvRef = useRef<HTMLInputElement>(null);
 
@@ -90,22 +91,28 @@ export default function LoginPage() {
     else { setError(result.message); }
   };
 
-  const handleStudentRegister = (e: React.FormEvent) => {
-    e.preventDefault(); setError("");
+  const handleStudentRegister = async (e: React.FormEvent) => {
+    e.preventDefault(); setError(""); setSuccess("");
     if (!regData.name || !regData.nationalId || !regData.school || !regData.phone) { setError("يرجى تعبئة الحقول المطلوبة"); return; }
+    if (submitting) return;
+    setSubmitting(true);
     const { confirmPassword, regCode, ...data } = regData;
-    const result = register(data, regCode);
+    const result = await register(data, regCode);
+    setSubmitting(false);
     if (result.success) { setSuccess("تم إرسال بياناتك! أرسل رمز جهازك للإدارة عشان يعطونك رمز الدخول."); }
     else { setError(result.message); }
   };
 
-  const handleCoordRegister = (e: React.FormEvent) => {
-    e.preventDefault(); setError("");
+  const handleCoordRegister = async (e: React.FormEvent) => {
+    e.preventDefault(); setError(""); setSuccess("");
     if (!coordData.name || !coordData.email || !coordData.phone || !coordData.school || !coordData.subject) { setError("يرجى تعبئة الحقول المطلوبة"); return; }
     if (coordData.password.length < 6) { setError("كلمة المرور 6 أحرف على الأقل"); return; }
     if (coordData.password !== coordData.confirmPassword) { setError("كلمة المرور غير متطابقة"); return; }
+    if (submitting) return;
+    setSubmitting(true);
     const { confirmPassword, regCode, ...data } = coordData;
-    const result = registerCoordinator(data, regCode);
+    const result = await registerCoordinator(data, regCode);
+    setSubmitting(false);
     if (result.success) { setSuccess("تم إرسال طلبك! بلّغ الإدارة عبر واتساب وانتظر الموافقة."); }
     else { setError(result.message); }
   };
@@ -373,7 +380,7 @@ export default function LoginPage() {
                 <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-0.5 block">البريد الإلكتروني</label><input type="email" value={regData.email} onChange={e => setRegData(p => ({ ...p, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" /></div>
               </div>
               <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">رمز التسجيل <span className="text-gray-400 font-normal">(إن وجد)</span></label><input value={regData.regCode} onChange={e => setRegData(p => ({ ...p, regCode: e.target.value }))} placeholder="أدخل الرمز إن طُلب منك" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" /></div>
-              <button type="submit" className="w-full bg-emerald-700 text-white py-3 rounded-xl font-bold hover:bg-emerald-600">إرسال بياناتي للإدارة</button>
+              <button type="submit" disabled={submitting} className="w-full bg-emerald-700 text-white py-3 rounded-xl font-bold hover:bg-emerald-600 disabled:opacity-50">{submitting ? "جارٍ الإرسال..." : "إرسال بياناتي للإدارة"}</button>
             </form>
           )}
 
@@ -404,7 +411,7 @@ export default function LoginPage() {
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">تأكيد المرور *</label><input type="password" value={coordData.confirmPassword} onChange={e => setCoordData(p => ({ ...p, confirmPassword: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
               </div>
               <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">رمز التسجيل <span className="text-gray-400 font-normal">(مطلوب)</span></label><input value={coordData.regCode} onChange={e => setCoordData(p => ({ ...p, regCode: e.target.value }))} placeholder="أدخل رمز التسجيل" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" /></div>
-              <button type="submit" className="w-full bg-violet-700 text-white py-3 rounded-xl font-bold hover:bg-violet-600">إنشاء حساب منسق</button>
+              <button type="submit" disabled={submitting} className="w-full bg-violet-700 text-white py-3 rounded-xl font-bold hover:bg-violet-600 disabled:opacity-50">{submitting ? "جارٍ الإرسال..." : "إنشاء حساب منسق"}</button>
             </form>
           )}
 

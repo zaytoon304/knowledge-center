@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Trophy, Calendar, Search, Globe, MapPin, ChevronLeft, ExternalLink } from "lucide-react";
+import { cloudGet } from "@/lib/cloud";
 
 interface Competition {
   id: string; title: string; description: string; type: string;
@@ -28,7 +29,12 @@ export default function CompetitionsPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("الكل");
 
-  useEffect(() => { setCompetitions(load()); }, []);
+  useEffect(() => {
+    setCompetitions(load());
+    cloudGet<Competition[]>("kc_competitions").then(data => {
+      if (Array.isArray(data)) { localStorage.setItem("kc_competitions", JSON.stringify(data)); setCompetitions(data); }
+    });
+  }, []);
 
   const types = ["الكل", ...Array.from(new Set(competitions.map(c => c.type).filter(Boolean)))];
 

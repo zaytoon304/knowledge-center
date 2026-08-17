@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Medal, Star, Trophy, Crown, Plus, Trash2, Gift } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 interface PointRecord { id: string; studentId: string; studentName: string; points: number; reason: string; date: string; }
 interface Badge { id: string; emoji: string; label: string; }
@@ -20,9 +21,9 @@ const BADGES: Badge[] = [
 const QUICK_REASONS = ["حضور برنامج تدريبي", "تقديم مشروع", "الفوز بمسابقة", "إنجاز دورة", "مشاركة فعّالة", "ابتكار فكرة مميزة", "مساعدة زميل", "تميز في العرض"];
 
 function loadPoints(): PointRecord[] { try { const d = localStorage.getItem("kc_points"); return d ? JSON.parse(d) : []; } catch { return []; } }
-function savePoints(p: PointRecord[]) { localStorage.setItem("kc_points", JSON.stringify(p)); }
+function savePoints(p: PointRecord[]) { localStorage.setItem("kc_points", JSON.stringify(p)); cloudSet("kc_points", p); }
 function loadBadges(): { [sid: string]: string[] } { try { const d = localStorage.getItem("kc_badges"); return d ? JSON.parse(d) : {}; } catch { return {}; } }
-function saveBadges(b: { [sid: string]: string[] }) { localStorage.setItem("kc_badges", JSON.stringify(b)); }
+function saveBadges(b: { [sid: string]: string[] }) { localStorage.setItem("kc_badges", JSON.stringify(b)); cloudSet("kc_badges", b); }
 function isAdmin() { try { return typeof window !== "undefined" && localStorage.getItem("kc_admin_auth") === "1"; } catch { return false; } }
 
 export default function LeaderboardPage() {
@@ -35,7 +36,15 @@ export default function LeaderboardPage() {
   const [selectedBadge, setSelectedBadge] = useState("");
   const [awardTab, setAwardTab] = useState<"points" | "badges">("points");
 
-  useEffect(() => { setPoints(loadPoints()); setBadges(loadBadges()); }, []);
+  useEffect(() => {
+    setPoints(loadPoints()); setBadges(loadBadges());
+    cloudGet<PointRecord[]>("kc_points").then(data => {
+      if (Array.isArray(data)) { localStorage.setItem("kc_points", JSON.stringify(data)); setPoints(data); }
+    });
+    cloudGet<{ [sid: string]: string[] }>("kc_badges").then(data => {
+      if (data) { localStorage.setItem("kc_badges", JSON.stringify(data)); setBadges(data); }
+    });
+  }, []);
 
   const students = getAllStudents().filter(s => s.status === "approved");
 

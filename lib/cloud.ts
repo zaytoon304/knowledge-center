@@ -22,14 +22,17 @@ export async function cloudSet(key: string, data: unknown): Promise<void> {
 }
 
 // يجلب القائمة الحالية من Firebase ثم يضيف العنصر الجديد بدون حذف الباقين
-export async function cloudPush<T>(key: string, item: T): Promise<void> {
+// يرجّع true لو نجح الحفظ فعلياً بالسحابة، false لو فشل (مثلاً بدون إنترنت) — لازم يُتحقق منها قبل قول "تم" للمستخدم
+export async function cloudPush<T>(key: string, item: T): Promise<boolean> {
   try {
     await ensureSignedIn();
     const existing = await cloudGet<T[]>(key);
     const arr = Array.isArray(existing) ? existing : [];
     await set(ref(db, key), [...arr, item]);
+    return true;
   } catch (e) {
     console.error(`cloudPush failed for "${key}":`, e);
+    return false;
   }
 }
 

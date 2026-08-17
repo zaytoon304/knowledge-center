@@ -1,50 +1,64 @@
 "use client";
 import { useState } from "react";
 import { Baby, Search, User, Award, Star, Kanban, BookOpen, Shield } from "lucide-react";
+import { cloudGet } from "@/lib/cloud";
 
 interface StudentProfile {
   id: string; name: string; nationalId: string; school: string; grade: string;
   phone: string; email: string; photo: string; status: string; registeredAt: string;
 }
 
-function loadStudents(): StudentProfile[] {
-  try { const d = localStorage.getItem("kc_students"); return d ? JSON.parse(d) : []; } catch { return []; }
-}
-function loadCertificates(sid: string) {
-  try { const d = localStorage.getItem("kc_certificates"); const all = d ? JSON.parse(d) : []; return all.filter((c: { studentId: string }) => c.studentId === sid); } catch { return []; }
-}
-function loadPoints(sid: string): number {
-  try { const d = localStorage.getItem("kc_points"); const all = d ? JSON.parse(d) : []; return all.filter((p: { studentId: string }) => p.studentId === sid).reduce((s: number, p: { points: number }) => s + p.points, 0); } catch { return 0; }
-}
-function loadBadges(sid: string): string[] {
-  try { const d = localStorage.getItem("kc_badges"); const all = d ? JSON.parse(d) : {}; return all[sid] || []; } catch { return []; }
-}
-function loadProjects(sid: string) {
-  try { const d = localStorage.getItem("kc_kanban"); const all = d ? JSON.parse(d) : []; return all.filter((p: { studentId: string }) => p.studentId === sid); } catch { return []; }
+async function fetchFresh<T>(key: string, fallback: T): Promise<T> {
+  const cloudData = await cloudGet<T>(key);
+  if (cloudData !== null && cloudData !== undefined) {
+    try { localStorage.setItem(key, JSON.stringify(cloudData)); } catch { /* تجاهل */ }
+    return cloudData;
+  }
+  try { const d = localStorage.getItem(key); return d ? (JSON.parse(d) as T) : fallback; } catch { return fallback; }
 }
 
 const STAGE_LABELS: { [k: string]: string } = { idea: "💡 فكرة", design: "✏️ تصميم", prototype: "🔧 نموذج", testing: "🧪 اختبار", final: "🏆 مكتمل" };
 const BADGE_EMOJIS: { [k: string]: string } = { star: "⭐", rocket: "🚀", robot: "🤖", brain: "🧠", trophy: "🏆", book: "📚", fire: "🔥", diamond: "💎" };
+
+interface CertRecord { id: string; studentId: string; title: string; date: string; type: string }
+interface PointRecord { studentId: string; points: number }
+interface KanbanRecord { id: string; studentId: string; title: string; stage: string; field: string }
 
 export default function ParentPortalPage() {
   const [nationalId, setNationalId] = useState("");
   const [student, setStudent] = useState<StudentProfile | null>(null);
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [certs, setCerts] = useState<CertRecord[]>([]);
+  const [points, setPoints] = useState(0);
+  const [badges, setBadges] = useState<string[]>([]);
+  const [projects, setProjects] = useState<KanbanRecord[]>([]);
 
-  const handleSearch = () => {
-    if (!nationalId.trim()) return;
-    const students = loadStudents();
+  const handleSearch = async () => {
+    if (!nationalId.trim() || loading) return;
+    setLoading(true);
+    const students = await fetchFresh<StudentProfile[]>("kc_students", []);
     const found = students.find(s => s.nationalId === nationalId.trim() && s.status === "approved");
-    if (found) { setStudent(found); setError(""); }
-    else { setStudent(null); setError("لم يُعثر على طالب معتمد بهذا الرقم. تأكد من رقم الهوية أو تواصل مع إدارة المركز."); }
+    if (found) {
+      setStudent(found); setError("");
+      const [allCerts, allPoints, allBadges, allProjects] = await Promise.all([
+        fetchFresh<CertRecord[]>("kc_certificates", []),
+        fetchFresh<PointRecord[]>("kc_points", []),
+        fetchFresh<Record<string, string[]>>("kc_badges", {}),
+        fetchFresh<KanbanRecord[]>("kc_kanban", []),
+      ]);
+      setCerts(allCerts.filter(c => c.studentId === found.id));
+      setPoints(allPoints.filter(p => p.studentId === found.id).reduce((s, p) => s + p.points, 0));
+      setBadges(allBadges[found.id] || []);
+      setProjects(allProjects.filter(p => p.studentId === found.id));
+    } else {
+      setStudent(null); setError("لم يُعثر على طالب معتمد بهذا الرقم. تأكد من رقم الهوية أو تواصل مع إدارة المركز.");
+      setCerts([]); setPoints(0); setBadges([]); setProjects([]);
+    }
     setSearched(true);
+    setLoading(false);
   };
-
-  const certs = student ? loadCertificates(student.id) : [];
-  const points = student ? loadPoints(student.id) : 0;
-  const badges = student ? loadBadges(student.id) : [];
-  const projects = student ? loadProjects(student.id) : [];
 
   return (
     <div className="max-w-2xl mx-auto space-y-5 animate-fade-in">
@@ -79,9 +93,9 @@ export default function ParentPortalPage() {
             className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm text-center tracking-widest outline-none focus:border-teal-500 bg-gray-50 font-mono"
             maxLength={10}
           />
-          <button onClick={handleSearch}
-            className="bg-teal-700 text-white px-5 py-3 rounded-xl hover:bg-teal-600 transition-colors flex items-center gap-2 text-sm font-medium">
-            <Search className="w-4 h-4" /> بحث
+          <button onClick={handleSearch} disabled={loading}
+            className="bg-teal-700 text-white px-5 py-3 rounded-xl hover:bg-teal-600 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50">
+            <Search className="w-4 h-4" /> {loading ? "جارٍ البحث..." : "بحث"}
           </button>
         </div>
         {error && searched && (
