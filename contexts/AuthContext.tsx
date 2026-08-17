@@ -100,9 +100,9 @@ interface AuthContextType {
   isStudent: boolean;
   isCoordinator: boolean;
   isApproved: boolean;
-  login: (id: string, pw: string) => { success: boolean; message: string };
-  loginWithAccessCode: (code: string) => { success: boolean; message: string };
-  loginCoordinator: (email: string, pw: string) => { success: boolean; message: string };
+  login: (id: string, pw: string) => Promise<{ success: boolean; message: string }>;
+  loginWithAccessCode: (code: string) => Promise<{ success: boolean; message: string }>;
+  loginCoordinator: (email: string, pw: string) => Promise<{ success: boolean; message: string }>;
   register: (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">, code: string) => Promise<{ success: boolean; message: string }>;
   registerCoordinator: (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">, code: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
@@ -218,8 +218,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const getRegCodes = () => load<RegCodes>(KEYS.regCodes, { studentCode: "", coordCode: "" });
   const setRegCodes = (codes: RegCodes) => { save(KEYS.regCodes, codes); cloudSet("kc_reg_codes", codes); };
 
-  const login = (identifier: string, pw: string) => {
-    const s = getAllStudents().find(s => s.nationalId === identifier && s.password === pw);
+  // يجيب أحدث نسخة من السحابة مباشرة قبل أي محاولة دخول — عشان جهاز يدخل لأول مرة
+  // (أو ما انتظر اكتمال المزامنة بالخلفية) ما يُرفض بسبب نسخة محلية فاضية أو قديمة
+  const freshStudents = async (): Promise<StudentProfile[]> => {
+    const cloud = await cloudGet<StudentProfile[]>("kc_students");
+    if (Array.isArray(cloud) && cloud.length > 0) { save(KEYS.students, cloud); return cloud; }
+    return getAllStudents();
+  };
+  const freshCoordinators = async (): Promise<CoordinatorProfile[]> => {
+    const cloud = await cloudGet<CoordinatorProfile[]>("kc_coordinators");
+    if (Array.isArray(cloud) && cloud.length > 0) { save(KEYS.coordinators, cloud); return cloud; }
+    return getAllCoordinators();
+  };
+
+  const login = async (identifier: string, pw: string) => {
+    const all = await freshStudents();
+    const s = all.find(s => s.nationalId === identifier && s.password === pw);
     if (s) {
       setUser(s); save(KEYS.currentUser, s);
       if (s.status === "pending") return { success: true, message: "pending" };
@@ -231,14 +245,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // دخول الطلاب برمز الجهاز (نفس آلية أكاديمية زيتون) — الطالب يسجّل بياناته
   // مرة، محمد يعتمد طلبه ويرسله رمز دخول مربوط بجهازه تحديداً
-  const loginWithAccessCode = (code: string) => {
+  const loginWithAccessCode = async (code: string) => {
     const deviceId = getDeviceId();
     const result = validateAccessCode(code, deviceId);
     if (result === null) return { success: false, message: "الرمز غير صحيح" };
     if (result === "wrong-device") return { success: false, message: "هذا الرمز مخصص لجهاز آخر" };
     if (result === "expired") return { success: false, message: "انتهت صلاحية هذا الرمز" };
 
-    const s = getAllStudents().find(s => s.deviceId === deviceId);
+    const all = await freshStudents();
+    const s = all.find(s => s.deviceId === deviceId);
     if (!s) return { success: false, message: "لم يُعثر على طلب تسجيل مرتبط بهذا الجهاز — سجّل بياناتك أولاً" };
     if (s.status === "rejected") return { success: false, message: "تم رفض طلبك. تواصل مع الإدارة" };
 
@@ -247,8 +262,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: true, message: "ok" };
   };
 
-  const loginCoordinator = (email: string, pw: string) => {
-    const c = getAllCoordinators().find(c => c.email === email && c.password === pw);
+  const loginCoordinator = async (email: string, pw: string) => {
+    const all = await freshCoordinators();
+    const c = all.find(c => c.email === email && c.password === pw);
     if (c) {
       setUser(c); save(KEYS.currentUser, c);
       if (c.status === "pending") return { success: true, message: "pending" };

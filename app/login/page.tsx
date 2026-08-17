@@ -73,7 +73,7 @@ export default function LoginPage() {
     const r = new FileReader(); r.onload = ev => setCoordData(p => ({ ...p, cv: ev.target?.result as string, cvName: f.name })); r.readAsDataURL(f); e.target.value = "";
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setError("");
     if (loginData.type === "visitor") {
       const v = loginVisitor(loginData.identifier);
@@ -82,11 +82,14 @@ export default function LoginPage() {
       router.push("/visitor-portal");
       return;
     }
+    if (submitting) return;
+    setSubmitting(true);
     const result = loginData.type === "coordinator"
-      ? loginCoordinator(loginData.identifier, loginData.password)
+      ? await loginCoordinator(loginData.identifier, loginData.password)
       : loginData.type === "student"
-        ? loginWithAccessCode(loginData.accessCode)
-        : login(loginData.identifier, loginData.password);
+        ? await loginWithAccessCode(loginData.accessCode)
+        : await login(loginData.identifier, loginData.password);
+    setSubmitting(false);
     if (result.success) { router.push(loginData.type === "coordinator" ? "/coordinator-portal" : "/student-portal"); }
     else { setError(result.message); }
   };
@@ -271,7 +274,7 @@ export default function LoginPage() {
                   <p className="text-xs text-teal-700 bg-teal-50 p-3 rounded-xl">بعد موافقة الإدارة على طلبك ستتمكن من الدخول برقم جوالك</p>
                 </>
               )}
-              <button type="submit" className="w-full bg-blue-800 text-white py-3 rounded-xl font-bold hover:bg-blue-700">دخول</button>
+              <button type="submit" disabled={submitting} className="w-full bg-blue-800 text-white py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50">{submitting ? "جارٍ التحقق..." : "دخول"}</button>
             </form>
           )}
 
