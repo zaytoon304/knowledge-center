@@ -7,7 +7,7 @@ import {
   Printer, UserCheck, AlertCircle, PenLine
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { cloudSet, cloudListen } from "@/lib/cloud";
+import { cloudSet, cloudListen, cloudTransact } from "@/lib/cloud";
 
 /* =================== أنواع البيانات =================== */
 interface AgendaItem {
@@ -196,8 +196,11 @@ export default function MeetingsPage() {
   };
 
   /* --- نقاش --- */
-  const addDiscussion = (agendaId: string) => {
+  // نستخدم "معاملة" (transaction) بدل استبدال القائمة كاملة، لأن عدة منسّقين قد يضيفون
+  // مداخلات بنفس اللحظة تماماً أثناء الاجتماع — والاستبدال الكامل قد يُفقد مداخلة منسّق آخر.
+  const addDiscussion = async (agendaId: string) => {
     if (!selected || !discussorName.trim() || !discussInputs[agendaId]?.trim()) return;
+    const meetingId = selected.id;
     const entry: DiscussionEntry = {
       id: Date.now().toString(),
       coordinatorName: discussorName,
@@ -205,26 +208,35 @@ export default function MeetingsPage() {
       agendaId,
       at: new Date().toLocaleTimeString("ar"),
     };
-    const updated = { ...selected, discussions: [...selected.discussions, entry] };
-    // تحديث حالة المحور
-    updated.agenda = updated.agenda.map(a => a.id === agendaId ? { ...a, status: "discussed" as const } : a);
-    updateMeeting(updated);
     setDiscussInputs(p => ({ ...p, [agendaId]: "" }));
     localStorage.setItem("kc_student_name", discussorName);
+    await cloudTransact<Meeting[]>("kc_meetings", current => {
+      const list = (current || []).map(normalizeMeeting);
+      return list.map(m => m.id === meetingId ? {
+        ...m,
+        discussions: [...m.discussions, entry],
+        agenda: m.agenda.map(a => a.id === agendaId ? { ...a, status: "discussed" as const } : a),
+      } : m);
+    });
   };
 
   /* --- تصويت --- */
-  const vote = (itemId: string, type: "for" | "against" | "abstain") => {
+  // نفس السبب: التصويت يحصل من عدة منسّقين بنفس اللحظة، فلازم معاملة آمنة بدل استبدال كامل.
+  const vote = async (itemId: string, type: "for" | "against" | "abstain") => {
     if (!selected) return;
-    updateMeeting({
-      ...selected,
-      agenda: selected.agenda.map(a => a.id === itemId ? {
-        ...a,
-        voteFor: type === "for" ? a.voteFor + 1 : a.voteFor,
-        voteAgainst: type === "against" ? a.voteAgainst + 1 : a.voteAgainst,
-        voteAbstain: type === "abstain" ? a.voteAbstain + 1 : a.voteAbstain,
-        status: "voted" as const,
-      } : a)
+    const meetingId = selected.id;
+    await cloudTransact<Meeting[]>("kc_meetings", current => {
+      const list = (current || []).map(normalizeMeeting);
+      return list.map(m => m.id === meetingId ? {
+        ...m,
+        agenda: m.agenda.map(a => a.id === itemId ? {
+          ...a,
+          voteFor: type === "for" ? a.voteFor + 1 : a.voteFor,
+          voteAgainst: type === "against" ? a.voteAgainst + 1 : a.voteAgainst,
+          voteAbstain: type === "abstain" ? a.voteAbstain + 1 : a.voteAbstain,
+          status: "voted" as const,
+        } : a)
+      } : m);
     });
   };
 

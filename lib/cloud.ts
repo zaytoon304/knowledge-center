@@ -1,4 +1,4 @@
-import { ref, get, set, push as dbPush, onValue, off, type DataSnapshot } from "firebase/database";
+import { ref, get, set, push as dbPush, onValue, off, runTransaction, type DataSnapshot } from "firebase/database";
 import { db, ensureSignedIn } from "./firebase";
 
 export async function cloudGet<T>(key: string): Promise<T | null> {
@@ -21,17 +21,33 @@ export async function cloudSet(key: string, data: unknown): Promise<void> {
   }
 }
 
-// يجلب القائمة الحالية من Firebase ثم يضيف العنصر الجديد بدون حذف الباقين
+// يضيف عنصراً جديداً لقائمة في Firebase بأمان حتى لو كتب شخصان بنفس اللحظة تماماً —
+// يستخدم "معاملة" (transaction) حقيقية تعيد المحاولة تلقائياً لو تغيّرت البيانات أثناء الكتابة،
+// بدل قراءة القائمة ثم استبدالها كاملة (كان يسبب ضياع عنصر لو حصل تزامن، لاحظناه فعلياً بالإنتاج).
 // يرجّع true لو نجح الحفظ فعلياً بالسحابة، false لو فشل (مثلاً بدون إنترنت) — لازم يُتحقق منها قبل قول "تم" للمستخدم
 export async function cloudPush<T>(key: string, item: T): Promise<boolean> {
   try {
     await ensureSignedIn();
-    const existing = await cloudGet<T[]>(key);
-    const arr = Array.isArray(existing) ? existing : [];
-    await set(ref(db, key), [...arr, item]);
-    return true;
+    const result = await runTransaction(ref(db, key), (current: T[] | null) => {
+      const arr = Array.isArray(current) ? current : [];
+      return [...arr, item];
+    });
+    return result.committed;
   } catch (e) {
     console.error(`cloudPush failed for "${key}":`, e);
+    return false;
+  }
+}
+
+// يعدّل قيمة موجودة في Firebase بأمان عبر دالة تحويل، مع إعادة محاولة تلقائية لو تغيّرت البيانات
+// أثناء الكتابة (مفيد لتعديلات متزامنة من عدة أجهزة بنفس اللحظة، مثل إضافة مداخلة نقاش باجتماع).
+export async function cloudTransact<T>(key: string, updateFn: (current: T | null) => T): Promise<boolean> {
+  try {
+    await ensureSignedIn();
+    const result = await runTransaction(ref(db, key), (current: T | null) => updateFn(current));
+    return result.committed;
+  } catch (e) {
+    console.error(`cloudTransact failed for "${key}":`, e);
     return false;
   }
 }
