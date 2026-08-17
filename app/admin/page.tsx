@@ -9,6 +9,13 @@ import {
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
 import { generateAccessCode } from "@/lib/deviceCode";
+import { GRADES } from "@/lib/grades";
+
+interface HotsScheduleEntry { date: string; grade: string }
+interface HotsResult {
+  studentId: string; studentName: string; grade: string; school: string;
+  date: string; correct: number; total: number; elapsedSeconds: number; submittedAt: string;
+}
 const KnowledgeAdmin = dynamic(() => import("@/components/admin/KnowledgeAdmin"), { ssr: false });
 const SectionCMS = dynamic(() => import("@/components/admin/SectionCMS"), { ssr: false });
 
@@ -183,6 +190,9 @@ export default function AdminPage() {
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [platformAchievements, setPlatformAchievements] = useState<PlatformAchievement[]>([]);
   const [regCodes, setRegCodesState] = useState(getRegCodes());
+  const [hotsSchedule, setHotsSchedule] = useState<HotsScheduleEntry[]>([]);
+  const [hotsResults, setHotsResults] = useState<HotsResult[]>([]);
+  const [hotsForm, setHotsForm] = useState({ date: "", grade: GRADES[0] });
   const [accessCodeFor, setAccessCodeFor] = useState<string | null>(null); // id الطالب اللي يعرض رمز دخوله حالياً
   const [accessCodeCopied, setAccessCodeCopied] = useState(false);
   const [sForm, setSForm] = useState({ name: "", description: "", price: "", image: "", imageName: "", category: "كتب", contact: "" });
@@ -235,10 +245,12 @@ export default function AdminPage() {
 
   // يجلب أحدث البيانات من Firebase ثم يحدث الواجهة
   const refreshFromCloud = async () => {
-    const [cloudStudents, cloudCoords, cloudVisitors] = await Promise.all([
+    const [cloudStudents, cloudCoords, cloudVisitors, cloudHotsSchedule, cloudHotsResults] = await Promise.all([
       cloudGet<StudentProfile[]>("kc_students"),
       cloudGet<CoordinatorProfile[]>("kc_coordinators"),
       cloudGet<VisitorRequest[]>("kc_visitor_requests"),
+      cloudGet<HotsScheduleEntry[]>("kc_hots_schedule"),
+      cloudGet<Record<string, HotsResult>>("kc_hots_results"),
     ]);
     if (Array.isArray(cloudStudents) && cloudStudents.length > 0)
       localStorage.setItem("kc_students", JSON.stringify(cloudStudents));
@@ -246,6 +258,8 @@ export default function AdminPage() {
       localStorage.setItem("kc_coordinators", JSON.stringify(cloudCoords));
     if (Array.isArray(cloudVisitors))
       localStorage.setItem("kc_visitor_requests", JSON.stringify(cloudVisitors));
+    setHotsSchedule(Array.isArray(cloudHotsSchedule) ? cloudHotsSchedule : []);
+    setHotsResults(cloudHotsResults ? Object.values(cloudHotsResults) : []);
     refresh();
   };
 
@@ -1545,6 +1559,71 @@ export default function AdminPage() {
               {regCodes.coordCode && <p className="text-sm text-green-800">منسقون: <span className="font-mono font-bold">{regCodes.coordCode}</span></p>}
             </div>
           )}
+        </div>
+
+        {/* جدول اختبار مهارات التفكير العليا */}
+        <div className="card p-6 space-y-4">
+          <div className="flex items-center gap-3 mb-1">
+            <GraduationCap className="w-6 h-6 text-violet-600" />
+            <h2 className="font-bold text-gray-800 text-lg">جدول اختبار مهارات التفكير العليا</h2>
+          </div>
+          <p className="text-xs text-gray-400">حدّد يوم كل صف — الطالب لا يقدر يفتح الاختبار ولا يشوف أسئلته إلا في يومه المحدد بالضبط، ومرة واحدة فقط.</p>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input type="date" value={hotsForm.date} onChange={e => setHotsForm(p => ({ ...p, date: e.target.value }))}
+              className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-violet-500" />
+            <select value={hotsForm.grade} onChange={e => setHotsForm(p => ({ ...p, grade: e.target.value }))}
+              className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-violet-500">
+              {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+            <button onClick={async () => {
+              if (!hotsForm.date) { alert("اختر التاريخ أولاً"); return; }
+              const next = [...hotsSchedule.filter(e => !(e.date === hotsForm.date && e.grade === hotsForm.grade)), { date: hotsForm.date, grade: hotsForm.grade }];
+              setHotsSchedule(next);
+              await cloudSet("kc_hots_schedule", next);
+            }} className="bg-violet-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-violet-600 flex items-center gap-1 justify-center">
+              <Plus className="w-4 h-4" /> إضافة
+            </button>
+          </div>
+
+          {hotsSchedule.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-3">لا يوجد جدول محدد بعد</p>
+          ) : (
+            <div className="space-y-1.5">
+              {[...hotsSchedule].sort((a, b) => a.date.localeCompare(b.date)).map((e, i) => (
+                <div key={`${e.date}_${e.grade}_${i}`} className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
+                  <span className="text-sm text-gray-700"><span className="font-mono font-bold">{e.date}</span> — {e.grade}</span>
+                  <button onClick={async () => {
+                    const next = hotsSchedule.filter(x => !(x.date === e.date && x.grade === e.grade));
+                    setHotsSchedule(next);
+                    await cloudSet("kc_hots_schedule", next);
+                  }} className="text-red-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="border-t border-gray-100 pt-4">
+            <p className="text-xs font-semibold text-gray-600 mb-2">نتائج الطلاب ({hotsResults.length})</p>
+            {hotsResults.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-3">لا توجد نتائج بعد</p>
+            ) : (
+              <div className="space-y-1.5 max-h-72 overflow-y-auto">
+                {[...hotsResults].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)).map(r => (
+                  <div key={r.studentId} className="flex items-center justify-between bg-violet-50 border border-violet-100 rounded-xl px-3 py-2.5 text-sm">
+                    <div>
+                      <p className="font-bold text-gray-800">{r.studentName}</p>
+                      <p className="text-xs text-gray-500">{r.grade} • {r.school}</p>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-violet-700">{r.correct}/{r.total}</p>
+                      <p className="text-xs text-gray-400">{Math.round(r.elapsedSeconds / 60)} د</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         </div>
       )}

@@ -5,7 +5,7 @@ import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
   Archive, Settings, X, LogOut, LogIn, Briefcase, CalendarDays,
-  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode, Radio, PenLine, Gamepad2, Brain
+  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode, Radio, PenLine, Gamepad2, Brain, Sparkles
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +42,7 @@ const adminNavItems = [
 
 const studentNavItems = [
   { href: "/student-portal", label: "بوابتي", icon: Users },
+  { href: "/talent-test", label: "اختبار مهارات التفكير العليا", icon: Sparkles },
 ];
 
 const coordinatorNavItems = [

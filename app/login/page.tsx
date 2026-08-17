@@ -7,13 +7,7 @@ import CenterLogo from "@/components/icons/CenterLogo";
 import { cloudPush } from "@/lib/cloud";
 import { getDeviceId } from "@/lib/deviceCode";
 import { whatsappLink } from "@/lib/whatsapp";
-
-const grades = [
-  "الصف الأول الابتدائي", "الصف الثاني الابتدائي", "الصف الثالث الابتدائي",
-  "الصف الرابع الابتدائي", "الصف الخامس الابتدائي", "الصف السادس الابتدائي",
-  "الصف الأول المتوسط", "الصف الثاني المتوسط", "الصف الثالث المتوسط",
-  "الصف الأول الثانوي", "الصف الثاني الثانوي", "الصف الثالث الثانوي",
-];
+import { GRADES as grades } from "@/lib/grades";
 
 type Mode = "login" | "student" | "coordinator" | "visitor";
 

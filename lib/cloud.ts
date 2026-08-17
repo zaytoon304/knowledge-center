@@ -1,4 +1,4 @@
-import { ref, get, set, push as dbPush } from "firebase/database";
+import { ref, get, set, push as dbPush, onValue, off, type DataSnapshot } from "firebase/database";
 import { db, ensureSignedIn } from "./firebase";
 
 export async function cloudGet<T>(key: string): Promise<T | null> {
@@ -36,4 +36,21 @@ export async function cloudPush<T>(key: string, item: T): Promise<void> {
 // احتياطي غير مستخدم حالياً لكن متاح لو احتجنا مفاتيح فريدة لاحقاً
 export function cloudPushKey(key: string): string | null {
   return dbPush(ref(db, key)).key;
+}
+
+// يراقب مفتاحاً بشكل مباشر (Realtime) — أي تغيير من أي جهاز يوصل فوراً بدون تحديث الصفحة.
+// يرجّع دالة إلغاء الاشتراك، استدعها عند إزالة المكوّن (useEffect cleanup).
+export function cloudListen<T>(key: string, callback: (data: T | null) => void): () => void {
+  const r = ref(db, key);
+  let cancelled = false;
+  let unsubscribe: (() => void) | null = null;
+  ensureSignedIn()
+    .then(() => {
+      if (cancelled) return;
+      const handler = (snap: DataSnapshot) => callback(snap.exists() ? (snap.val() as T) : null);
+      onValue(r, handler, (e) => console.error(`cloudListen failed for "${key}":`, e));
+      unsubscribe = () => off(r, "value", handler);
+    })
+    .catch((e) => console.error(`cloudListen sign-in failed for "${key}":`, e));
+  return () => { cancelled = true; if (unsubscribe) unsubscribe(); };
 }

@@ -4,8 +4,10 @@ import {
   Video, Plus, Trash2, ChevronRight, ChevronLeft,
   CheckCircle, FileText, Users,
   Calendar, MapPin, Clock,
-  Printer, UserCheck, AlertCircle
+  Printer, UserCheck, AlertCircle, PenLine
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { cloudSet, cloudListen } from "@/lib/cloud";
 
 /* =================== أنواع البيانات =================== */
 interface AgendaItem {
@@ -31,11 +33,25 @@ interface Meeting {
   createdAt: string;
 }
 
-type Stage = "overview" | "agenda" | "discussion" | "voting" | "minutes";
+type Stage = "overview" | "agenda" | "discussion" | "voting" | "signing" | "minutes";
+
+interface SignatureEntry { coordinatorName: string; at: string }
+// meetingId -> agendaItemId -> coordinatorId -> توقيعه
+type SignaturesTree = Record<string, Record<string, Record<string, SignatureEntry>>>;
 
 /* =================== localStorage =================== */
+// Firebase Realtime Database يحذف أي مصفوفة/كائن فارغ عند الحفظ (لا يوجد "[]" فيه) —
+// فلازم نعيد تعبئة الحقول الفارغة يدوياً بعد كل قراءة من السحابة أو من التخزين المحلي.
+function normalizeMeeting(m: Meeting): Meeting {
+  return {
+    ...m,
+    agenda: (m.agenda || []).map(a => ({ ...a, notes: a.notes || [] })),
+    discussions: m.discussions || [],
+    participants: m.participants || [],
+  };
+}
 function loadMeetings(): Meeting[] {
-  try { const d = localStorage.getItem("kc_meetings"); return d ? JSON.parse(d) : []; } catch { return []; }
+  try { const d = localStorage.getItem("kc_meetings"); return d ? (JSON.parse(d) as Meeting[]).map(normalizeMeeting) : []; } catch { return []; }
 }
 function saveMeetings(ms: Meeting[]) { localStorage.setItem("kc_meetings", JSON.stringify(ms)); }
 
@@ -64,6 +80,7 @@ const STAGES: { id: Stage; label: string; emoji: string }[] = [
   { id: "agenda", label: "المحاور", emoji: "📌" },
   { id: "discussion", label: "النقاش", emoji: "💬" },
   { id: "voting", label: "التصويت", emoji: "🗳️" },
+  { id: "signing", label: "التوقيع", emoji: "✍️" },
   { id: "minutes", label: "المحضر", emoji: "📄" },
 ];
 
@@ -74,8 +91,10 @@ const EMPTY_AGENDA: AgendaItem = {
 
 /* =================== المكوّن الرئيسي =================== */
 export default function MeetingsPage() {
+  const { user, isCoordinator } = useAuth();
   const [admin] = useState(isAdmin);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [signatures, setSignatures] = useState<SignaturesTree>({});
   const [coordinators, setCoordinators] = useState<string[]>([]);
   const [selected, setSelected] = useState<Meeting | null>(null);
   const [stage, setStage] = useState<Stage>("overview");
@@ -98,10 +117,23 @@ export default function MeetingsPage() {
   const [newAgendaTitle, setNewAgendaTitle] = useState("");
 
   useEffect(() => {
+    // نسخة محلية سريعة لحين وصول البيانات الحيّة من Firebase
     setMeetings(loadMeetings());
     setCoordinators(loadCoordinators());
     const n = localStorage.getItem("kc_student_name") || "";
     if (n) setDiscussName(n);
+
+    // مزامنة حيّة: أي تعديل من أي جهاز (محمد أو أي منسّق) يوصل فوراً لكل الأجهزة المفتوحة
+    const unsubMeetings = cloudListen<Meeting[]>("kc_meetings", data => {
+      const list = (data || []).map(normalizeMeeting);
+      saveMeetings(list);
+      setMeetings(list);
+      setSelected(prev => prev ? (list.find(m => m.id === prev.id) || null) : null);
+    });
+    const unsubSigs = cloudListen<SignaturesTree>("kc_meeting_signatures", data => {
+      setSignatures(data || {});
+    });
+    return () => { unsubMeetings(); unsubSigs(); };
   }, []);
 
   const updateMeeting = (m: Meeting) => {
@@ -109,7 +141,21 @@ export default function MeetingsPage() {
     saveMeetings(updated);
     setMeetings(updated);
     setSelected(m);
+    cloudSet("kc_meetings", updated);
   };
+
+  /* --- توقيع الالتزام ببند من بنود الاجتماع (مربوط بحساب المنسّق نفسه) --- */
+  const signAgendaItem = (agendaId: string) => {
+    if (!selected || !user || !isCoordinator) return;
+    cloudSet(`kc_meeting_signatures/${selected.id}/${agendaId}/${user.id}`, {
+      coordinatorName: user.name,
+      at: new Date().toLocaleString("ar-SA"),
+    });
+  };
+  const itemSignatures = (agendaId: string): SignatureEntry[] =>
+    selected ? Object.values(signatures[selected.id]?.[agendaId] || {}) : [];
+  const mySignature = (agendaId: string): SignatureEntry | undefined =>
+    selected && user ? signatures[selected.id]?.[agendaId]?.[user.id] : undefined;
 
   /* --- إنشاء اجتماع --- */
   const createMeeting = () => {
@@ -128,8 +174,10 @@ export default function MeetingsPage() {
       minutes: "",
       createdAt: new Date().toISOString(),
     };
-    saveMeetings([m, ...meetings]);
-    setMeetings([m, ...meetings]);
+    const next = [m, ...meetings];
+    saveMeetings(next);
+    setMeetings(next);
+    cloudSet("kc_meetings", next);
     setShowCreate(false);
     setForm({ title: "", date: "", time: "", location: "", meetingLink: "", type: "offline", description: "", participants: [], customParticipant: "", agenda: [] });
   };
@@ -211,6 +259,7 @@ export default function MeetingsPage() {
       ...selected.agenda.map((a, i) => {
         const discForItem = selected.discussions.filter(d => d.agendaId === a.id);
         const total = a.voteFor + a.voteAgainst + a.voteAbstain;
+        const sigs = Object.values(signatures[selected.id]?.[a.id] || {}) as SignatureEntry[];
         return [
           `${i + 1}. ${a.title}`,
           a.description ? `   التفاصيل: ${a.description}` : "",
@@ -218,6 +267,7 @@ export default function MeetingsPage() {
           ...discForItem.map(d => `     • ${d.coordinatorName}: ${d.content}`),
           total > 0 ? `   التصويت: مع (${a.voteFor}) | ضد (${a.voteAgainst}) | امتناع (${a.voteAbstain})` : "",
           a.decision ? `   ✅ القرار: ${a.decision}` : "   ⏳ القرار: لم يُحدد بعد",
+          sigs.length ? `   ✍️ التزم ووقّع: ${sigs.map(s => s.coordinatorName).join(" | ")}` : "   ✍️ لم يوقّع أحد على هذا البند بعد",
           "",
         ].filter(Boolean).join("\n");
       }),
@@ -233,6 +283,7 @@ export default function MeetingsPage() {
     const totalDecided = selected.agenda.filter(a => a.status === "decided").length;
     const totalVoted = selected.agenda.filter(a => a.voteFor + a.voteAgainst + a.voteAbstain > 0).length;
     const totalDiscussed = selected.discussions.length;
+    const totalSignatures = selected.agenda.reduce((n, a) => n + itemSignatures(a.id).length, 0);
 
     return (
       <div className="space-y-4 animate-fade-in max-w-3xl mx-auto">
@@ -308,7 +359,33 @@ export default function MeetingsPage() {
                 <Users className="w-4 h-4 text-violet-600" />
                 <p className="font-bold text-gray-700 text-sm">المعنيون بالاجتماع ({selected.participants.length})</p>
               </div>
-              {selected.participants.length === 0
+              {admin ? (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {coordinators.map(c => {
+                      const on = selected.participants.includes(c);
+                      return (
+                        <button key={c} onClick={() => updateMeeting({ ...selected, participants: on ? selected.participants.filter(x => x !== c) : [...selected.participants, c] })}
+                          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${on ? "bg-violet-700 text-white border-violet-700" : "bg-gray-50 text-gray-500 border-gray-200 hover:border-violet-300"}`}>
+                          {on ? "✓" : "+"} {c}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selected.participants.filter(p => !coordinators.includes(p)).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {selected.participants.filter(p => !coordinators.includes(p)).map(p => (
+                        <span key={p} className="flex items-center gap-1 bg-violet-50 text-violet-700 border border-violet-100 px-2.5 py-1 rounded-full text-xs">
+                          {p}
+                          <button onClick={() => updateMeeting({ ...selected, participants: selected.participants.filter(x => x !== p) })}
+                            className="text-violet-400 hover:text-red-500 ml-0.5">×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400">💡 أضف أي منسّق جديد يُعتمد قبل الاجتماع من هنا مباشرة — يظهر فوراً لجميع الأجهزة.</p>
+                </div>
+              ) : selected.participants.length === 0
                 ? <p className="text-gray-400 text-xs text-center py-3">لم يُحدد الحضور</p>
                 : <div className="flex flex-wrap gap-2">
                     {selected.participants.map(p => (
@@ -346,6 +423,12 @@ export default function MeetingsPage() {
                   <div className="text-3xl mb-2">🗳️</div>
                   <p className="font-bold text-gray-700 text-sm">التصويت</p>
                   <p className="text-xs text-gray-400">{totalVoted} من {selected.agenda.length}</p>
+                </button>
+                <button onClick={() => setStage("signing")}
+                  className="card p-4 text-center hover:shadow-md transition-shadow cursor-pointer">
+                  <div className="text-3xl mb-2">✍️</div>
+                  <p className="font-bold text-gray-700 text-sm">التوقيع</p>
+                  <p className="text-xs text-gray-400">{totalSignatures} توقيع</p>
                 </button>
                 <button onClick={() => setStage("minutes")}
                   className="card p-4 text-center hover:shadow-md transition-shadow cursor-pointer">
@@ -387,7 +470,17 @@ export default function MeetingsPage() {
                       <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold flex-shrink-0 text-sm">{i + 1}</div>
                       <div className="flex-1">
                         <p className="font-bold text-gray-800">{item.title}</p>
-                        {item.description && <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>}
+                        {admin ? (
+                          <textarea
+                            defaultValue={item.description}
+                            placeholder="أضف تفاصيل هذا المحور... (تظهر لكل المنسّقين)"
+                            rows={2}
+                            onBlur={e => { if (e.target.value !== item.description) updateMeeting({ ...selected, agenda: selected.agenda.map(a => a.id === item.id ? { ...a, description: e.target.value } : a) }); }}
+                            className="mt-1 w-full text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 outline-none focus:border-violet-300 resize-y"
+                          />
+                        ) : (
+                          item.description && <p className="text-xs text-gray-500 mt-0.5 whitespace-pre-line">{item.description}</p>
+                        )}
                         {item.decision && (
                           <div className="mt-2 bg-green-50 border border-green-100 rounded-xl p-2.5 text-sm text-green-800">
                             ✅ <strong>القرار:</strong> {item.decision}
@@ -573,6 +666,81 @@ export default function MeetingsPage() {
               <button onClick={() => setStage("discussion")} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm">
                 <ChevronRight className="w-4 h-4" /> السابق
               </button>
+              <button onClick={() => setStage("signing")}
+                className="flex items-center gap-2 bg-violet-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-violet-600">
+                التالي: التوقيع <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ===== التوقيع على بنود الاجتماع ===== */}
+        {stage === "signing" && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">✍️ توقيع الالتزام ببنود الاجتماع</h3>
+              <p className="text-xs text-gray-400 mt-1">كل منسّق يوقّع من حسابه على كل بند، توثيقاً لموافقته والتزامه بما ورد فيه.</p>
+            </div>
+
+            {selected.agenda.length === 0 ? (
+              <div className="card p-8 text-center text-gray-400">
+                <AlertCircle className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                <p>أضف محاور الاجتماع أولاً</p>
+              </div>
+            ) : (
+              selected.agenda.map((item, i) => {
+                const sigs = itemSignatures(item.id);
+                const mine = mySignature(item.id);
+                const canSign = isCoordinator && !!user && selected.participants.includes(user.name);
+                return (
+                  <div key={item.id} className="card p-5">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold flex-shrink-0 text-sm">{i + 1}</div>
+                      <div className="flex-1">
+                        <p className="font-bold text-gray-800">{item.title}</p>
+                        {item.decision && <p className="text-xs text-green-700 mt-1">✅ القرار: {item.decision}</p>}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {selected.participants.length === 0
+                        ? <span className="text-xs text-gray-400">لم يُحدد المعنيون بهذا الاجتماع</span>
+                        : selected.participants.map(p => {
+                            const signed = sigs.some(s => s.coordinatorName === p);
+                            return (
+                              <span key={p} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${signed ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-50 text-gray-400 border-gray-200"}`}>
+                                {signed ? <CheckCircle className="w-3.5 h-3.5" /> : <span className="w-3.5 h-3.5 rounded-full border-2 border-gray-300" />}
+                                {p}
+                              </span>
+                            );
+                          })}
+                    </div>
+
+                    {canSign ? (
+                      mine ? (
+                        <div className="bg-green-50 border border-green-100 rounded-xl p-2.5 text-sm text-green-700 flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4" /> وقّعت والتزمت بهذا البند — {mine.at}
+                        </div>
+                      ) : (
+                        <button onClick={() => signAgendaItem(item.id)}
+                          className="w-full bg-violet-700 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-violet-600 flex items-center justify-center gap-2">
+                          <PenLine className="w-4 h-4" /> أوقّع وألتزم بهذا البند
+                        </button>
+                      )
+                    ) : !isCoordinator ? (
+                      <p className="text-xs text-amber-600">⚠️ سجّل دخولك كمنسّق من حسابك الخاص للتوقيع</p>
+                    ) : user && !selected.participants.includes(user.name) ? (
+                      <p className="text-xs text-gray-400">أنت لست ضمن المعنيين بهذا الاجتماع</p>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
+
+            <div className="flex justify-between">
+              <button onClick={() => setStage("voting")} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm">
+                <ChevronRight className="w-4 h-4" /> السابق
+              </button>
               <button onClick={() => setStage("minutes")}
                 className="flex items-center gap-2 bg-violet-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-violet-600">
                 التالي: المحضر <ChevronLeft className="w-4 h-4" />
@@ -614,7 +782,7 @@ export default function MeetingsPage() {
               )}
             </div>
             <div className="flex justify-start">
-              <button onClick={() => setStage("voting")} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm">
+              <button onClick={() => setStage("signing")} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm">
                 <ChevronRight className="w-4 h-4" /> السابق
               </button>
             </div>
@@ -873,7 +1041,7 @@ export default function MeetingsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {admin && (
-                        <button onClick={e => { e.stopPropagation(); if (confirm("حذف هذا الاجتماع؟")) { const updated = meetings.filter(x => x.id !== m.id); saveMeetings(updated); setMeetings(updated); } }}
+                        <button onClick={e => { e.stopPropagation(); if (confirm("حذف هذا الاجتماع؟")) { const updated = meetings.filter(x => x.id !== m.id); saveMeetings(updated); setMeetings(updated); cloudSet("kc_meetings", updated); } }}
                           className="p-1.5 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
