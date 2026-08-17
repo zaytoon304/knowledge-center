@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { FolderOpen, Search, Users, School, ChevronRight, Code, Package, Play, Film } from "lucide-react";
+import { cloudGet } from "@/lib/cloud";
 
 interface ProjectVideo {
   id: string; title: string; url: string;
@@ -62,7 +63,12 @@ export default function ProjectsPage() {
   const [activeVideo, setActiveVideo] = useState<ProjectVideo | null>(null);
   const [activeTab, setActiveTab] = useState<"info" | "videos">("info");
 
-  useEffect(() => { setProjects(loadProjects()); }, []);
+  useEffect(() => {
+    setProjects(loadProjects());
+    cloudGet<Project[]>("kc_projects").then(data => {
+      if (Array.isArray(data)) { localStorage.setItem("kc_projects", JSON.stringify(data.map(p => ({ ...p, videos: p.videos || [] })))); setProjects(data.map(p => ({ ...p, videos: p.videos || [] }))); }
+    });
+  }, []);
 
   const fields = ["الكل", ...Array.from(new Set(projects.map(p => p.field).filter(Boolean)))];
   const levels = ["الكل", ...Array.from(new Set(projects.map(p => p.level).filter(Boolean)))];
