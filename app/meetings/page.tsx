@@ -295,11 +295,11 @@ export default function MeetingsPage() {
               <ChevronRight className="w-5 h-5" />
             </button>
             <div className="flex-1 min-w-0">
-              <h2 className="font-bold text-lg leading-tight">{selected.title}</h2>
-              <div className="flex flex-wrap gap-3 text-xs text-white/80 mt-1.5">
-                {selected.date && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{selected.date}</span>}
-                {selected.time && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{selected.time}</span>}
-                {selected.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{selected.location}</span>}
+              <h2 className="font-bold text-2xl leading-tight">{selected.title}</h2>
+              <div className="flex flex-wrap gap-4 text-sm text-white/80 mt-2">
+                {selected.date && <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />{selected.date}</span>}
+                {selected.time && <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" />{selected.time}</span>}
+                {selected.location && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{selected.location}</span>}
               </div>
             </div>
             {admin ? (
@@ -334,11 +334,11 @@ export default function MeetingsPage() {
         </div>
 
         {/* تبويبات المراحل */}
-        <div className="card p-1.5 flex gap-1 overflow-x-auto">
+        <div className="card p-2 flex gap-1.5 overflow-x-auto">
           {STAGES.map(s => (
             <button key={s.id} onClick={() => setStage(s.id)}
-              className={`flex-1 min-w-fit flex items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${stage === s.id ? "bg-violet-700 text-white shadow" : "text-gray-500 hover:bg-gray-100"}`}>
-              <span>{s.emoji}</span> {s.label}
+              className={`flex-1 min-w-fit flex items-center justify-center gap-1.5 py-3.5 px-3 rounded-xl text-base font-bold transition-all whitespace-nowrap ${stage === s.id ? "bg-violet-700 text-white shadow" : "text-gray-500 hover:bg-gray-100"}`}>
+              <span className="text-2xl">{s.emoji}</span> {s.label}
             </button>
           ))}
         </div>
@@ -348,16 +348,16 @@ export default function MeetingsPage() {
           <div className="space-y-4">
             {selected.description && (
               <div className="card p-5">
-                <p className="text-xs font-semibold text-gray-500 mb-2">وصف الاجتماع</p>
-                <p className="text-sm text-gray-700 leading-relaxed">{selected.description}</p>
+                <p className="text-sm font-semibold text-gray-500 mb-2">وصف الاجتماع</p>
+                <p className="text-lg text-gray-700 leading-relaxed">{selected.description}</p>
               </div>
             )}
 
             {/* الحضور */}
             <div className="card p-5">
               <div className="flex items-center gap-2 mb-3">
-                <Users className="w-4 h-4 text-violet-600" />
-                <p className="font-bold text-gray-700 text-sm">المعنيون بالاجتماع ({selected.participants.length})</p>
+                <Users className="w-5 h-5 text-violet-600" />
+                <p className="font-bold text-gray-700 text-lg">المعنيون بالاجتماع ({selected.participants.length})</p>
               </div>
               {admin ? (
                 <div className="space-y-3">
@@ -386,19 +386,19 @@ export default function MeetingsPage() {
                   <p className="text-xs text-gray-400">💡 أضف أي منسّق جديد يُعتمد قبل الاجتماع من هنا مباشرة — يظهر فوراً لجميع الأجهزة.</p>
                 </div>
               ) : selected.participants.length === 0
-                ? <p className="text-gray-400 text-xs text-center py-3">لم يُحدد الحضور</p>
-                : <div className="flex flex-wrap gap-2">
+                ? <p className="text-gray-400 text-base text-center py-3">لم يُحدد الحضور</p>
+                : <div className="flex flex-wrap gap-2.5">
                     {selected.participants.map(p => (
-                      <span key={p} className="flex items-center gap-1.5 bg-violet-50 text-violet-700 border border-violet-100 px-3 py-1.5 rounded-full text-sm font-medium">
-                        <UserCheck className="w-3.5 h-3.5" /> {p}
+                      <span key={p} className="flex items-center gap-2 bg-violet-50 text-violet-700 border border-violet-100 px-4 py-2 rounded-full text-lg font-medium">
+                        <UserCheck className="w-5 h-5" /> {p}
                       </span>
                     ))}
                   </div>
               }
               {selected.meetingLink && (
                 <a href={selected.meetingLink} target="_blank" rel="noopener noreferrer"
-                  className="mt-3 flex items-center gap-2 text-blue-600 text-sm hover:underline">
-                  <Video className="w-4 h-4" /> رابط الاجتماع الإلكتروني
+                  className="mt-3 flex items-center gap-2 text-blue-600 text-base hover:underline">
+                  <Video className="w-5 h-5" /> رابط الاجتماع الإلكتروني
                 </a>
               )}
             </div>
@@ -465,29 +465,29 @@ export default function MeetingsPage() {
                 };
                 const statusLabels = { decided: "✅ مُقرَّر", voted: "🗳️ مُصوَّت", discussed: "💬 نوقش", pending: "⏳ قيد النقاش" };
                 return (
-                  <div key={item.id} className={`card p-4 border-r-4 ${statusColors[item.status]}`}>
+                  <div key={item.id} className={`card p-5 border-r-4 ${statusColors[item.status]}`}>
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold flex-shrink-0 text-sm">{i + 1}</div>
+                      <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold flex-shrink-0 text-lg">{i + 1}</div>
                       <div className="flex-1">
-                        <p className="font-bold text-gray-800">{item.title}</p>
+                        <p className="font-bold text-gray-800 text-xl">{item.title}</p>
                         {admin ? (
                           <textarea
                             defaultValue={item.description}
                             placeholder="أضف تفاصيل هذا المحور... (تظهر لكل المنسّقين)"
                             rows={2}
                             onBlur={e => { if (e.target.value !== item.description) updateMeeting({ ...selected, agenda: selected.agenda.map(a => a.id === item.id ? { ...a, description: e.target.value } : a) }); }}
-                            className="mt-1 w-full text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 outline-none focus:border-violet-300 resize-y"
+                            className="mt-1.5 w-full text-base text-gray-600 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 outline-none focus:border-violet-300 resize-y"
                           />
                         ) : (
-                          item.description && <p className="text-xs text-gray-500 mt-0.5 whitespace-pre-line">{item.description}</p>
+                          item.description && <p className="text-base text-gray-600 mt-1.5 whitespace-pre-line leading-relaxed">{item.description}</p>
                         )}
                         {item.decision && (
-                          <div className="mt-2 bg-green-50 border border-green-100 rounded-xl p-2.5 text-sm text-green-800">
+                          <div className="mt-3 bg-green-50 border border-green-100 rounded-xl p-3 text-base text-green-800">
                             ✅ <strong>القرار:</strong> {item.decision}
                           </div>
                         )}
                         {item.voteFor + item.voteAgainst + item.voteAbstain > 0 && (
-                          <div className="mt-2 flex gap-3 text-xs">
+                          <div className="mt-2 flex gap-3 text-sm">
                             <span className="text-green-600">👍 {item.voteFor}</span>
                             <span className="text-red-500">👎 {item.voteAgainst}</span>
                             <span className="text-gray-400">➖ {item.voteAbstain}</span>
@@ -495,7 +495,7 @@ export default function MeetingsPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="text-xs text-gray-400">{statusLabels[item.status]}</span>
+                        <span className="text-sm font-medium text-gray-400">{statusLabels[item.status]}</span>
                         {admin && (
                           <button onClick={() => deleteAgenda(item.id)} className="p-1 text-red-300 hover:text-red-500 ml-1">
                             <Trash2 className="w-3.5 h-3.5" />
@@ -695,21 +695,21 @@ export default function MeetingsPage() {
                 return (
                   <div key={item.id} className="card p-5">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold flex-shrink-0 text-sm">{i + 1}</div>
+                      <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold flex-shrink-0 text-lg">{i + 1}</div>
                       <div className="flex-1">
-                        <p className="font-bold text-gray-800">{item.title}</p>
-                        {item.decision && <p className="text-xs text-green-700 mt-1">✅ القرار: {item.decision}</p>}
+                        <p className="font-bold text-gray-800 text-xl">{item.title}</p>
+                        {item.decision && <p className="text-base text-green-700 mt-1.5">✅ القرار: {item.decision}</p>}
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 mb-3">
+                    <div className="flex flex-wrap gap-2.5 mb-4">
                       {selected.participants.length === 0
-                        ? <span className="text-xs text-gray-400">لم يُحدد المعنيون بهذا الاجتماع</span>
+                        ? <span className="text-sm text-gray-400">لم يُحدد المعنيون بهذا الاجتماع</span>
                         : selected.participants.map(p => {
                             const signed = sigs.some(s => s.coordinatorName === p);
                             return (
-                              <span key={p} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${signed ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-50 text-gray-400 border-gray-200"}`}>
-                                {signed ? <CheckCircle className="w-3.5 h-3.5" /> : <span className="w-3.5 h-3.5 rounded-full border-2 border-gray-300" />}
+                              <span key={p} className={`flex items-center gap-2 px-4 py-2 rounded-full text-base font-medium border ${signed ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-50 text-gray-400 border-gray-200"}`}>
+                                {signed ? <CheckCircle className="w-5 h-5" /> : <span className="w-5 h-5 rounded-full border-2 border-gray-300" />}
                                 {p}
                               </span>
                             );
@@ -718,19 +718,19 @@ export default function MeetingsPage() {
 
                     {canSign ? (
                       mine ? (
-                        <div className="bg-green-50 border border-green-100 rounded-xl p-2.5 text-sm text-green-700 flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4" /> وقّعت والتزمت بهذا البند — {mine.at}
+                        <div className="bg-green-50 border border-green-100 rounded-xl p-3 text-base text-green-700 flex items-center gap-2">
+                          <CheckCircle className="w-5 h-5" /> وقّعت والتزمت بهذا البند — {mine.at}
                         </div>
                       ) : (
                         <button onClick={() => signAgendaItem(item.id)}
-                          className="w-full bg-violet-700 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-violet-600 flex items-center justify-center gap-2">
-                          <PenLine className="w-4 h-4" /> أوقّع وألتزم بهذا البند
+                          className="w-full bg-violet-700 text-white py-3.5 rounded-xl text-base font-bold hover:bg-violet-600 flex items-center justify-center gap-2">
+                          <PenLine className="w-5 h-5" /> أوقّع وألتزم بهذا البند
                         </button>
                       )
                     ) : !isCoordinator ? (
-                      <p className="text-xs text-amber-600">⚠️ سجّل دخولك كمنسّق من حسابك الخاص للتوقيع</p>
+                      <p className="text-sm text-amber-600">⚠️ سجّل دخولك كمنسّق من حسابك الخاص للتوقيع</p>
                     ) : user && !selected.participants.includes(user.name) ? (
-                      <p className="text-xs text-gray-400">أنت لست ضمن المعنيين بهذا الاجتماع</p>
+                      <p className="text-sm text-gray-400">أنت لست ضمن المعنيين بهذا الاجتماع</p>
                     ) : null}
                   </div>
                 );
