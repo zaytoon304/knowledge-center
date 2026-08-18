@@ -1,7 +1,15 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, Send, Users, Plus, ArrowRight, Lock, Hash } from "lucide-react";
+import { MessageSquare, Send, Users, ArrowRight, Lock, Hash, Paperclip, Video, FileText, X, Image as ImageIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cloudListen, cloudTransact, cloudSet } from "@/lib/cloud";
+
+interface Attachment {
+  kind: "image" | "file" | "video";
+  data?: string;   // صورة أو ملف — Base64
+  name?: string;   // اسم الملف
+  url?: string;    // فيديو — رابط
+}
 
 interface ChatMessage {
   id: string;
@@ -9,6 +17,7 @@ interface ChatMessage {
   senderName: string;
   senderId: string;
   timestamp: string;
+  attachment?: Attachment;
 }
 
 interface GroupWithMembers {
@@ -19,18 +28,22 @@ interface GroupWithMembers {
 
 const ADMIN_ID = "__admin__";
 const ADMIN_NAME = "إدارة المركز";
+const ADMIN_SIGNATURE = "إعداد: مشروع الموهبة والذكاء الاصطناعي — محمد زيتون";
 
 function loadMessages(groupId: string): ChatMessage[] {
   try { const d = localStorage.getItem(`kc_chat_${groupId}`); return d ? JSON.parse(d) : []; } catch { return []; }
 }
-function saveMessages(groupId: string, msgs: ChatMessage[]) {
+function saveMessagesLocal(groupId: string, msgs: ChatMessage[]) {
   localStorage.setItem(`kc_chat_${groupId}`, JSON.stringify(msgs));
 }
 function loadGroups(): GroupWithMembers[] {
   try { const d = localStorage.getItem("kc_groups"); return d ? JSON.parse(d) : []; } catch { return []; }
 }
-function saveGroups(gs: GroupWithMembers[]) {
+function saveGroupsLocal(gs: GroupWithMembers[]) {
   localStorage.setItem("kc_groups", JSON.stringify(gs));
+}
+function fileToBase64(file: File): Promise<string> {
+  return new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target?.result as string); fr.readAsDataURL(file); });
 }
 
 function timeAgo(ts: string): string {
@@ -45,25 +58,37 @@ function timeAgo(ts: string): string {
 
 export default function GroupsPage() {
   const { user, isLoggedIn, getAllStudents, getAllCoordinators } = useAuth();
-  const isAdmin = !isLoggedIn && typeof window !== "undefined" && localStorage.getItem("kc_admin_auth") === "1";
   const [adminCheck, setAdminCheck] = useState(false);
 
   const [groups, setGroups] = useState<GroupWithMembers[]>([]);
   const [activeGroup, setActiveGroup] = useState<GroupWithMembers | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [pendingAttachment, setPendingAttachment] = useState<Attachment | null>(null);
+  const [showVideoInput, setShowVideoInput] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("");
   const [showMembers, setShowMembers] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setAdminCheck(typeof window !== "undefined" && localStorage.getItem("kc_admin_auth") === "1");
-    const gs = loadGroups();
-    setGroups(gs);
+    setGroups(loadGroups());
+    const unsub = cloudListen<GroupWithMembers[]>("kc_groups", data => {
+      if (Array.isArray(data)) { saveGroupsLocal(data); setGroups(data); }
+    });
+    return unsub;
   }, []);
 
   useEffect(() => {
-    if (activeGroup) setMessages(loadMessages(activeGroup.id));
+    if (!activeGroup) return;
+    setMessages(loadMessages(activeGroup.id));
+    const unsub = cloudListen<ChatMessage[]>(`kc_chat_${activeGroup.id}`, data => {
+      const list = Array.isArray(data) ? data : [];
+      saveMessagesLocal(activeGroup.id, list);
+      setMessages(list);
+    });
+    return unsub;
   }, [activeGroup]);
 
   useEffect(() => {
@@ -81,20 +106,40 @@ export default function GroupsPage() {
     return g.members?.includes(currentId);
   });
 
-  const sendMessage = () => {
-    if (!input.trim() || !activeGroup) return;
+  const handleImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setPendingAttachment({ kind: "image", data: await fileToBase64(f), name: f.name });
+    e.target.value = "";
+  };
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setPendingAttachment({ kind: "file", data: await fileToBase64(f), name: f.name });
+    e.target.value = "";
+  };
+  const attachVideo = () => {
+    if (!videoUrl.trim()) return;
+    setPendingAttachment({ kind: "video", url: videoUrl.trim() });
+    setVideoUrl(""); setShowVideoInput(false);
+  };
+
+  const sendMessage = async () => {
+    if ((!input.trim() && !pendingAttachment) || !activeGroup) return;
     if (!adminCheck && !isLoggedIn) return;
+    const groupId = activeGroup.id;
     const msg: ChatMessage = {
       id: Date.now().toString(),
       content: input.trim(),
       senderName: currentName,
       senderId: currentId,
       timestamp: new Date().toISOString(),
+      ...(pendingAttachment ? { attachment: pendingAttachment } : {}),
     };
-    const updated = [...messages, msg];
-    saveMessages(activeGroup.id, updated);
-    setMessages(updated);
-    setInput("");
+    setInput(""); setPendingAttachment(null);
+    // معاملة آمنة: أكثر من عضو قد يرسل رسالة بنفس اللحظة تماماً بجروب مزدحم
+    await cloudTransact<ChatMessage[]>(`kc_chat_${groupId}`, current => {
+      const list = Array.isArray(current) ? current : loadMessages(groupId);
+      return [...list, msg];
+    });
   };
 
   /* قائمة الأعضاء المتاحة للإضافة */
@@ -112,7 +157,8 @@ export default function GroupsPage() {
         : [...(g.members || []), uid];
       return { ...g, members };
     });
-    saveGroups(updated);
+    saveGroupsLocal(updated);
+    cloudSet("kc_groups", updated);
     setGroups(updated);
     setActiveGroup(updated.find(g => g.id === activeGroup.id) || null);
   };
@@ -245,13 +291,37 @@ export default function GroupsPage() {
                 ) : (
                   messages.map(msg => {
                     const isMe = msg.senderId === currentId;
+                    const isFromAdmin = msg.senderId === ADMIN_ID;
                     return (
                       <div key={msg.id} className={`flex ${isMe ? "justify-start" : "justify-end"}`}>
                         <div className={`max-w-[75%] ${isMe ? "items-start" : "items-end"} flex flex-col gap-1`}>
                           {!isMe && <span className="text-xs text-gray-500 px-1">{msg.senderName}</span>}
                           <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${isMe ? "bg-blue-700 text-white rounded-tr-sm" : "bg-white text-gray-800 rounded-tl-sm"}`}>
                             {isMe && <span className="block text-xs text-blue-200 mb-0.5">{msg.senderName}</span>}
+
+                            {msg.attachment?.kind === "image" && (
+                              <img src={msg.attachment.data} alt={msg.attachment.name || ""} className="rounded-xl max-w-full max-h-64 object-cover mb-2" />
+                            )}
+                            {msg.attachment?.kind === "video" && (
+                              <a href={msg.attachment.url} target="_blank" rel="noopener noreferrer"
+                                className={`flex items-center gap-2 rounded-xl px-3 py-2 mb-2 text-xs font-medium ${isMe ? "bg-white/15 text-white" : "bg-blue-50 text-blue-700"}`}>
+                                <Video className="w-4 h-4 flex-shrink-0" /> رابط فيديو
+                              </a>
+                            )}
+                            {msg.attachment?.kind === "file" && (
+                              <a href={msg.attachment.data} download={msg.attachment.name}
+                                className={`flex items-center gap-2 rounded-xl px-3 py-2 mb-2 text-xs font-medium ${isMe ? "bg-white/15 text-white" : "bg-blue-50 text-blue-700"}`}>
+                                <FileText className="w-4 h-4 flex-shrink-0" /> <span className="truncate">{msg.attachment.name || "ملف مرفق"}</span>
+                              </a>
+                            )}
+
                             {msg.content}
+
+                            {isFromAdmin && (
+                              <p className={`mt-2 pt-1.5 border-t text-[10px] ${isMe ? "border-white/20 text-blue-200" : "border-gray-100 text-gray-400"}`}>
+                                {ADMIN_SIGNATURE}
+                              </p>
+                            )}
                           </div>
                           <span className="text-xs text-gray-400 px-1">{timeAgo(msg.timestamp)}</span>
                         </div>
@@ -262,8 +332,43 @@ export default function GroupsPage() {
                 <div ref={messagesEndRef} />
               </div>
 
+              {/* مرفق قيد الإرسال */}
+              {pendingAttachment && (
+                <div className="px-3 pt-2 border-t bg-white">
+                  <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 text-xs text-blue-700">
+                    {pendingAttachment.kind === "image" && <ImageIcon className="w-4 h-4 flex-shrink-0" />}
+                    {pendingAttachment.kind === "video" && <Video className="w-4 h-4 flex-shrink-0" />}
+                    {pendingAttachment.kind === "file" && <FileText className="w-4 h-4 flex-shrink-0" />}
+                    <span className="flex-1 truncate">{pendingAttachment.name || pendingAttachment.url || "مرفق"}</span>
+                    <button onClick={() => setPendingAttachment(null)} className="text-blue-400 hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
+                  </div>
+                </div>
+              )}
+              {showVideoInput && (
+                <div className="px-3 pt-2 border-t bg-white flex gap-2">
+                  <input value={videoUrl} onChange={e => setVideoUrl(e.target.value)}
+                    placeholder="رابط الفيديو (يوتيوب أو رابط مباشر)" dir="ltr"
+                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none font-mono" />
+                  <button onClick={attachVideo} className="bg-blue-700 text-white px-4 py-2 rounded-xl text-sm">إرفاق</button>
+                  <button onClick={() => { setShowVideoInput(false); setVideoUrl(""); }} className="bg-gray-100 text-gray-500 px-3 py-2 rounded-xl text-sm">إلغاء</button>
+                </div>
+              )}
+
               {/* Input */}
               <div className="p-3 border-t bg-white flex gap-2">
+                <label className="w-10 h-10 flex-shrink-0 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-100 cursor-pointer" title="إرفاق صورة">
+                  <ImageIcon className="w-4 h-4" />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImage} />
+                </label>
+                <label className="w-10 h-10 flex-shrink-0 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-100 cursor-pointer" title="إرفاق ملف / خطاب">
+                  <Paperclip className="w-4 h-4" />
+                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*" className="hidden" onChange={handleFile} />
+                </label>
+                <button onClick={() => setShowVideoInput(v => !v)}
+                  className={`w-10 h-10 flex-shrink-0 border rounded-xl flex items-center justify-center transition-colors ${showVideoInput ? "bg-blue-100 border-blue-200 text-blue-700" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}
+                  title="إرفاق رابط فيديو">
+                  <Video className="w-4 h-4" />
+                </button>
                 <input
                   value={input}
                   onChange={e => setInput(e.target.value)}
@@ -272,8 +377,8 @@ export default function GroupsPage() {
                   className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50"
                 />
                 <button onClick={sendMessage}
-                  disabled={!input.trim()}
-                  className="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center text-white disabled:opacity-40 hover:bg-blue-600 transition-colors">
+                  disabled={!input.trim() && !pendingAttachment}
+                  className="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center text-white disabled:opacity-40 hover:bg-blue-600 transition-colors flex-shrink-0">
                   <Send className="w-4 h-4" />
                 </button>
               </div>
