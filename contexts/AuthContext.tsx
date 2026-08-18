@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { cloudGet, cloudSet, cloudPush } from "@/lib/cloud";
+import { cloudGet, cloudSet, cloudPush, cloudTransact } from "@/lib/cloud";
 import { getDeviceId, validateAccessCode, grantAccess, hasAccess as hasDeviceAccess, revokeAccess } from "@/lib/deviceCode";
 
 export interface StudentProfile {
@@ -338,33 +338,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(updated); save(KEYS.currentUser, updated);
   };
 
+  // نستخدم معاملة (transaction) حقيقية بدل استبدال القائمة كاملة، لأن أكثر من منسّق
+  // (أو منسّق والإدارة معاً) قد يوافقون/يرفضون طلاباً مختلفين بنفس اللحظة تماماً.
   const approveStudent = (id: string) => {
     const all = getAllStudents().map(s => s.id === id ? { ...s, status: "approved" as const } : s);
-    save(KEYS.students, all); cloudSet("kc_students", all);
+    save(KEYS.students, all);
+    cloudTransact<StudentProfile[]>("kc_students", current => {
+      const list = Array.isArray(current) && current.length > 0 ? current : all;
+      return list.map(s => s.id === id ? { ...s, status: "approved" as const } : s);
+    });
     if (user?.id === id) { const u = { ...user, status: "approved" as const }; setUser(u); save(KEYS.currentUser, u); }
   };
   const rejectStudent = (id: string) => {
     const all = getAllStudents().map(s => s.id === id ? { ...s, status: "rejected" as const } : s);
-    save(KEYS.students, all); cloudSet("kc_students", all);
+    save(KEYS.students, all);
+    cloudTransact<StudentProfile[]>("kc_students", current => {
+      const list = Array.isArray(current) && current.length > 0 ? current : all;
+      return list.map(s => s.id === id ? { ...s, status: "rejected" as const } : s);
+    });
   };
   const deleteStudent = (id: string) => {
     const all = getAllStudents().filter(s => s.id !== id);
-    save(KEYS.students, all); cloudSet("kc_students", all);
+    save(KEYS.students, all);
+    cloudTransact<StudentProfile[]>("kc_students", current => {
+      const list = Array.isArray(current) && current.length > 0 ? current : all;
+      return list.filter(s => s.id !== id);
+    });
     if (user?.id === id) logout();
   };
 
   const approveCoordinator = (id: string) => {
     const all = getAllCoordinators().map(c => c.id === id ? { ...c, status: "approved" as const } : c);
-    save(KEYS.coordinators, all); cloudSet("kc_coordinators", all);
+    save(KEYS.coordinators, all);
+    cloudTransact<CoordinatorProfile[]>("kc_coordinators", current => {
+      const list = Array.isArray(current) && current.length > 0 ? current : all;
+      return list.map(c => c.id === id ? { ...c, status: "approved" as const } : c);
+    });
     if (user?.id === id) { const u = { ...user, status: "approved" as const }; setUser(u); save(KEYS.currentUser, u); }
   };
   const rejectCoordinator = (id: string) => {
     const all = getAllCoordinators().map(c => c.id === id ? { ...c, status: "rejected" as const } : c);
-    save(KEYS.coordinators, all); cloudSet("kc_coordinators", all);
+    save(KEYS.coordinators, all);
+    cloudTransact<CoordinatorProfile[]>("kc_coordinators", current => {
+      const list = Array.isArray(current) && current.length > 0 ? current : all;
+      return list.map(c => c.id === id ? { ...c, status: "rejected" as const } : c);
+    });
   };
   const deleteCoordinator = (id: string) => {
     const all = getAllCoordinators().filter(c => c.id !== id);
-    save(KEYS.coordinators, all); cloudSet("kc_coordinators", all);
+    save(KEYS.coordinators, all);
+    cloudTransact<CoordinatorProfile[]>("kc_coordinators", current => {
+      const list = Array.isArray(current) && current.length > 0 ? current : all;
+      return list.filter(c => c.id !== id);
+    });
     if (user?.id === id) logout();
   };
 

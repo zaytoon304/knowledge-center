@@ -1,13 +1,14 @@
 "use client";
-import { useState } from "react";
-import { useAuth, CoordinatorProfile } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
+import { useAuth, CoordinatorProfile, StudentProfile } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import {
   Briefcase, Calendar, Layers, Trophy, Star, Archive, GraduationCap,
-  LogIn, Clock, XCircle, Download, FileText, Camera, Users
+  LogIn, Clock, XCircle, Download, FileText, Camera, Users, UserCheck
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { whatsappLink } from "@/lib/whatsapp";
+import { cloudListen } from "@/lib/cloud";
 
 const PlansSection = dynamic(() => import("@/components/coordinator/PlansSection"), { ssr: false });
 const ProgramsSection = dynamic(() => import("@/components/coordinator/ProgramsSection"), { ssr: false });
@@ -16,9 +17,11 @@ const AchievementsSection = dynamic(() => import("@/components/coordinator/Achie
 const ArchiveSection = dynamic(() => import("@/components/coordinator/ArchiveSection"), { ssr: false });
 const ProfDevSection = dynamic(() => import("@/components/coordinator/ProfDevSection"), { ssr: false });
 const StudentsSection = dynamic(() => import("@/components/coordinator/StudentsSection"), { ssr: false });
+const PendingStudentsSection = dynamic(() => import("@/components/coordinator/PendingStudentsSection"), { ssr: false });
 
 const tabs = [
   { id: "dashboard", label: "رئيسيتي", icon: Briefcase },
+  { id: "pending", label: "طلاب بانتظار الموافقة", icon: UserCheck },
   { id: "students", label: "طلابي وفرقي", icon: Users },
   { id: "plans", label: "الخطط", icon: Calendar },
   { id: "programs", label: "البرامج", icon: Layers },
@@ -87,6 +90,15 @@ export default function CoordinatorPortalPage() {
   const { user, isCoordinator, isLoggedIn, isApproved, logout } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState("dashboard");
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (!isCoordinator || !isApproved) return;
+    const unsub = cloudListen<StudentProfile[]>("kc_students", data => {
+      setPendingCount(Array.isArray(data) ? data.filter(s => s.status === "pending").length : 0);
+    });
+    return unsub;
+  }, [isCoordinator, isApproved]);
 
   if (!isLoggedIn || !isCoordinator) {
     return (
@@ -149,6 +161,9 @@ export default function CoordinatorPortalPage() {
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${tab === t.id ? "bg-violet-700 text-white shadow-md" : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"}`}>
               <Icon className="w-4 h-4" /> {t.label}
+              {t.id === "pending" && pendingCount > 0 && (
+                <span className={`text-xs font-bold rounded-full px-1.5 ${tab === t.id ? "bg-white/20" : "bg-amber-100 text-amber-700"}`}>{pendingCount}</span>
+              )}
             </button>
           );
         })}
@@ -190,6 +205,7 @@ export default function CoordinatorPortalPage() {
         </div>
       )}
 
+      {tab === "pending" && <PendingStudentsSection />}
       {tab === "students" && <StudentsSection />}
       {tab === "plans" && <PlansSection />}
       {tab === "programs" && <ProgramsSection />}
