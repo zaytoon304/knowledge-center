@@ -225,6 +225,8 @@ export default function AdminPage() {
   const [videoForm, setVideoForm] = useState({ title: "", url: "", type: "journey" as ProjectVideo["type"], description: "" });
   const [dailyLog, setDailyLog] = useState<DailyLogEntry[]>([]);
   const [showDForm, setShowDForm] = useState(false);
+  const [dImagesUploading, setDImagesUploading] = useState(0);
+  const [dSubmitting, setDSubmitting] = useState(false);
   const [studentSearch, setStudentSearch] = useState("");
   const [taskSearch, setTaskSearch] = useState("");
   const [taskSelectedIds, setTaskSelectedIds] = useState<string[]>([]);
@@ -1755,14 +1757,25 @@ export default function AdminPage() {
                     <ImageIcon className="w-4 h-4" /> إضافة صور (متعددة)
                     <input type="file" accept="image/*" multiple className="hidden" onChange={e => {
                       const files = Array.from(e.target.files || []);
+                      setDImagesUploading(n => n + files.length);
                       files.forEach(f => {
                         const r = new FileReader();
-                        r.onload = ev => setDForm(p => ({ ...p, images: [...p.images, { data: ev.target?.result as string, name: f.name }] }));
+                        r.onload = ev => {
+                          setDForm(p => ({ ...p, images: [...p.images, { data: ev.target?.result as string, name: f.name }] }));
+                          setDImagesUploading(n => n - 1);
+                        };
+                        r.onerror = () => setDImagesUploading(n => n - 1);
                         r.readAsDataURL(f);
                       });
                       e.target.value = "";
                     }} />
                   </label>
+                  {dImagesUploading > 0 && (
+                    <p className="text-xs text-blue-600 mt-2 flex items-center gap-1.5">
+                      <span className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                      جارٍ تحميل {dImagesUploading} صورة... انتظر قبل النشر
+                    </p>
+                  )}
                   {dForm.images.length > 0 && (
                     <div className="flex gap-2 mt-2 flex-wrap">
                       {dForm.images.map((img, i) => (
@@ -1789,13 +1802,18 @@ export default function AdminPage() {
               </div>
               <div className="flex gap-2">
                 <button onClick={async () => {
-                  if (!dForm.title.trim()) return;
+                  if (!dForm.title.trim() || dSubmitting || dImagesUploading > 0) return;
+                  setDSubmitting(true);
                   const ok = await addDailyLogEntry({ ...dForm, videoLinks: dForm.videoLinks.filter(l => l.trim()) });
                   if (!ok) alert("⚠️ تعذر حفظ اليومية بالسحابة — تحقق من اتصال الإنترنت وحاول مرة أخرى. اليومية محفوظة مؤقتاً على جهازك فقط ولن تظهر لغيرك حتى تنجح المزامنة.");
+                  setDSubmitting(false);
                   setShowDForm(false);
                   setDForm({ title: "", date: "", description: "", category: "نشاط", images: [], videoLinks: [""] });
                   refresh();
-                }} className="bg-blue-800 text-white px-6 py-2 rounded-xl text-sm font-semibold">نشر</button>
+                }} disabled={dSubmitting || dImagesUploading > 0}
+                  className="bg-blue-800 text-white px-6 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                  {dSubmitting ? "جارٍ النشر..." : dImagesUploading > 0 ? "بانتظار الصور..." : "نشر"}
+                </button>
                 <button onClick={() => setShowDForm(false)} className="bg-gray-100 text-gray-600 px-6 py-2 rounded-xl text-sm">إلغاء</button>
               </div>
             </div>
