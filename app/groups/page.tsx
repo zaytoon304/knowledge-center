@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, Send, Users, ArrowRight, Lock, Hash, Paperclip, Video, FileText, X, Image as ImageIcon, Mic, Square, Upload } from "lucide-react";
+import { MessageSquare, Send, Users, ArrowRight, Lock, Hash, Paperclip, Video, FileText, X, Image as ImageIcon, Mic, Square, Upload, Play } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cloudListen, cloudTransact, cloudSet } from "@/lib/cloud";
+import { extractYouTubeId, youtubeThumbUrl } from "@/lib/youtube";
+import { noDownloadProps } from "@/lib/imageProtect";
 
 interface Attachment {
   kind: "image" | "file" | "video" | "audio";
@@ -366,17 +368,29 @@ export default function GroupsPage() {
                             {isMe && <span className="block text-xs text-blue-200 mb-0.5">{msg.senderName}</span>}
 
                             {msg.attachment?.kind === "image" && (
-                              <img src={msg.attachment.data} alt={msg.attachment.name || ""} className="rounded-xl max-w-full max-h-64 object-cover mb-2" />
+                              <img src={msg.attachment.data} alt={msg.attachment.name || ""} className="rounded-xl max-w-full max-h-64 object-cover mb-2" {...noDownloadProps} />
                             )}
                             {msg.attachment?.kind === "video" && msg.attachment.data && (
-                              <video src={msg.attachment.data} controls className="rounded-xl max-w-full max-h-64 mb-2" />
+                              <video src={msg.attachment.data} controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} className="rounded-xl max-w-full max-h-64 mb-2" />
                             )}
-                            {msg.attachment?.kind === "video" && msg.attachment.url && (
-                              <a href={msg.attachment.url} target="_blank" rel="noopener noreferrer"
-                                className={`flex items-center gap-2 rounded-xl px-3 py-2 mb-2 text-xs font-medium ${isMe ? "bg-white/15 text-white" : "bg-blue-50 text-blue-700"}`}>
-                                <Video className="w-4 h-4 flex-shrink-0" /> رابط فيديو
-                              </a>
-                            )}
+                            {msg.attachment?.kind === "video" && msg.attachment.url && (() => {
+                              const vid = extractYouTubeId(msg.attachment.url);
+                              return vid ? (
+                                <a href={msg.attachment.url} target="_blank" rel="noopener noreferrer" className="relative rounded-xl overflow-hidden group block mb-2">
+                                  <img src={youtubeThumbUrl(vid)} alt="فيديو" className="w-full max-w-[220px] aspect-video object-cover" {...noDownloadProps} />
+                                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/35 transition-colors flex items-center justify-center">
+                                    <div className="w-9 h-9 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+                                      <Play className="w-3.5 h-3.5 text-white fill-white" />
+                                    </div>
+                                  </div>
+                                </a>
+                              ) : (
+                                <a href={msg.attachment.url} target="_blank" rel="noopener noreferrer"
+                                  className={`flex items-center gap-2 rounded-xl px-3 py-2 mb-2 text-xs font-medium ${isMe ? "bg-white/15 text-white" : "bg-blue-50 text-blue-700"}`}>
+                                  <Video className="w-4 h-4 flex-shrink-0" /> رابط فيديو
+                                </a>
+                              );
+                            })()}
                             {msg.attachment?.kind === "audio" && (
                               <div className="mb-2">
                                 <audio src={msg.attachment.data} controls className="max-w-full" style={{ height: "36px" }} />

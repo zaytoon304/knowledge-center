@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Cpu, Brain, Wifi, Bot, Glasses, Printer, ChevronLeft, BookOpen, Play, Link2 } from "lucide-react";
 import { cloudGet } from "@/lib/cloud";
+import { noDownloadProps } from "@/lib/imageProtect";
 
 /* التقنيات الافتراضية (تظهر دائماً) */
 const DEFAULT_TECHS = [
@@ -108,7 +109,7 @@ export default function EmergingTechPage() {
             <div key={t.id} onClick={() => setSelected(t.id)}
               className="card p-6 cursor-pointer group hover:shadow-lg transition-all">
               {t.image ? (
-                <img src={t.image} alt={t.title} className="w-14 h-14 rounded-2xl object-cover mb-4" />
+                <img src={t.image} alt={t.title} className="w-14 h-14 rounded-2xl object-cover mb-4" {...noDownloadProps} />
               ) : (
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${t.color || "from-blue-600 to-cyan-500"} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform text-2xl`}>
                   {t.emoji || "💡"}
@@ -138,7 +139,7 @@ export default function EmergingTechPage() {
           <div className={`card p-8 bg-gradient-to-br ${tech.color || "from-blue-700 to-cyan-500"} text-white`}>
             <div className="flex items-center gap-4 mb-4">
               {tech.image ? (
-                <img src={tech.image} alt={tech.title} className="w-16 h-16 rounded-2xl object-cover" />
+                <img src={tech.image} alt={tech.title} className="w-16 h-16 rounded-2xl object-cover" {...noDownloadProps} />
               ) : (
                 <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-4xl">
                   {tech.emoji || "💡"}

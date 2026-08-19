@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Trophy, Calendar, Search, Globe, ChevronDown, ChevronUp, ExternalLink, ClipboardList, Users, ImageIcon, Building2, X, Send, AlertTriangle, CheckCircle } from "lucide-react";
 import { cloudGet, cloudTransact } from "@/lib/cloud";
 import { useAuth } from "@/contexts/AuthContext";
+import { noDownloadProps } from "@/lib/imageProtect";
 
 interface Competition {
   id: string; title: string; description: string; type: string;
@@ -155,7 +156,7 @@ export default function CompetitionsPage() {
         <div className="grid md:grid-cols-2 gap-4">
           {filtered.map(comp => (
             <div key={comp.id} className="card overflow-hidden hover:shadow-md transition-shadow">
-              {comp.image && <img src={comp.image} alt={comp.title} className="w-full h-40 object-cover" />}
+              {comp.image && <img src={comp.image} alt={comp.title} className="w-full h-40 object-cover" {...noDownloadProps} />}
               <div className="p-5">
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <h3 className="font-bold text-gray-800 text-sm leading-tight">{comp.title}</h3>
@@ -214,7 +215,7 @@ export default function CompetitionsPage() {
                       <div>
                         <p className="text-xs font-bold text-gray-600 flex items-center gap-1.5 mb-1"><ImageIcon className="w-3.5 h-3.5" /> صور التجهيزات</p>
                         <div className="grid grid-cols-3 gap-2">
-                          {comp.prepPhotos.map((src, i) => <img key={i} src={src} alt="" className="w-full h-20 object-cover rounded-lg border border-gray-200" />)}
+                          {comp.prepPhotos.map((src, i) => <img key={i} src={src} alt="" className="w-full h-20 object-cover rounded-lg border border-gray-200" {...noDownloadProps} />)}
                         </div>
                       </div>
                     )}

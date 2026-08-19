@@ -364,6 +364,20 @@ export default function AdminPage() {
         </div>
       </div>
 
+      {/* اختصارات سريعة — بضغطة واحدة توديك لأكثر الأقسام استخداماً */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button onClick={() => { setTab("daily"); setShowDForm(true); refresh(); }}
+          className="card p-4 flex items-center gap-3 text-right bg-gradient-to-br from-blue-700 to-blue-500 text-white hover:shadow-lg transition-all">
+          <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0"><CalendarDays className="w-6 h-6" /></div>
+          <div><div className="font-bold text-sm">إضافة يومية للمركز</div><div className="text-xs text-white/80">ضغطة واحدة لفتح نموذج الإضافة</div></div>
+        </button>
+        <button onClick={() => { setTab("groups"); refresh(); }}
+          className="card p-4 flex items-center gap-3 text-right bg-gradient-to-br from-indigo-700 to-purple-600 text-white hover:shadow-lg transition-all">
+          <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0"><MessageSquare className="w-6 h-6" /></div>
+          <div><div className="font-bold text-sm">إدارة الجروبات</div><div className="text-xs text-white/80">إنشاء جروب جديد أو متابعة القائم</div></div>
+        </button>
+      </div>
+
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
@@ -1774,9 +1788,10 @@ export default function AdminPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => {
+                <button onClick={async () => {
                   if (!dForm.title.trim()) return;
-                  addDailyLogEntry({ ...dForm, videoLinks: dForm.videoLinks.filter(l => l.trim()) });
+                  const ok = await addDailyLogEntry({ ...dForm, videoLinks: dForm.videoLinks.filter(l => l.trim()) });
+                  if (!ok) alert("⚠️ تعذر حفظ اليومية بالسحابة — تحقق من اتصال الإنترنت وحاول مرة أخرى. اليومية محفوظة مؤقتاً على جهازك فقط ولن تظهر لغيرك حتى تنجح المزامنة.");
                   setShowDForm(false);
                   setDForm({ title: "", date: "", description: "", category: "نشاط", images: [], videoLinks: [""] });
                   refresh();

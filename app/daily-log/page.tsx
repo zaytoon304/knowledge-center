@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { CalendarDays, Play, ExternalLink } from "lucide-react";
 import { DailyLogEntry } from "@/contexts/AuthContext";
+import { extractYouTubeId, youtubeThumbUrl } from "@/lib/youtube";
+import { noDownloadProps } from "@/lib/imageProtect";
 
 function load<T>(key: string, fallback: T): T {
   try { const d = localStorage.getItem(key); return d ? JSON.parse(d) : fallback; } catch { return fallback; }
@@ -94,20 +96,33 @@ export default function DailyLogPage() {
                     {entry.images.map((img, i) => (
                       <img key={i} src={img.data} alt="" onClick={() => setLightbox(img.data)}
                         className="w-full rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                        style={{ maxHeight: entry.images.length === 1 ? "300px" : "160px" }} />
+                        style={{ maxHeight: entry.images.length === 1 ? "300px" : "160px" }} {...noDownloadProps} />
                     ))}
                   </div>
                 )}
 
                 {/* فيديوهات */}
                 {entry.videoLinks.length > 0 && (
-                  <div className="space-y-2">
-                    {entry.videoLinks.map((link, i) => (
-                      <a key={i} href={link} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-100">
-                        <Play className="w-4 h-4" /> مشاهدة الفيديو <ExternalLink className="w-3.5 h-3.5 mr-auto" />
-                      </a>
-                    ))}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {entry.videoLinks.map((link, i) => {
+                      const vid = extractYouTubeId(link);
+                      return vid ? (
+                        <a key={i} href={link} target="_blank" rel="noopener noreferrer"
+                          className="relative rounded-xl overflow-hidden group block">
+                          <img src={youtubeThumbUrl(vid)} alt="فيديو" className="w-full aspect-video object-cover" {...noDownloadProps} />
+                          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/35 transition-colors flex items-center justify-center">
+                            <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+                              <Play className="w-4 h-4 text-white fill-white" />
+                            </div>
+                          </div>
+                        </a>
+                      ) : (
+                        <a key={i} href={link} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-100">
+                          <Play className="w-4 h-4" /> مشاهدة الفيديو <ExternalLink className="w-3.5 h-3.5 mr-auto" />
+                        </a>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -119,7 +134,7 @@ export default function DailyLogPage() {
       {/* Lightbox */}
       {lightbox && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
-          <img src={lightbox} alt="" className="max-w-full max-h-[90vh] rounded-2xl object-contain" />
+          <img src={lightbox} alt="" className="max-w-full max-h-[90vh] rounded-2xl object-contain" {...noDownloadProps} />
         </div>
       )}
     </div>

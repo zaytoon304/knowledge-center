@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { BookOpen, Download, Eye, Search, FileText, Shield, Calendar, ClipboardList, Filter, X, Link } from "lucide-react";
+import { BookOpen, Eye, Search, FileText, Shield, Calendar, ClipboardList, Filter, X, Link } from "lucide-react";
 import { type KnowledgeItem } from "@/components/admin/KnowledgeAdmin";
 import { cloudGet } from "@/lib/cloud";
+import { noDownloadProps } from "@/lib/imageProtect";
 
 const KEYS: Record<string, string> = {
   guides: "kc_knowledge_guides",
@@ -62,9 +63,9 @@ function ItemCard({ item, accentColor }: { item: KnowledgeItem; accentColor: str
             </div>
             <div className="flex flex-wrap gap-2">
               {item.pdfBase64 && (
-                <a href={item.pdfBase64} download={item.pdfName}
+                <a href={item.pdfBase64} target="_blank" rel="noopener noreferrer"
                   className={`flex items-center gap-1.5 ${btnMap[accentColor]} text-white text-xs px-3 py-1.5 rounded-lg transition-colors`}>
-                  <Download className="w-3 h-3" /> تحميل PDF
+                  <Eye className="w-3 h-3" /> عرض PDF
                 </a>
               )}
               {((item.images?.length ?? 0) > 0 || item.videoUrl || item.steps?.length) && (
@@ -104,7 +105,7 @@ function ItemCard({ item, accentColor }: { item: KnowledgeItem; accentColor: str
                 <div className="flex gap-2 flex-wrap">
                   {item.images.map((img, i) => (
                     <img key={i} src={img} alt="" onClick={() => setViewImg(img)}
-                      className="w-24 h-20 object-cover rounded-xl border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity" />
+                      className="w-24 h-20 object-cover rounded-xl border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity" {...noDownloadProps} />
                   ))}
                 </div>
               </div>
@@ -115,7 +116,7 @@ function ItemCard({ item, accentColor }: { item: KnowledgeItem; accentColor: str
 
       {viewImg && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setViewImg(null)}>
-          <img src={viewImg} alt="" className="max-w-full max-h-full rounded-2xl object-contain" />
+          <img src={viewImg} alt="" className="max-w-full max-h-full rounded-2xl object-contain" {...noDownloadProps} />
           <button onClick={() => setViewImg(null)} className="absolute top-4 left-4 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30">
             <X className="w-5 h-5" />
           </button>

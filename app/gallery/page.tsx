@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Archive, Video, Link2, X, Calendar, MapPin, User } from "lucide-react";
+import { Archive, Video, Link2, X, Calendar, MapPin, User, Play } from "lucide-react";
 import { cloudGet } from "@/lib/cloud";
+import { extractYouTubeId, youtubeThumbUrl } from "@/lib/youtube";
+import { noDownloadProps } from "@/lib/imageProtect";
 
 interface ArchiveItem {
   id: string; title: string; date: string; event: string; year: string;
@@ -51,7 +53,7 @@ export default function GalleryPage() {
       {lightbox && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
           <button className="absolute top-4 left-4 text-white" onClick={() => setLightbox(null)}><X className="w-8 h-8" /></button>
-          <img src={lightbox} alt="" className="max-w-full max-h-full rounded-xl object-contain" onClick={e => e.stopPropagation()} />
+          <img src={lightbox} alt="" className="max-w-full max-h-full rounded-xl object-contain" onClick={e => e.stopPropagation()} {...noDownloadProps} />
         </div>
       )}
 
@@ -125,13 +127,26 @@ export default function GalleryPage() {
               </div>
 
               {item.videos?.length > 0 && (
-                <div className="space-y-1.5 mb-3">
-                  {item.videos.map((v, i) => (
-                    <a key={i} href={v.url} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2.5 text-sm text-blue-700 hover:bg-blue-100 transition-colors">
-                      <Video className="w-4 h-4 flex-shrink-0" /> <span className="flex-1 font-medium">{v.title}</span> <Link2 className="w-3.5 h-3.5 flex-shrink-0" />
-                    </a>
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                  {item.videos.map((v, i) => {
+                    const vid = extractYouTubeId(v.url);
+                    return vid ? (
+                      <a key={i} href={v.url} target="_blank" rel="noopener noreferrer" className="relative rounded-xl overflow-hidden group block">
+                        <img src={youtubeThumbUrl(vid)} alt={v.title} className="w-full aspect-video object-cover" {...noDownloadProps} />
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/35 transition-colors flex items-center justify-center">
+                          <div className="w-9 h-9 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+                            <Play className="w-3.5 h-3.5 text-white fill-white" />
+                          </div>
+                        </div>
+                        <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] px-2 py-1 truncate">{v.title}</span>
+                      </a>
+                    ) : (
+                      <a key={i} href={v.url} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2.5 text-sm text-blue-700 hover:bg-blue-100 transition-colors">
+                        <Video className="w-4 h-4 flex-shrink-0" /> <span className="flex-1 font-medium">{v.title}</span> <Link2 className="w-3.5 h-3.5 flex-shrink-0" />
+                      </a>
+                    );
+                  })}
                 </div>
               )}
 
@@ -139,7 +154,7 @@ export default function GalleryPage() {
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                   {item.photos.map((ph, i) => (
                     <img key={i} src={ph.data} alt="" onClick={() => setLightbox(ph.data)}
-                      className="w-full h-24 object-cover rounded-xl cursor-pointer hover:opacity-90 hover:scale-105 transition-all" />
+                      className="w-full h-24 object-cover rounded-xl cursor-pointer hover:opacity-90 hover:scale-105 transition-all" {...noDownloadProps} />
                   ))}
                 </div>
               )}

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Archive, Search, Clock, Wrench, ChevronLeft } from "lucide-react";
 import { cloudGet } from "@/lib/cloud";
+import { noDownloadProps } from "@/lib/imageProtect";
 
 interface BankProject {
   id: string; title: string; description: string; category: string;
@@ -110,7 +111,7 @@ export default function ProjectBankPage() {
           {filtered.map(project => (
             <div key={project.id} className="card overflow-hidden hover:shadow-md transition-shadow">
               {project.image ? (
-                <img src={project.image} alt={project.title} className="w-full h-36 object-cover" />
+                <img src={project.image} alt={project.title} className="w-full h-36 object-cover" {...noDownloadProps} />
               ) : (
                 <div className="w-full h-36 bg-gradient-to-br from-slate-700 to-gray-500 flex items-center justify-center text-5xl">
                   {catEmoji[project.category] || "💡"}

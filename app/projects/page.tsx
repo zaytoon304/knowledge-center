@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { FolderOpen, Search, Users, School, ChevronRight, Code, Package, Play, Film } from "lucide-react";
 import { cloudGet } from "@/lib/cloud";
+import { noDownloadProps } from "@/lib/imageProtect";
 
 interface ProjectVideo {
   id: string; title: string; url: string;
@@ -96,7 +97,7 @@ export default function ProjectsPage() {
         <div className="card p-6">
           <div className="flex items-start gap-4 mb-4">
             {selected.image
-              ? <img src={selected.image} alt={selected.title} className="w-24 h-24 rounded-2xl object-cover border border-gray-100 flex-shrink-0" />
+              ? <img src={selected.image} alt={selected.title} className="w-24 h-24 rounded-2xl object-cover border border-gray-100 flex-shrink-0" {...noDownloadProps} />
               : <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-800 to-indigo-700 flex items-center justify-center text-4xl flex-shrink-0">{selected.emoji || "💡"}</div>
             }
             <div className="flex-1">
@@ -223,7 +224,7 @@ export default function ProjectsPage() {
                               <button key={v.id} onClick={() => setActiveVideo(isActive ? null : v)}
                                 className={`w-full text-right flex items-center gap-3 p-3 rounded-xl transition-all ${isActive ? "bg-blue-50 border-2 border-blue-300" : "bg-gray-50 hover:bg-gray-100 border border-gray-100"}`}>
                                 {thumb
-                                  ? <img src={thumb} alt="" className="w-16 h-10 rounded-lg object-cover flex-shrink-0" />
+                                  ? <img src={thumb} alt="" className="w-16 h-10 rounded-lg object-cover flex-shrink-0" {...noDownloadProps} />
                                   : <div className="w-16 h-10 rounded-lg bg-red-600 flex items-center justify-center flex-shrink-0">
                                       <Play className="w-5 h-5 text-white" />
                                     </div>
@@ -310,7 +311,7 @@ export default function ProjectsPage() {
                 className="card p-5 cursor-pointer hover:shadow-lg transition-all group hover:border-blue-200 border border-transparent">
                 <div className="flex items-start gap-3 mb-3">
                   {p.image
-                    ? <img src={p.image} alt={p.title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                    ? <img src={p.image} alt={p.title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" {...noDownloadProps} />
                     : <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-700 to-indigo-600 flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-105 transition-transform">{p.emoji || "💡"}</div>
                   }
                   <div className="flex-1 min-w-0">

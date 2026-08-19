@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Layers, Search, ChevronLeft, Users, Target, Clock } from "lucide-react";
 import { cloudGet } from "@/lib/cloud";
+import { noDownloadProps } from "@/lib/imageProtect";
 
 interface Program {
   id: string; title: string; description: string; emoji: string;
@@ -69,7 +70,7 @@ export default function ProgramsPage() {
           {filtered.map(program => (
             <div key={program.id} className="card overflow-hidden group cursor-pointer hover:shadow-lg transition-all">
               {program.image ? (
-                <img src={program.image} alt={program.title} className="w-full h-36 object-cover" />
+                <img src={program.image} alt={program.title} className="w-full h-36 object-cover" {...noDownloadProps} />
               ) : (
                 <div className={`w-full h-36 bg-gradient-to-br ${program.gradient || "from-purple-700 to-violet-500"} flex items-center justify-center`}>
                   <span className="text-5xl">{program.emoji || "🎯"}</span>

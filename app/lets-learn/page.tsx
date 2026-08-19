@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Lightbulb, ChevronRight, Wrench, ListOrdered, Code2, Sparkles, ExternalLink, Info } from "lucide-react";
+import { noDownloadProps } from "@/lib/imageProtect";
 
 interface Lesson {
   id: string;
@@ -553,7 +554,7 @@ export default function LetsLearnPage() {
         </button>
 
         <div className="card overflow-hidden">
-          <img src={active.image} alt={active.title} className="w-full h-56 object-cover" />
+          <img src={active.image} alt={active.title} className="w-full h-56 object-cover" {...noDownloadProps} />
           <div className="p-5 space-y-4">
             <div className="flex items-center gap-3">
               <span className="text-3xl">{active.emoji}</span>
@@ -644,7 +645,7 @@ export default function LetsLearnPage() {
           <button key={l.id} onClick={() => setActive(l)}
             className="card overflow-hidden text-right hover:shadow-lg transition-all group">
             <div className="relative">
-              <img src={l.image} alt={l.title} className="w-full h-36 object-cover group-hover:scale-105 transition-transform" />
+              <img src={l.image} alt={l.title} className="w-full h-36 object-cover group-hover:scale-105 transition-transform" {...noDownloadProps} />
               <span className={`absolute top-2 left-2 text-xs font-bold px-2.5 py-0.5 rounded-full ${LEVEL_COLORS[l.level]}`}>{l.level}</span>
             </div>
             <div className="p-4">

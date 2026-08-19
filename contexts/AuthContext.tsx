@@ -152,8 +152,8 @@ interface AuthContextType {
   addProject: (p: Omit<ProjectItem, "id">) => void;
   deleteProject: (id: string) => void;
   getDailyLog: () => DailyLogEntry[];
-  addDailyLogEntry: (e: Omit<DailyLogEntry, "id" | "createdAt">) => void;
-  deleteDailyLogEntry: (id: string) => void;
+  addDailyLogEntry: (e: Omit<DailyLogEntry, "id" | "createdAt">) => Promise<boolean>;
+  deleteDailyLogEntry: (id: string) => Promise<boolean>;
   getShopItems: () => ShopItem[];
   addShopItem: (s: Omit<ShopItem, "id" | "createdAt">) => void;
   deleteShopItem: (id: string) => void;
@@ -497,13 +497,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const getDailyLog = () => load<DailyLogEntry[]>(KEYS.dailyLog, []);
-  const addDailyLogEntry = (e: Omit<DailyLogEntry, "id" | "createdAt">) => {
-    const all = [...getDailyLog(), { ...e, id: Date.now().toString(), createdAt: new Date().toISOString() }];
-    save(KEYS.dailyLog, all); cloudSet(KEYS.dailyLog, all);
+  // تُرجع true/false حسب نجاح الحفظ الفعلي بالسحابة — كان الحفظ يفشل بصمت لو الاتصال ضعيف
+  // (تظهر باليومية محلياً لحظياً ثم "تختفي" لاحقاً لأنها ما وصلت فعلياً لقاعدة البيانات)
+  const addDailyLogEntry = async (e: Omit<DailyLogEntry, "id" | "createdAt">): Promise<boolean> => {
+    const entry: DailyLogEntry = { ...e, id: Date.now().toString(), createdAt: new Date().toISOString() };
+    save(KEYS.dailyLog, [...getDailyLog(), entry]);
+    return cloudTransact<DailyLogEntry[]>(KEYS.dailyLog, current => {
+      const list = Array.isArray(current) ? current : getDailyLog();
+      return [...list, entry];
+    });
   };
-  const deleteDailyLogEntry = (id: string) => {
-    const all = getDailyLog().filter(e => e.id !== id);
-    save(KEYS.dailyLog, all); cloudSet(KEYS.dailyLog, all);
+  const deleteDailyLogEntry = async (id: string): Promise<boolean> => {
+    save(KEYS.dailyLog, getDailyLog().filter(e => e.id !== id));
+    return cloudTransact<DailyLogEntry[]>(KEYS.dailyLog, current => {
+      const list = Array.isArray(current) ? current : getDailyLog();
+      return list.filter(e => e.id !== id);
+    });
   };
 
   const getShopItems = () => load<ShopItem[]>(KEYS.shop, []);
