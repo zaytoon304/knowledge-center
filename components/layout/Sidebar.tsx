@@ -8,7 +8,7 @@ import {
   MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode, Radio, PenLine, Gamepad2, Brain, Sparkles, Images, Lightbulb
 } from "lucide-react";
 import clsx from "clsx";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, CoordinatorProfile } from "@/contexts/AuthContext";
 import CenterLogo from "@/components/icons/CenterLogo";
 
 const adminNavItems = [
@@ -64,10 +64,15 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, isLoggedIn } = useAuth();
+  const isSupervisor = isLoggedIn && (user as CoordinatorProfile)?.isSupervisor;
   const navItems = studentMode
     ? studentNavItems
     : coordinatorMode
-    ? [coordinatorNavItems[0], ...adminNavItems.filter(i => i.href !== "/admin")]
+    ? [
+        coordinatorNavItems[0],
+        ...(isSupervisor ? [{ href: "/oversight", label: "متابعة المنسقين والطلاب", icon: Eye }] : []),
+        ...adminNavItems.filter(i => i.href !== "/admin"),
+      ]
     : adminNavItems;
 
   return (

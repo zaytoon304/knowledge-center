@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
 import { generateAccessCode } from "@/lib/deviceCode";
 import { GRADES } from "@/lib/grades";
+import { getNotes, addNote } from "@/lib/notes";
 
 interface HotsScheduleEntry { date: string; grade: string }
 interface HotsResult {
@@ -167,7 +168,7 @@ const EMOJIS = ["🤖", "🏆", "🧠", "🔬", "💡", "🚀", "⭐", "📚", "
 
 export default function AdminPage() {
   const { getAllStudents, approveStudent, rejectStudent, deleteStudent,
-    getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator,
+    getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor,
     getGroups, createGroup, deleteGroup,
     getLiveStream, updateLiveStream, getCourses, addCourse, deleteCourse,
     getVideos, addVideo, deleteVideo, getProjects, addProject, deleteProject,
@@ -221,7 +222,7 @@ export default function AdminPage() {
   const [coordSearch, setCoordSearch] = useState("");
   const [studentNoteInputs, setStudentNoteInputs] = useState<Record<string, string>>({});
   const [coordNoteInputs, setCoordNoteInputs] = useState<Record<string, string>>({});
-  const [notesRefresh, setNotesRefresh] = useState(0);
+  const [notesMap, setNotesMap] = useState<Record<string, string[]>>({});
   const [dForm, setDForm] = useState({
     title: "", date: "", description: "", category: "نشاط",
     images: [] as Array<{ data: string; name: string }>,
@@ -287,6 +288,19 @@ export default function AdminPage() {
     const interval = setInterval(refreshFromCloud, 30000); // تحديث تلقائي كل 30 ثانية
     return () => clearInterval(interval);
   }, [authed]);
+
+  // نجلب ملاحظات المتابعة (منسّقين/طلاب) من Firebase عند فتح التبويب المعني
+  useEffect(() => {
+    if (!authed) return;
+    if (tab === "coord_tracking") {
+      Promise.all(coordinators.map(async c => [c.id, await getNotes("kc_cnotes_" + c.id)] as const))
+        .then(entries => setNotesMap(prev => ({ ...prev, ...Object.fromEntries(entries) })));
+    } else if (tab === "student_tracking") {
+      Promise.all(students.map(async s => [s.id, await getNotes("kc_snotes_" + s.id)] as const))
+        .then(entries => setNotesMap(prev => ({ ...prev, ...Object.fromEntries(entries) })));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed, tab]);
 
   // --- الآن نتحقق من تسجيل الدخول ---
   if (!authed) return <AdminLogin onSuccess={() => setAuthed(true)} />;
@@ -496,9 +510,9 @@ export default function AdminPage() {
           {students.filter(s => s.status === "approved" && (s.name.includes(studentSearch) || s.school.includes(studentSearch) || s.grade.includes(studentSearch))).length === 0
             ? <div className="card p-10 text-center text-gray-400"><Users className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا يوجد طلاب</p></div>
             : students.filter(s => s.status === "approved" && (s.name.includes(studentSearch) || s.school.includes(studentSearch) || s.grade.includes(studentSearch))).map(s => {
-              const notes: string[] = (() => { try { return JSON.parse(localStorage.getItem("kc_snotes_" + s.id) || "[]"); } catch { return []; } })();
+              const notes: string[] = notesMap[s.id] || [];
               return (
-                <div key={s.id + notesRefresh} className="card p-4 space-y-3">
+                <div key={s.id} className="card p-4 space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg flex-shrink-0">
                       {s.photo ? <img src={s.photo} className="w-full h-full object-cover rounded-xl" alt="" /> : s.name[0]}
@@ -526,9 +540,9 @@ export default function AdminPage() {
                   <div className="flex gap-2">
                     <input value={studentNoteInputs[s.id] || ""}
                       onChange={e => setStudentNoteInputs(p => ({ ...p, [s.id]: e.target.value }))}
-                      onKeyDown={e => { if (e.key === "Enter") { const txt = (studentNoteInputs[s.id] || "").trim(); if (!txt) return; const ns = [...notes, `${new Date().toLocaleDateString("ar-SA")} — ${txt}`]; localStorage.setItem("kc_snotes_" + s.id, JSON.stringify(ns)); setStudentNoteInputs(p => ({ ...p, [s.id]: "" })); setNotesRefresh(r => r + 1); } }}
+                      onKeyDown={e => { if (e.key === "Enter") { const txt = (studentNoteInputs[s.id] || "").trim(); if (!txt) return; setStudentNoteInputs(p => ({ ...p, [s.id]: "" })); addNote("kc_snotes_" + s.id, txt).then(ns => { if (ns) setNotesMap(p => ({ ...p, [s.id]: ns })); }); } }}
                       placeholder="أضف ملاحظة..." className="input flex-1 text-sm" />
-                    <button onClick={() => { const txt = (studentNoteInputs[s.id] || "").trim(); if (!txt) return; const ns = [...notes, `${new Date().toLocaleDateString("ar-SA")} — ${txt}`]; localStorage.setItem("kc_snotes_" + s.id, JSON.stringify(ns)); setStudentNoteInputs(p => ({ ...p, [s.id]: "" })); setNotesRefresh(r => r + 1); }}
+                    <button onClick={() => { const txt = (studentNoteInputs[s.id] || "").trim(); if (!txt) return; setStudentNoteInputs(p => ({ ...p, [s.id]: "" })); addNote("kc_snotes_" + s.id, txt).then(ns => { if (ns) setNotesMap(p => ({ ...p, [s.id]: ns })); }); }}
                       className="bg-yellow-500 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-400">إضافة</button>
                   </div>
                 </div>
@@ -548,11 +562,11 @@ export default function AdminPage() {
           {coordinators.filter(c => c.status === "approved" && (c.name.includes(coordSearch) || c.school.includes(coordSearch) || c.subject.includes(coordSearch))).length === 0
             ? <div className="card p-10 text-center text-gray-400"><Briefcase className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>لا يوجد منسقون معتمدون</p></div>
             : coordinators.filter(c => c.status === "approved" && (c.name.includes(coordSearch) || c.school.includes(coordSearch) || c.subject.includes(coordSearch))).map(c => {
-              const notes: string[] = (() => { try { return JSON.parse(localStorage.getItem("kc_cnotes_" + c.id) || "[]"); } catch { return []; } })();
+              const notes: string[] = notesMap[c.id] || [];
               const coordProjects: {coordinator?: string}[] = (() => { try { return JSON.parse(localStorage.getItem("kc_projects") || "[]"); } catch { return []; } })();
               const projCount = coordProjects.filter(p => p.coordinator === c.name).length;
               return (
-                <div key={c.id + notesRefresh} className="card p-4 space-y-3">
+                <div key={c.id} className="card p-4 space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg flex-shrink-0">
                       {c.name[0]}
@@ -570,6 +584,11 @@ export default function AdminPage() {
                     <div className="flex flex-col gap-1 items-end">
                       <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-semibold">معتمد ✓</span>
                       <a href={`/admin/coordinator/${c.id}`} className="text-xs bg-blue-600 text-white px-2 py-1 rounded-lg font-semibold hover:bg-blue-500">عرض الملف ←</a>
+                      <button onClick={() => toggleSupervisor(c.id)}
+                        title="صلاحية محدودة: متابعة المنسقين والطلاب وإرسال ملاحظات فقط، بدون دخول لوحة الإدارة"
+                        className={`text-xs px-2 py-1 rounded-lg font-semibold flex items-center gap-1 ${c.isSupervisor ? "bg-violet-600 text-white hover:bg-violet-500" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+                        <Shield className="w-3 h-3" /> {c.isSupervisor ? "مشرف متابعة ✓" : "منح صلاحية متابعة"}
+                      </button>
                     </div>
                   </div>
                   {notes.length > 0 && (
@@ -581,9 +600,9 @@ export default function AdminPage() {
                   <div className="flex gap-2">
                     <input value={coordNoteInputs[c.id] || ""}
                       onChange={e => setCoordNoteInputs(p => ({ ...p, [c.id]: e.target.value }))}
-                      onKeyDown={e => { if (e.key === "Enter") { const txt = (coordNoteInputs[c.id] || "").trim(); if (!txt) return; const ns = [...notes, `${new Date().toLocaleDateString("ar-SA")} — ${txt}`]; localStorage.setItem("kc_cnotes_" + c.id, JSON.stringify(ns)); setCoordNoteInputs(p => ({ ...p, [c.id]: "" })); setNotesRefresh(r => r + 1); } }}
+                      onKeyDown={e => { if (e.key === "Enter") { const txt = (coordNoteInputs[c.id] || "").trim(); if (!txt) return; setCoordNoteInputs(p => ({ ...p, [c.id]: "" })); addNote("kc_cnotes_" + c.id, txt).then(ns => { if (ns) setNotesMap(p => ({ ...p, [c.id]: ns })); }); } }}
                       placeholder="أضف ملاحظة..." className="input flex-1 text-sm" />
-                    <button onClick={() => { const txt = (coordNoteInputs[c.id] || "").trim(); if (!txt) return; const ns = [...notes, `${new Date().toLocaleDateString("ar-SA")} — ${txt}`]; localStorage.setItem("kc_cnotes_" + c.id, JSON.stringify(ns)); setCoordNoteInputs(p => ({ ...p, [c.id]: "" })); setNotesRefresh(r => r + 1); }}
+                    <button onClick={() => { const txt = (coordNoteInputs[c.id] || "").trim(); if (!txt) return; setCoordNoteInputs(p => ({ ...p, [c.id]: "" })); addNote("kc_cnotes_" + c.id, txt).then(ns => { if (ns) setNotesMap(p => ({ ...p, [c.id]: ns })); }); }}
                       className="bg-yellow-500 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-400">إضافة</button>
                   </div>
                 </div>

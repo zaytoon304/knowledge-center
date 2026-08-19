@@ -17,6 +17,9 @@ export interface CoordinatorProfile {
   photo: string; cv: string; cvName: string;
   password: string; role: "coordinator";
   registeredAt: string; status: "pending" | "approved" | "rejected";
+  // صلاحية محدودة يمنحها الأدمن: متابعة المنسقين والطلاب وإرسال ملاحظات فقط —
+  // بدون دخول لوحة الإدارة أو التحكم بأي محتوى/أيقونة بالمنصة
+  isSupervisor?: boolean;
 }
 
 export type AnyUser = StudentProfile | CoordinatorProfile;
@@ -115,6 +118,7 @@ interface AuthContextType {
   approveCoordinator: (id: string) => void;
   rejectCoordinator: (id: string) => void;
   deleteCoordinator: (id: string) => void;
+  toggleSupervisor: (id: string) => void;
   getGroups: () => ChatGroup[];
   createGroup: (g: Omit<ChatGroup, "id" | "createdAt">) => void;
   deleteGroup: (id: string) => void;
@@ -394,6 +398,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user?.id === id) logout();
   };
 
+  const toggleSupervisor = (id: string) => {
+    const all = getAllCoordinators().map(c => c.id === id ? { ...c, isSupervisor: !c.isSupervisor } : c);
+    save(KEYS.coordinators, all);
+    cloudTransact<CoordinatorProfile[]>("kc_coordinators", current => {
+      const list = Array.isArray(current) && current.length > 0 ? current : all;
+      return list.map(c => c.id === id ? { ...c, isSupervisor: !c.isSupervisor } : c);
+    });
+    if (user?.id === id) { const u = { ...user, isSupervisor: !(user as CoordinatorProfile).isSupervisor }; setUser(u); save(KEYS.currentUser, u); }
+  };
+
   const getGroups = () => load<ChatGroup[]>(KEYS.groups, []);
   const createGroup = (g: Omit<ChatGroup, "id" | "createdAt">) => {
     const all = [...getGroups(), { ...g, id: Date.now().toString(), createdAt: new Date().toISOString() }];
@@ -478,7 +492,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login, loginWithAccessCode, loginCoordinator, register, registerCoordinator,
       logout, updateProfile,
       getAllStudents, approveStudent, rejectStudent, deleteStudent,
-      getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator,
+      getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor,
       getGroups, createGroup, deleteGroup,
       getLiveStream, updateLiveStream,
       getCourses, addCourse, deleteCourse,
