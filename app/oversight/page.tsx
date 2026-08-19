@@ -68,7 +68,7 @@ export default function OversightPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">متابعة المنسقين والطلاب</h1>
-            <p className="text-indigo-200 text-sm">عرض ومتابعة وإرسال ملاحظات — بدون تعديل محتوى المنصة</p>
+            <p className="text-white font-semibold text-base">عرض ومتابعة وإرسال ملاحظات — بدون تعديل محتوى المنصة</p>
           </div>
         </div>
       </div>

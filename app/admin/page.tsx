@@ -359,7 +359,7 @@ export default function AdminPage() {
           <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><Settings className="w-7 h-7" /></div>
           <div>
             <h1 className="text-2xl font-bold">لوحة الإدارة</h1>
-            <p className="text-red-200 text-sm">إدارة الطلاب والجروبات والمحتوى</p>
+            <p className="text-white font-semibold text-base">إدارة الطلاب والجروبات والمحتوى</p>
           </div>
         </div>
       </div>
@@ -1899,7 +1899,7 @@ export default function AdminPage() {
                 <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><Video className="w-6 h-6" /></div>
                 <div>
                   <h3 className="font-bold text-lg">إدارة الاجتماعات</h3>
-                  <p className="text-indigo-200 text-xs">إنشاء واستعراض وإدارة اجتماعات المنسقين</p>
+                  <p className="text-white font-semibold text-sm">إنشاء واستعراض وإدارة اجتماعات المنسقين</p>
                 </div>
               </div>
               <a href="/meetings" className="bg-white text-violet-800 px-4 py-2 rounded-xl text-sm font-bold hover:bg-violet-50 flex items-center gap-2 flex-shrink-0">
@@ -1976,7 +1976,7 @@ export default function AdminPage() {
               <div className="text-4xl">🖊️</div>
               <div>
                 <h2 className="text-xl font-bold">السبورة الذكية</h2>
-                <p className="text-blue-200 text-sm">أداة رسم وشرح تفاعلية للمعلم والطالب</p>
+                <p className="text-white font-semibold text-base">أداة رسم وشرح تفاعلية للمعلم والطالب</p>
               </div>
             </div>
           </div>
@@ -2381,7 +2381,7 @@ function SupervisorProfileEditor() {
             </div>
             <div>
               <h3 className="font-bold">ملفي الشخصي المهني</h3>
-              <p className="text-blue-200 text-xs">صفحة عامة قابلة للمشاركة مع الطلاب والمنسقين</p>
+              <p className="text-white font-semibold text-sm">صفحة عامة قابلة للمشاركة مع الطلاب والمنسقين</p>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">

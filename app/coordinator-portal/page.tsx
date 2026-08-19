@@ -154,7 +154,7 @@ export default function CoordinatorPortalPage() {
           </div>
           <div className="flex-1">
             <h1 className="text-xl font-bold">{coord.name}</h1>
-            <p className="text-purple-200 text-sm">{coord.subject} • {coord.school}</p>
+            <p className="text-white font-semibold text-base">{coord.subject} • {coord.school}</p>
           </div>
           <div className="hidden md:flex items-center gap-1 bg-white/20 rounded-xl px-3 py-1.5">
             <Briefcase className="w-4 h-4" />

@@ -38,12 +38,12 @@ export default function ProgramsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">مركز البرامج</h1>
-            <p className="text-purple-200 text-sm">برامج الموهبة والابتكار وSTEAM</p>
+            <p className="text-white font-semibold text-base">برامج الموهبة والابتكار وSTEAM</p>
           </div>
         </div>
         <div className="bg-black/15 rounded-xl p-3 text-center w-32">
           <div className="text-2xl font-bold text-yellow-300">{programs.length}</div>
-          <div className="text-purple-100 text-sm">برنامج نشط</div>
+          <div className="text-white font-semibold text-base">برنامج نشط</div>
         </div>
       </div>
 

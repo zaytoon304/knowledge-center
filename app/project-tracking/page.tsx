@@ -128,7 +128,7 @@ export default function ProjectTrackingPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold">متابعة المشاريع</h1>
-              <p className="text-blue-200 text-xs">{myCards.length} مشروع — {myCards.filter(c => c.stage === "final").length} مكتمل</p>
+              <p className="text-white font-semibold text-sm">{myCards.length} مشروع — {myCards.filter(c => c.stage === "final").length} مكتمل</p>
             </div>
           </div>
           {(admin || !isStudent) && (

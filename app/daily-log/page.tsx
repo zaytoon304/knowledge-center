@@ -42,7 +42,7 @@ export default function DailyLogPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">يوميات مركز الابتكار</h1>
-            <p className="text-blue-200 text-sm">أنشطتنا وفعالياتنا وإنجازاتنا</p>
+            <p className="text-white font-semibold text-base">أنشطتنا وفعالياتنا وإنجازاتنا</p>
           </div>
         </div>
       </div>

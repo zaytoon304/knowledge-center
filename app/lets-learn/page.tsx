@@ -611,7 +611,7 @@ export default function LetsLearnPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">هيا نتعلم</h1>
-            <p className="text-indigo-200 text-sm">دروس تفاعلية بالصور: الأداة، طريقة التركيب، والكود — خطوة بخطوة</p>
+            <p className="text-white font-semibold text-base">دروس تفاعلية بالصور: الأداة، طريقة التركيب، والكود — خطوة بخطوة</p>
           </div>
         </div>
         <div className="bg-black/15 rounded-xl p-2 text-center mt-4 w-fit px-4">

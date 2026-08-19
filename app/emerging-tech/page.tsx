@@ -93,12 +93,12 @@ export default function EmergingTechPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">مركز التقنيات الناشئة</h1>
-            <p className="text-blue-200 text-sm">تعلم واستكشف أحدث التقنيات في عالم اليوم</p>
+            <p className="text-white font-semibold text-base">تعلم واستكشف أحدث التقنيات في عالم اليوم</p>
           </div>
         </div>
         <div className="bg-black/15 rounded-xl p-3 text-center w-28">
           <div className="text-2xl font-bold text-yellow-300">{allTechs.length}</div>
-          <div className="text-blue-100 text-sm">تقنية</div>
+          <div className="text-white font-semibold text-base">تقنية</div>
         </div>
       </div>
 

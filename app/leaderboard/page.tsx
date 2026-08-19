@@ -94,7 +94,7 @@ export default function LeaderboardPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold">لوحة المتصدرين</h1>
-              <p className="text-yellow-100 text-xs">{students.length} طالب — {points.reduce((s, p) => s + p.points, 0)} نقطة موزَّعة</p>
+              <p className="text-white font-semibold text-sm">{students.length} طالب — {points.reduce((s, p) => s + p.points, 0)} نقطة موزَّعة</p>
             </div>
           </div>
           {admin && (
@@ -113,7 +113,7 @@ export default function LeaderboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-4xl font-bold">{myRecord.total}</div>
-              <p className="text-blue-200 text-sm">المرتبة {totals.findIndex(t => t.id === user?.id) + 1} من {students.length}</p>
+              <p className="text-white font-semibold text-base">المرتبة {totals.findIndex(t => t.id === user?.id) + 1} من {students.length}</p>
             </div>
             <div className="flex flex-wrap gap-1 max-w-[200px]">
               {myRecord.badges.map((b, i) => {

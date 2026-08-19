@@ -54,7 +54,7 @@ function MemoryGame() {
         </div>
         <button onClick={reset} className="flex items-center gap-1.5 bg-gray-100 text-gray-600 px-3 py-1.5 rounded-xl text-sm hover:bg-gray-200"><RotateCcw className="w-3.5 h-3.5"/>إعادة</button>
       </div>
-      {done&&<div className="bg-gradient-to-l from-violet-700 to-indigo-600 text-white rounded-2xl p-5 text-center"><div className="text-5xl mb-2">🏆</div><p className="text-xl font-black">أحسنت! فزت!</p><p className="text-indigo-200 text-sm">{moves} حركة في {time} ثانية</p><button onClick={reset} className="mt-3 bg-white text-violet-700 px-6 py-2 rounded-xl font-bold text-sm">العب مجدداً</button></div>}
+      {done&&<div className="bg-gradient-to-l from-violet-700 to-indigo-600 text-white rounded-2xl p-5 text-center"><div className="text-5xl mb-2">🏆</div><p className="text-xl font-black">أحسنت! فزت!</p><p className="text-white font-semibold text-base">{moves} حركة في {time} ثانية</p><button onClick={reset} className="mt-3 bg-white text-violet-700 px-6 py-2 rounded-xl font-bold text-sm">العب مجدداً</button></div>}
       <div className="grid grid-cols-4 gap-2">
         {cards.map((c,i)=>(
           <button key={c.id} onClick={()=>flip(i)} className={`aspect-square rounded-2xl text-3xl transition-all duration-200 flex items-center justify-center border-2 ${c.matched?"bg-green-50 border-green-300 scale-95 opacity-60":c.flipped?"bg-violet-50 border-violet-400 scale-105 shadow-md":"bg-gray-100 border-gray-200 hover:bg-gray-200 hover:scale-105 text-transparent"}`}>
@@ -466,7 +466,7 @@ export default function PlayPage() {
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><Gamepad2 className="w-6 h-6"/></div>
-            <div><h1 className="text-2xl font-bold">نلعب ونتعلم</h1><p className="text-indigo-200 text-sm">6 ألعاب تعليمية تفاعلية ممتعة</p></div>
+            <div><h1 className="text-2xl font-bold">نلعب ونتعلم</h1><p className="text-white font-semibold text-base">6 ألعاب تعليمية تفاعلية ممتعة</p></div>
           </div>
           {admin&&<button onClick={()=>setShowAdd(true)} className="flex items-center gap-2 bg-white text-purple-800 px-4 py-2 rounded-xl text-sm font-bold hover:bg-purple-50 flex-shrink-0"><Plus className="w-4 h-4"/>أضف لعبة</button>}
         </div>
@@ -524,7 +524,7 @@ export default function PlayPage() {
       <div className="card overflow-hidden">
         <div className="bg-gradient-to-l from-violet-800 to-indigo-700 p-5 text-white flex items-center gap-4">
           <div className="text-4xl">🧬</div>
-          <div className="flex-1"><h3 className="font-bold text-lg">اختبار نسبة الذكاء IQ</h3><p className="text-indigo-200 text-sm">20 سؤالاً بأنواع متعددة حسب عمرك</p></div>
+          <div className="flex-1"><h3 className="font-bold text-lg">اختبار نسبة الذكاء IQ</h3><p className="text-white font-semibold text-base">20 سؤالاً بأنواع متعددة حسب عمرك</p></div>
           <Link href="/iq-test" className="bg-white text-violet-800 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-violet-50 flex-shrink-0">ابدأ الاختبار →</Link>
         </div>
       </div>

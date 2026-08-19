@@ -56,7 +56,7 @@ export default function PlatformQRPage() {
             <CenterLogo className="w-11 h-11" />
             <div>
               <h1 className="font-bold text-lg">باركود المنصة</h1>
-              <p className="text-blue-200 text-xs">امسح الكود للتسجيل في مركز المعرفة والابتكار STEAM</p>
+              <p className="text-white font-semibold text-sm">امسح الكود للتسجيل في مركز المعرفة والابتكار STEAM</p>
             </div>
           </div>
         </div>

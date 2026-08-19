@@ -109,7 +109,7 @@ export default function CompetitionsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">المسابقات والجوائز</h1>
-            <p className="text-yellow-100 text-sm">المسابقات المحلية والوطنية والدولية</p>
+            <p className="text-white font-semibold text-base">المسابقات المحلية والوطنية والدولية</p>
           </div>
         </div>
         <div className="flex gap-3">

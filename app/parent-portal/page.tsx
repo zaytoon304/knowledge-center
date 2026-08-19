@@ -70,7 +70,7 @@ export default function ParentPortalPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">بوابة أولياء الأمور</h1>
-            <p className="text-teal-200 text-xs">تابع مسيرة ابنك/ابنتك في المركز</p>
+            <p className="text-white font-semibold text-sm">تابع مسيرة ابنك/ابنتك في المركز</p>
           </div>
         </div>
       </div>

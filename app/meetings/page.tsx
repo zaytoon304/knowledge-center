@@ -820,7 +820,7 @@ export default function MeetingsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">الاجتماعات</h1>
-              <p className="text-indigo-200 text-sm">إدارة اجتماعات المنسقين</p>
+              <p className="text-white font-semibold text-base">إدارة اجتماعات المنسقين</p>
             </div>
           </div>
           {admin && (

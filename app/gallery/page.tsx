@@ -63,7 +63,7 @@ export default function GalleryPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">أرشيف المركز</h1>
-            <p className="text-blue-200 text-sm">صور وفيديوهات فعاليات وبرامج مركز المعرفة والابتكار عبر السنوات</p>
+            <p className="text-white font-semibold text-base">صور وفيديوهات فعاليات وبرامج مركز المعرفة والابتكار عبر السنوات</p>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2 mt-4">

@@ -68,7 +68,7 @@ export default function PortfolioPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">الملف المهني</h1>
-            <p className="text-pink-200 text-sm">ملفك المهني الرقمي الموحد</p>
+            <p className="text-white font-semibold text-base">ملفك المهني الرقمي الموحد</p>
           </div>
         </div>
       </div>

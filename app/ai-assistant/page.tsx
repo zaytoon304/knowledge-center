@@ -154,7 +154,7 @@ export default function AIAssistantPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">المساعد الذكي</h1>
-              <p className="text-purple-200 text-sm">مدعوم بـ Groq + Llama 3.3 — مجاني وسريع جداً</p>
+              <p className="text-white font-semibold text-base">مدعوم بـ Groq + Llama 3.3 — مجاني وسريع جداً</p>
             </div>
           </div>
           {!apiKey && (

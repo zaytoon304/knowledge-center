@@ -122,7 +122,7 @@ export default function StudentPortalPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold">مرحباً، {student.name}</h1>
-              <p className="text-green-100 text-sm">{student.school} • {student.grade}</p>
+              <p className="text-white font-semibold text-base">{student.school} • {student.grade}</p>
             </div>
           </div>
         </div>
@@ -371,7 +371,7 @@ export default function StudentPortalPage() {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold">{student.name}</h2>
-                    <p className="text-blue-200 text-sm">{student.grade}</p>
+                    <p className="text-white font-semibold text-base">{student.grade}</p>
                     <p className="text-blue-300 text-xs mt-1">{student.school}</p>
                   </div>
                 </div>

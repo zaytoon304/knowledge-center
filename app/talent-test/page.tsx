@@ -316,7 +316,7 @@ export default function TalentTestPage() {
         <div className="card p-8 bg-gradient-to-br from-violet-800 via-indigo-700 to-blue-700 text-white text-center">
           <Sparkles className="w-14 h-14 mx-auto mb-3" />
           <h1 className="text-2xl font-bold mb-1">اختبار مهارات التفكير العليا</h1>
-          <p className="text-indigo-200 text-sm">{(user as StudentProfile).grade}</p>
+          <p className="text-white font-semibold text-base">{(user as StudentProfile).grade}</p>
         </div>
         <div className="card p-6 space-y-3 text-sm text-gray-600">
           <p>⏱️ {QUESTION_SECONDS} ثانية لكل سؤال، و{questions.length} سؤالاً بالمجموع.</p>

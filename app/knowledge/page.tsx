@@ -162,7 +162,7 @@ export default function KnowledgePage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">مركز المعرفة</h1>
-            <p className="text-blue-200 text-sm">مستودع المعرفة المؤسسية لوحدة الموهبة والابتكار</p>
+            <p className="text-white font-semibold text-base">مستودع المعرفة المؤسسية لوحدة الموهبة والابتكار</p>
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

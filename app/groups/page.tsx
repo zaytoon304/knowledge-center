@@ -185,7 +185,7 @@ export default function GroupsPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">الجروبات</h1>
-            <p className="text-blue-200 text-xs">{visibleGroups.length} جروب متاح</p>
+            <p className="text-white font-semibold text-sm">{visibleGroups.length} جروب متاح</p>
           </div>
         </div>
       </div>

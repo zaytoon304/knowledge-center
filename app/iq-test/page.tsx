@@ -312,7 +312,7 @@ export default function IQTestPage() {
       <div className="card p-8 bg-gradient-to-br from-violet-800 via-indigo-700 to-blue-700 text-white text-center">
         <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4"><Brain className="w-10 h-10"/></div>
         <h1 className="text-2xl font-bold mb-2">اختبار نسبة الذكاء</h1>
-        <p className="text-indigo-200 text-sm">IQ Test — 20 سؤالاً بأنواع متعددة</p>
+        <p className="text-white font-semibold text-base">IQ Test — 20 سؤالاً بأنواع متعددة</p>
         <div className="grid grid-cols-3 gap-3 mt-5">
           {[{n:"6",l:"أنواع أسئلة"},{n:"20",l:"سؤالاً"},{n:"40",l:"ث/سؤال"}].map(s=>(
             <div key={s.l} className="bg-black/15 rounded-xl p-3"><div className="text-2xl font-bold">{s.n}</div><div className="text-xs text-indigo-200">{s.l}</div></div>

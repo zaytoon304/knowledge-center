@@ -71,7 +71,7 @@ export default function IndicatorsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">مركز المؤشرات</h1>
-              <p className="text-orange-100 text-sm">لوحة قيادة مؤشرات الأداء الرئيسية KPI</p>
+              <p className="text-white font-semibold text-base">لوحة قيادة مؤشرات الأداء الرئيسية KPI</p>
             </div>
           </div>
           <div className="flex gap-2">

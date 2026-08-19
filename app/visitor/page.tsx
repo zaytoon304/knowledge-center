@@ -53,7 +53,7 @@ export default function VisitorPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold">وضع الزائر</h1>
-              <p className="text-cyan-100 text-sm">تصفح المحتوى بدون تسجيل</p>
+              <p className="text-white font-semibold text-base">تصفح المحتوى بدون تسجيل</p>
             </div>
           </div>
           <button onClick={() => router.push("/login")}

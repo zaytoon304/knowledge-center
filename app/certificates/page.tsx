@@ -85,7 +85,7 @@ export default function CertificatesPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold">الشهادات الرقمية</h1>
-                <p className="text-purple-200 text-xs">{myCerts.length} شهادة مُصدَرة</p>
+                <p className="text-white font-semibold text-sm">{myCerts.length} شهادة مُصدَرة</p>
               </div>
             </div>
             {admin && (

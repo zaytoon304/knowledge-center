@@ -235,8 +235,8 @@ export default function TrainingPage() {
             <div className="text-4xl">{selectedCourse.emoji || "📚"}</div>
             <div className="flex-1">
               <h1 className="text-xl font-bold mb-1">{selectedCourse.title}</h1>
-              {selectedCourse.instructor && <p className="text-green-200 text-sm">المدرب: {selectedCourse.instructor}</p>}
-              {selectedCourse.duration && <p className="text-green-200 text-sm">المدة: {selectedCourse.duration}</p>}
+              {selectedCourse.instructor && <p className="text-white font-semibold text-base">المدرب: {selectedCourse.instructor}</p>}
+              {selectedCourse.duration && <p className="text-white font-semibold text-base">المدة: {selectedCourse.duration}</p>}
             </div>
             {isCourseCompleted(selectedCourse) && (
               <button onClick={() => generateCertificate(studentName || "الطالب", selectedCourse)}
@@ -370,12 +370,12 @@ export default function TrainingPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">الدورات التدريبية</h1>
-              <p className="text-green-200 text-sm">تعلّم واحصل على شهادتك</p>
+              <p className="text-white font-semibold text-base">تعلّم واحصل على شهادتك</p>
             </div>
           </div>
           <div className="bg-black/15 rounded-2xl px-4 py-2 text-center">
             <div className="text-3xl font-bold">{courses.length}</div>
-            <div className="text-green-200 text-xs">دورة</div>
+            <div className="text-white font-semibold text-sm">دورة</div>
           </div>
         </div>
       </div>

@@ -338,7 +338,7 @@ export default function SupervisorPage() {
             <div className="text-blue-300 text-xs">بمدارس الأرقم</div>
           </div>
         </div>
-        <p className="text-blue-200 text-xs">لمزيد من المعلومات تواصل معنا عبر الرابط أو رمز QR</p>
+        <p className="text-white font-semibold text-sm">لمزيد من المعلومات تواصل معنا عبر الرابط أو رمز QR</p>
       </div>
     </div>
   );

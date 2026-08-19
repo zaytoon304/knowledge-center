@@ -259,11 +259,11 @@ export default function ProjectsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">مركز المشاريع</h1>
-            <p className="text-blue-200 text-sm">مشاريع الطلاب والابتكارات</p>
+            <p className="text-white font-semibold text-base">مشاريع الطلاب والابتكارات</p>
           </div>
           <div className="mr-auto text-right">
             <div className="text-3xl font-bold">{projects.length}</div>
-            <div className="text-blue-200 text-xs">مشروع مسجّل</div>
+            <div className="text-white font-semibold text-sm">مشروع مسجّل</div>
           </div>
         </div>
       </div>
