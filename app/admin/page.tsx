@@ -41,13 +41,17 @@ const COMPETITIONS_CONFIG = {
   fields: [
     { key: "title", label: "اسم المسابقة", type: "text" as const, required: true, placeholder: "مثال: مسابقة WRO 2025" },
     { key: "description", label: "الوصف", type: "textarea" as const, placeholder: "تفاصيل المسابقة..." },
+    { key: "organizer", label: "الجهة المنظمة", type: "text" as const, placeholder: "مثال: مدارس التربية الإسلامية" },
     { key: "type", label: "النوع", type: "select" as const, options: ["محلية", "وطنية", "دولية", "مدرسية"] },
     { key: "subject", label: "المجال", type: "select" as const, options: ["روبوت", "رياضيات", "علوم", "برمجة", "ذكاء اصطناعي", "ابتكار", "متعدد"] },
     { key: "date", label: "تاريخ المسابقة", type: "date" as const },
     { key: "status", label: "الحالة", type: "select" as const, options: ["مفتوح", "قادم", "منتهي"] },
+    { key: "rules", label: "شروط المسابقة", type: "textarea" as const, placeholder: "شروط وضوابط المشاركة..." },
+    { key: "participants", label: "الطلاب المشاركون", type: "tags" as const, placeholder: "اكتب اسم الطالب ثم Enter" },
+    { key: "prepPhotos", label: "صور التجهيزات", type: "images" as const },
     { key: "registrationLink", label: "رابط التسجيل", type: "url" as const, placeholder: "https://..." },
     { key: "tags", label: "الأعمار المستهدفة", type: "tags" as const, placeholder: "مثال: 10-14 سنة" },
-    { key: "image", label: "صورة", type: "image" as const },
+    { key: "image", label: "صورة رئيسية", type: "image" as const },
   ],
 };
 

@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Trophy, Calendar, Search, Globe, MapPin, ChevronLeft, ExternalLink } from "lucide-react";
+import { Trophy, Calendar, Search, Globe, ChevronLeft, ChevronDown, ChevronUp, ExternalLink, ClipboardList, Users, ImageIcon, Building2 } from "lucide-react";
 import { cloudGet } from "@/lib/cloud";
 
 interface Competition {
   id: string; title: string; description: string; type: string;
-  subject: string; date: string; status: string;
+  subject: string; date: string; status: string; organizer?: string;
+  rules?: string; participants?: string[]; prepPhotos?: string[];
   registrationLink?: string; tags?: string[]; image?: string;
 }
 
@@ -27,6 +28,7 @@ const typeColor = (t: string) =>
 export default function CompetitionsPage() {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState("الكل");
 
   useEffect(() => {
@@ -110,15 +112,52 @@ export default function CompetitionsPage() {
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 leading-relaxed mb-3">{comp.description}</p>
-                <div className="flex flex-wrap gap-3 text-xs text-gray-400 mb-4">
+                <div className="flex flex-wrap gap-3 text-xs text-gray-400 mb-3">
                   {comp.date && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {comp.date}</span>}
                   {comp.subject && <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> {comp.subject}</span>}
+                  {comp.organizer && <span className="flex items-center gap-1"><Building2 className="w-3 h-3" /> {comp.organizer}</span>}
+                  {comp.participants && comp.participants.length > 0 && <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {comp.participants.length} طالب</span>}
                 </div>
                 {comp.tags && comp.tags.length > 0 && (
                   <div className="flex gap-1 flex-wrap mb-3">
                     {comp.tags.map((t, i) => <span key={i} className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{t}</span>)}
                   </div>
                 )}
+
+                {(comp.rules || (comp.participants && comp.participants.length > 0) || (comp.prepPhotos && comp.prepPhotos.length > 0)) && (
+                  <button onClick={() => setExpandedId(expandedId === comp.id ? null : comp.id)}
+                    className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-yellow-700 hover:text-yellow-800 py-2 mb-2 border-t border-b border-gray-100">
+                    {expandedId === comp.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    {expandedId === comp.id ? "إخفاء التفاصيل" : "عرض الشروط والمشاركين والتجهيزات"}
+                  </button>
+                )}
+                {expandedId === comp.id && (
+                  <div className="space-y-3 mb-4">
+                    {comp.rules && (
+                      <div>
+                        <p className="text-xs font-bold text-gray-600 flex items-center gap-1.5 mb-1"><ClipboardList className="w-3.5 h-3.5" /> شروط المسابقة</p>
+                        <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed bg-gray-50 rounded-xl p-3">{comp.rules}</p>
+                      </div>
+                    )}
+                    {comp.participants && comp.participants.length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold text-gray-600 flex items-center gap-1.5 mb-1"><Users className="w-3.5 h-3.5" /> الطلاب المشاركون ({comp.participants.length})</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {comp.participants.map((p, i) => <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">{p}</span>)}
+                        </div>
+                      </div>
+                    )}
+                    {comp.prepPhotos && comp.prepPhotos.length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold text-gray-600 flex items-center gap-1.5 mb-1"><ImageIcon className="w-3.5 h-3.5" /> صور التجهيزات</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {comp.prepPhotos.map((src, i) => <img key={i} src={src} alt="" className="w-full h-20 object-cover rounded-lg border border-gray-200" />)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {comp.registrationLink && (
                   <a href={comp.registrationLink} target="_blank" rel="noopener noreferrer"
                     className="w-full py-2.5 rounded-xl text-white text-sm font-medium bg-yellow-600 hover:bg-yellow-500 flex items-center justify-center gap-2 transition-colors">

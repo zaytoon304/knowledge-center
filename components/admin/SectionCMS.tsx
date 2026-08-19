@@ -6,7 +6,7 @@ import { cloudGet, cloudSet } from "@/lib/cloud";
 export interface CMSField {
   key: string;
   label: string;
-  type: "text" | "textarea" | "select" | "image" | "url" | "date" | "emoji" | "tags";
+  type: "text" | "textarea" | "select" | "image" | "images" | "url" | "date" | "emoji" | "tags";
   options?: string[];
   placeholder?: string;
   required?: boolean;
@@ -61,7 +61,7 @@ export default function SectionCMS({ config }: { config: CMSConfig }) {
   const makeEmpty = (): CMSItem => {
     const obj: CMSItem = { id: "" };
     config.fields.forEach(f => {
-      if (f.type === "tags") obj[f.key] = [];
+      if (f.type === "tags" || f.type === "images") obj[f.key] = [];
       else obj[f.key] = f.options?.[0] ?? "";
     });
     return obj;
@@ -100,6 +100,25 @@ export default function SectionCMS({ config }: { config: CMSConfig }) {
 
   const setField = (key: string, val: string) =>
     setEditing(prev => prev ? ({ ...prev, [key]: val }) : prev);
+
+  const handleImages = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length || !editing) return;
+    Promise.all(files.map(f => new Promise<string>(resolve => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(f);
+    }))).then(dataUrls => {
+      setEditing(prev => prev ? ({ ...prev, [key]: [...((prev[key] as string[]) ?? []), ...dataUrls] }) : prev);
+    });
+    e.target.value = "";
+  };
+  const removeImageAt = (key: string, idx: number) => {
+    if (!editing) return;
+    const arr = [...((editing[key] as string[]) ?? [])];
+    arr.splice(idx, 1);
+    setEditing(prev => prev ? ({ ...prev, [key]: arr }) : prev);
+  };
 
   const addTag = (key: string, val: string) => {
     if (!val.trim() || !editing) return;
@@ -182,6 +201,18 @@ export default function SectionCMS({ config }: { config: CMSConfig }) {
                   {config.fields.filter(f => f.type !== "image").map(f => {
                     const val = item[f.key];
                     if (!val || (Array.isArray(val) && val.length === 0)) return null;
+                    if (f.type === "images") {
+                      return (
+                        <div key={f.key}>
+                          <span className="text-xs font-semibold text-gray-500">{f.label}: </span>
+                          <div className="grid grid-cols-4 gap-2 mt-1">
+                            {(val as string[]).map((src, i) => (
+                              <img key={i} src={src} alt="" className="w-full h-16 object-cover rounded-lg border border-gray-200" />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
                     return (
                       <div key={f.key}>
                         <span className="text-xs font-semibold text-gray-500">{f.label}: </span>
@@ -190,7 +221,7 @@ export default function SectionCMS({ config }: { config: CMSConfig }) {
                             {val.map((v, i) => <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{v}</span>)}
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-700">{val as string}</span>
+                          <span className="text-sm text-gray-700 whitespace-pre-line">{val as string}</span>
                         )}
                       </div>
                     );
@@ -291,6 +322,29 @@ export default function SectionCMS({ config }: { config: CMSConfig }) {
                         </div>
                       )}
                       <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
+                    </div>
+                  )}
+
+                  {field.type === "images" && (
+                    <div className="space-y-2">
+                      <label htmlFor={`images-input-${field.key}`}
+                        className="flex items-center gap-2 border border-dashed border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 w-full justify-center transition-colors cursor-pointer">
+                        <Upload className="w-4 h-4" /> رفع صور (يمكن اختيار أكثر من صورة دفعة واحدة)
+                      </label>
+                      <input id={`images-input-${field.key}`} type="file" accept="image/*" multiple className="hidden" onChange={handleImages(field.key)} />
+                      {((editing[field.key] as string[]) ?? []).length > 0 && (
+                        <div className="grid grid-cols-4 gap-2">
+                          {((editing[field.key] as string[]) ?? []).map((src, i) => (
+                            <div key={i} className="relative">
+                              <img src={src} alt="" className="w-full h-16 object-cover rounded-lg border border-gray-200" />
+                              <button onClick={() => removeImageAt(field.key, i)}
+                                className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
