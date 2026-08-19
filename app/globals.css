@@ -84,7 +84,10 @@ body {
 
 /* Cards */
 .card {
-  background: white;
+  /* background-color بدل background (shorthand) — الـshorthand كان يصفّر background-image
+     ويلغي أي تدرّج لوني (bg-gradient-*) من Tailwind على نفس العنصر، فتظهر كل عناوين
+     الصفحات بخلفية بيضاء بدل التدرّج المقصود، والنص الفاتح فوقها يصير غير مقروء. */
+  background-color: white;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
