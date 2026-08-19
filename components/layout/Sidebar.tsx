@@ -5,7 +5,7 @@ import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
   Archive, Settings, X, LogOut, LogIn, Briefcase, CalendarDays,
-  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode, Radio, PenLine, Gamepad2, Brain, Sparkles, Images
+  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode, Radio, PenLine, Gamepad2, Brain, Sparkles, Images, Lightbulb
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ import CenterLogo from "@/components/icons/CenterLogo";
 const adminNavItems = [
   { href: "/", label: "الرئيسية", icon: Home },
   { href: "/knowledge", label: "مركز المعرفة", icon: BookOpen },
+  { href: "/lets-learn", label: "هيا نتعلم", icon: Lightbulb },
   { href: "/programs", label: "مركز البرامج", icon: Layers },
   { href: "/projects", label: "مركز المشاريع", icon: FolderOpen },
   { href: "/live", label: "البث المباشر", icon: Radio },
@@ -44,6 +45,7 @@ const adminNavItems = [
 const studentNavItems = [
   { href: "/student-portal", label: "بوابتي", icon: Users },
   { href: "/talent-test", label: "اختبار مهارات التفكير العليا", icon: Sparkles },
+  { href: "/lets-learn", label: "هيا نتعلم", icon: Lightbulb },
   { href: "/gallery", label: "أرشيف المركز", icon: Images },
 ];
 
