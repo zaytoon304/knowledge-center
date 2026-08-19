@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
@@ -9,7 +10,26 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth, CoordinatorProfile } from "@/contexts/AuthContext";
+import { cloudListen } from "@/lib/cloud";
 import CenterLogo from "@/components/icons/CenterLogo";
+
+// صوت تنبيه بسيط عند وصول ملاحظة جديدة من الإدارة — بدون أي ملف صوتي خارجي، يشتغل بأي صفحة بالمنصة
+function playNotificationBeep() {
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+  } catch { /* المتصفح ما يدعم الصوت — تجاهل بصمت */ }
+}
 
 const adminNavItems = [
   { href: "/", label: "الرئيسية", icon: Home },
@@ -65,6 +85,25 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
   const router = useRouter();
   const { user, logout, isLoggedIn } = useAuth();
   const isSupervisor = isLoggedIn && (user as CoordinatorProfile)?.isSupervisor;
+
+  // تنبيه صوتي فوري لأي منسّق لما تصله ملاحظة متابعة جديدة من الإدارة، بأي صفحة يكون فاتحها
+  const firstNotesLoad = useRef(true);
+  useEffect(() => {
+    firstNotesLoad.current = true;
+    if (!isLoggedIn || user?.role !== "coordinator") return;
+    const unsub = cloudListen<string[]>(`kc_cnotes_${user.id}`, data => {
+      const count = Array.isArray(data) ? data.length : 0;
+      if (!firstNotesLoad.current) {
+        const prev = Number(sessionStorage.getItem("kc_last_note_count") || "0");
+        if (count > prev) playNotificationBeep();
+      }
+      firstNotesLoad.current = false;
+      sessionStorage.setItem("kc_last_note_count", String(count));
+    });
+    return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, user?.id]);
+
   const navItems = studentMode
     ? studentNavItems
     : coordinatorMode

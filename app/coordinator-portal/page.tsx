@@ -4,7 +4,7 @@ import { useAuth, CoordinatorProfile, StudentProfile } from "@/contexts/AuthCont
 import { useRouter } from "next/navigation";
 import {
   Briefcase, Calendar, Layers, Trophy, Star, Archive, GraduationCap,
-  LogIn, Clock, XCircle, Download, FileText, Camera, Users, UserCheck
+  LogIn, Clock, XCircle, Download, FileText, Camera, Users, UserCheck, Bell
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { whatsappLink } from "@/lib/whatsapp";
@@ -91,6 +91,7 @@ export default function CoordinatorPortalPage() {
   const router = useRouter();
   const [tab, setTab] = useState("dashboard");
   const [pendingCount, setPendingCount] = useState(0);
+  const [notes, setNotes] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isCoordinator || !isApproved) return;
@@ -99,6 +100,15 @@ export default function CoordinatorPortalPage() {
     });
     return unsub;
   }, [isCoordinator, isApproved]);
+
+  useEffect(() => {
+    if (!isCoordinator || !isApproved || !user) return;
+    // الصوت نفسه يُشغَّل عالمياً من Sidebar (يشتغل بأي صفحة)، وهنا فقط لعرض قائمة الملاحظات
+    const unsub = cloudListen<string[]>(`kc_cnotes_${user.id}`, data => {
+      setNotes(Array.isArray(data) ? data : []);
+    });
+    return unsub;
+  }, [isCoordinator, isApproved, user]);
 
   if (!isLoggedIn || !isCoordinator) {
     return (
@@ -189,6 +199,18 @@ export default function CoordinatorPortalPage() {
               );
             })}
           </div>
+          {notes.length > 0 && (
+            <div className="card p-5 bg-amber-50 border border-amber-100">
+              <h3 className="font-bold text-amber-800 mb-3 flex items-center gap-2">
+                <Bell className="w-5 h-5" /> ملاحظات الإدارة ({notes.length})
+              </h3>
+              <div className="space-y-1.5 max-h-56 overflow-y-auto">
+                {[...notes].reverse().map((n, i) => (
+                  <p key={i} className="text-sm text-amber-900 bg-white/60 rounded-lg px-3 py-2">📝 {n}</p>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="card p-5">
             <h3 className="font-bold text-gray-700 mb-3">مرحباً بك {coord.name} 👋</h3>
             <p className="text-gray-500 text-sm leading-relaxed">هذه بوابتك المهنية الخاصة. رفع خططك، توثيق برامجك، مسابقاتك، إنجازاتك، وصورك الأرشيفية. كل ما ترفعه يُحفظ في ملفك المهني.</p>
