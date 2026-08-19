@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-  GraduationCap, Play, FileText, CheckCircle, Circle, ChevronRight,
-  Award, Download, Search, BookOpen, User, PenLine
+  GraduationCap, Play, FileText, CheckCircle, Circle, ChevronRight, ChevronLeft,
+  Award, Download, Search, BookOpen, User, PenLine, ShieldCheck
 } from "lucide-react";
 import { cloudGet } from "@/lib/cloud";
 
@@ -15,6 +15,7 @@ interface Lesson {
   pdfName: string;
   duration: string;
   content?: string;
+  slides?: string[];
 }
 
 interface Course {
@@ -26,6 +27,36 @@ interface Course {
   duration: string;
   lessons: Lesson[];
   createdAt: string;
+}
+
+// عرض شرائح محمي: صور فقط، بلا رابط تحميل وبلا إمكانية حفظ عبر الزر اليمين أو السحب.
+// هذا لا يمنع تصوير الشاشة (لا توجد طريقة تمنع ذلك بأي منصة ويب)، لكنه يوقف التحميل المباشر تماماً.
+function SlideViewer({ slides }: { slides: string[] }) {
+  const [idx, setIdx] = useState(0);
+  const total = slides.length;
+  return (
+    <div className="select-none">
+      <div className="relative bg-black flex items-center justify-center" style={{ minHeight: "320px" }}
+        onContextMenu={e => e.preventDefault()}>
+        <img src={slides[idx]} alt={`شريحة ${idx + 1}`} draggable={false}
+          className="max-h-[70vh] w-full object-contain pointer-events-none select-none" />
+        <span className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1">
+          <ShieldCheck className="w-3 h-3" /> عرض محمي — بدون تحميل
+        </span>
+      </div>
+      <div className="p-3 bg-gray-50 flex items-center justify-between gap-3">
+        <button onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
+          className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold bg-white border border-gray-200 disabled:opacity-30 hover:bg-gray-100">
+          <ChevronRight className="w-4 h-4" /> السابقة
+        </button>
+        <span className="text-xs text-gray-500 font-mono">{idx + 1} / {total}</span>
+        <button onClick={() => setIdx(i => Math.min(total - 1, i + 1))} disabled={idx === total - 1}
+          className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold bg-white border border-gray-200 disabled:opacity-30 hover:bg-gray-100">
+          التالية <ChevronLeft className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function extractYouTubeId(url: string): string {
@@ -288,7 +319,9 @@ export default function TrainingPage() {
                   </a>
                 </div>
               );
-            })() : selectedLesson.content ? (
+            })() : selectedLesson.slides && selectedLesson.slides.length > 0 ? (
+              <SlideViewer slides={selectedLesson.slides} />
+            ) : selectedLesson.content ? (
               <div className="p-6 bg-white">
                 <p className="text-gray-700 text-sm leading-loose whitespace-pre-line">{selectedLesson.content}</p>
               </div>

@@ -55,6 +55,7 @@ export interface LiveStreamSettings {
 export interface LessonItem {
   id: string; title: string; videoUrl: string; pdfUrl: string; pdfName: string; duration: string;
   content?: string; // نص الدرس المباشر — لدروس نصية بدون فيديو (مثل عناصر اللوائح والأدلة)
+  slides?: string[]; // عرض شرائح محمي — صور فقط (بدون ملف قابل للتحميل)، بلا رابط تحميل أو حفظ
 }
 
 export interface CourseItem {
