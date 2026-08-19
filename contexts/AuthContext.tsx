@@ -224,7 +224,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cloudGet<CourseItem[]>(KEYS.courses).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.courses, JSON.stringify(data)); }),
       cloudGet<VideoItem[]>(KEYS.videos).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.videos, JSON.stringify(data)); }),
       cloudGet<ProjectItem[]>(KEYS.projects).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.projects, JSON.stringify(data)); }),
-      cloudGet<DailyLogEntry[]>(KEYS.dailyLog).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.dailyLog, JSON.stringify(data)); }),
+      cloudGet<DailyLogEntry[]>(KEYS.dailyLog).then(data => {
+        if (Array.isArray(data)) {
+          // Firebase يحذف المصفوفات الفاضية عند الحفظ (images/videoLinks) فتصير undefined عند
+          // القراءة — لولا هذا التطبيع كل عنصر يومية بدون صور/فيديو كان يُسقط الصفحة كاملة بخطأ
+          const normalized = data.map(e => ({ ...e, images: e.images || [], videoLinks: e.videoLinks || [] }));
+          localStorage.setItem(KEYS.dailyLog, JSON.stringify(normalized));
+        }
+      }),
       cloudGet<ShopItem[]>(KEYS.shop).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.shop, JSON.stringify(data)); }),
       cloudGet<PlatformAchievement[]>(KEYS.achievements).then(data => { if (Array.isArray(data)) localStorage.setItem(KEYS.achievements, JSON.stringify(data)); }),
     ];

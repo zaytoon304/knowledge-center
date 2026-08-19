@@ -1819,12 +1819,12 @@ export default function AdminPage() {
                           <button onClick={() => { if(confirm("حذف هذه اليومية؟")) { deleteDailyLogEntry(entry.id); refresh(); } }} className="p-2 text-red-400 hover:bg-red-50 rounded-xl flex-shrink-0"><Trash2 className="w-4 h-4" /></button>
                         </div>
                         {entry.description && <p className="text-sm text-gray-600 leading-relaxed">{entry.description}</p>}
-                        {entry.images.length > 0 && (
+                        {(entry.images?.length ?? 0) > 0 && (
                           <div className="flex gap-2 mt-3 flex-wrap">
                             {entry.images.map((img, i) => <img key={i} src={img.data} alt="" className="w-20 h-20 rounded-xl object-cover" />)}
                           </div>
                         )}
-                        {entry.videoLinks.length > 0 && (
+                        {(entry.videoLinks?.length ?? 0) > 0 && (
                           <div className="mt-3 space-y-1">
                             {entry.videoLinks.map((link, i) => <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-red-600 hover:text-red-500"><Play className="w-3.5 h-3.5" /> {link}</a>)}
                           </div>

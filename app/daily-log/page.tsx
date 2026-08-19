@@ -4,9 +4,16 @@ import { CalendarDays, Play, ExternalLink } from "lucide-react";
 import { DailyLogEntry } from "@/contexts/AuthContext";
 import { extractYouTubeId, youtubeThumbUrl } from "@/lib/youtube";
 import { noDownloadProps } from "@/lib/imageProtect";
+import { cloudGet } from "@/lib/cloud";
 
 function load<T>(key: string, fallback: T): T {
   try { const d = localStorage.getItem(key); return d ? JSON.parse(d) : fallback; } catch { return fallback; }
+}
+
+// Firebase يحذف المصفوفات الفاضية (images/videoLinks) عند الحفظ فتصير undefined عند القراءة —
+// بدون هذا التطبيع أي يومية بدون صور/فيديو تُسقط الصفحة كاملة بخطأ (entry.images.length على undefined)
+function normalizeEntries(data: DailyLogEntry[]): DailyLogEntry[] {
+  return data.map(e => ({ ...e, images: e.images || [], videoLinks: e.videoLinks || [] }));
 }
 
 const CAT_COLORS: Record<string, string> = {
@@ -27,7 +34,18 @@ export default function DailyLogPage() {
   const [lightbox, setLightbox] = useState<string | null>(null);
 
   useEffect(() => {
-    setEntries(load<DailyLogEntry[]>("kc_daily_log", []));
+    // نسخة محلية فورية أثناء انتظار السحابة (لو كانت متاحة من زيارة سابقة)
+    setEntries(normalizeEntries(load<DailyLogEntry[]>("kc_daily_log", [])));
+    // القراءة المحلية وحدها كانت تتسابق مع مزامنة السحابة بالخلفية — لو الصفحة فُتحت
+    // مباشرة (رابط جديد أو أول زيارة) كانت أحياناً تعرض بيانات فاضية أو قديمة. الآن تجيب
+    // من Firebase مباشرة وتُطبّع البيانات (تحمي من عناصر بدون صور/فيديو).
+    cloudGet<DailyLogEntry[]>("kc_daily_log").then(data => {
+      if (Array.isArray(data)) {
+        const normalized = normalizeEntries(data);
+        localStorage.setItem("kc_daily_log", JSON.stringify(normalized));
+        setEntries(normalized);
+      }
+    });
   }, []);
 
   const filtered = filter === "الكل"
@@ -91,7 +109,7 @@ export default function DailyLogPage() {
                 )}
 
                 {/* صور */}
-                {entry.images.length > 0 && (
+                {(entry.images?.length ?? 0) > 0 && (
                   <div className={`grid gap-2 mb-4 ${entry.images.length === 1 ? "grid-cols-1" : entry.images.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
                     {entry.images.map((img, i) => (
                       <img key={i} src={img.data} alt="" onClick={() => setLightbox(img.data)}
@@ -102,7 +120,7 @@ export default function DailyLogPage() {
                 )}
 
                 {/* فيديوهات */}
-                {entry.videoLinks.length > 0 && (
+                {(entry.videoLinks?.length ?? 0) > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {entry.videoLinks.map((link, i) => {
                       const vid = extractYouTubeId(link);
