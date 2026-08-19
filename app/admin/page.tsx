@@ -18,6 +18,7 @@ interface HotsResult {
   date: string; correct: number; total: number; elapsedSeconds: number; submittedAt: string;
 }
 const KnowledgeAdmin = dynamic(() => import("@/components/admin/KnowledgeAdmin"), { ssr: false });
+const CompetitionParticipation = dynamic(() => import("@/components/admin/CompetitionParticipation"), { ssr: false });
 const SectionCMS = dynamic(() => import("@/components/admin/SectionCMS"), { ssr: false });
 
 const PROGRAMS_CONFIG = {
@@ -46,6 +47,8 @@ const COMPETITIONS_CONFIG = {
     { key: "subject", label: "المجال", type: "select" as const, options: ["روبوت", "رياضيات", "علوم", "برمجة", "ذكاء اصطناعي", "ابتكار", "متعدد"] },
     { key: "date", label: "تاريخ المسابقة", type: "date" as const },
     { key: "status", label: "الحالة", type: "select" as const, options: ["مفتوح", "قادم", "منتهي"] },
+    { key: "mandatory", label: "المشاركة", type: "select" as const, options: ["اختياري", "إلزامي"] },
+    { key: "deadline", label: "آخر موعد لإرسال المنسق مشاركته", type: "date" as const },
     { key: "rules", label: "شروط المسابقة", type: "textarea" as const, placeholder: "شروط وضوابط المشاركة..." },
     { key: "participants", label: "الطلاب المشاركون", type: "tags" as const, placeholder: "اكتب اسم الطالب ثم Enter" },
     { key: "prepPhotos", label: "صور التجهيزات", type: "images" as const },
@@ -1852,6 +1855,7 @@ export default function AdminPage() {
           <SectionCMS config={COMPETITIONS_CONFIG} />
         </div>
       )}
+      {tab === "competitions_cms" && <CompetitionParticipation />}
 
       {/* بنك المشاريع CMS */}
       {tab === "project_bank_cms" && (
@@ -1912,7 +1916,7 @@ export default function AdminPage() {
                 return (
                   <div className="grid grid-cols-4 gap-2 mt-4">
                     {[{n:total,l:"إجمالي",e:"📊"},{n:active,l:"جارٍ",e:"🟢"},{n:upcoming,l:"قادم",e:"⏳"},{n:completed,l:"منتهي",e:"✅"}].map(s=>(
-                      <div key={s.l} className="bg-white/10 rounded-xl p-2 text-center">
+                      <div key={s.l} className="bg-black/15 rounded-xl p-2 text-center">
                         <div className="text-lg">{s.e}</div>
                         <div className="text-xl font-bold">{s.n}</div>
                         <div className="text-indigo-200 text-[10px]">{s.l}</div>
@@ -2391,7 +2395,7 @@ function SupervisorProfileEditor() {
             </button>
           </div>
         </div>
-        <div className="mt-3 bg-white/10 rounded-xl p-2.5 flex items-center gap-2">
+        <div className="mt-3 bg-black/15 rounded-xl p-2.5 flex items-center gap-2">
           <span className="text-xs text-blue-200">رابط صفحتك:</span>
           <span className="text-white text-xs font-mono flex-1">{pageUrl}</span>
         </div>

@@ -336,7 +336,7 @@ export default function MeetingsPage() {
               { n: totalVoted, l: "تصويت", emoji: "🗳️" },
               { n: totalDecided, l: "قرار", emoji: "✅" },
             ].map(s => (
-              <div key={s.l} className="bg-white/10 rounded-xl p-2 text-center">
+              <div key={s.l} className="bg-black/15 rounded-xl p-2 text-center">
                 <div className="text-lg">{s.emoji}</div>
                 <div className="text-lg font-bold">{s.n}</div>
                 <div className="text-white/70 text-[10px]">{s.l}</div>
@@ -839,7 +839,7 @@ export default function MeetingsPage() {
             { n: upcoming, l: "قادم", emoji: "⏳" },
             { n: completed, l: "منتهي", emoji: "✅" },
           ].map(s => (
-            <div key={s.l} className="bg-white/10 rounded-xl p-2 text-center">
+            <div key={s.l} className="bg-black/15 rounded-xl p-2 text-center">
               <div className="text-lg">{s.emoji}</div>
               <div className="text-xl font-bold">{s.n}</div>
               <div className="text-indigo-200 text-[10px]">{s.l}</div>

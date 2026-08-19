@@ -141,7 +141,7 @@ export default function ProjectTrackingPage() {
         {/* Progress stats */}
         <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
           {statsByStage.map(s => (
-            <div key={s.id} className="bg-white/10 rounded-xl px-3 py-2 flex-shrink-0 text-center min-w-[70px]">
+            <div key={s.id} className="bg-black/15 rounded-xl px-3 py-2 flex-shrink-0 text-center min-w-[70px]">
               <div className="text-lg font-bold text-yellow-300">{s.count}</div>
               <div className="text-white/70 text-xs">{s.label.split(" ")[1]}</div>
             </div>

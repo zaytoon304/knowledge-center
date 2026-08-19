@@ -376,25 +376,25 @@ export default function StudentPortalPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="bg-white/10 rounded-xl p-3">
+                  <div className="bg-black/15 rounded-xl p-3">
                     <p className="text-blue-300 text-xs mb-1">رقم الهوية</p>
                     <p className="font-mono font-bold">{student.nationalId}</p>
                   </div>
-                  <div className="bg-white/10 rounded-xl p-3">
+                  <div className="bg-black/15 rounded-xl p-3">
                     <p className="text-blue-300 text-xs mb-1">تاريخ الميلاد</p>
                     <p className="font-bold">{student.birthDate || "—"}</p>
                   </div>
-                  <div className="bg-white/10 rounded-xl p-3">
+                  <div className="bg-black/15 rounded-xl p-3">
                     <p className="text-blue-300 text-xs mb-1">الجوال</p>
                     <p className="font-bold">{student.phone}</p>
                   </div>
-                  <div className="bg-white/10 rounded-xl p-3">
+                  <div className="bg-black/15 rounded-xl p-3">
                     <p className="text-blue-300 text-xs mb-1">جوال ولي الأمر</p>
                     <p className="font-bold">{student.parentPhone || "—"}</p>
                   </div>
                 </div>
                 {student.email && (
-                  <div className="bg-white/10 rounded-xl p-3 text-sm">
+                  <div className="bg-black/15 rounded-xl p-3 text-sm">
                     <p className="text-blue-300 text-xs mb-1">البريد الإلكتروني</p>
                     <p className="font-bold">{student.email}</p>
                   </div>

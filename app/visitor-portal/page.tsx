@@ -83,7 +83,7 @@ export default function VisitorPortalPage() {
             <LogOut className="w-4 h-4" /> خروج
           </button>
         </div>
-        <div className="mt-4 flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+        <div className="mt-4 flex items-center gap-2 bg-black/15 rounded-xl px-3 py-2">
           <CheckCircle className="w-4 h-4 text-green-300 flex-shrink-0" />
           <p className="text-sm text-white/90">تم اعتماد حسابك — يمكنك الوصول للأقسام المخصصة لك</p>
         </div>

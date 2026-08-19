@@ -167,7 +167,7 @@ export default function KnowledgePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {TABS.map(t => (
-            <div key={t.id} className="bg-white/10 rounded-xl p-3 text-center">
+            <div key={t.id} className="bg-black/15 rounded-xl p-3 text-center">
               <div className="text-2xl font-bold text-yellow-300">{allData[t.id]?.length ?? 0}</div>
               <div className="text-blue-100 text-xs mt-1">{t.label}</div>
             </div>

@@ -373,7 +373,7 @@ export default function TrainingPage() {
               <p className="text-green-200 text-sm">تعلّم واحصل على شهادتك</p>
             </div>
           </div>
-          <div className="bg-white/10 rounded-2xl px-4 py-2 text-center">
+          <div className="bg-black/15 rounded-2xl px-4 py-2 text-center">
             <div className="text-3xl font-bold">{courses.length}</div>
             <div className="text-green-200 text-xs">دورة</div>
           </div>

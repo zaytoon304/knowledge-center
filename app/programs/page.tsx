@@ -41,7 +41,7 @@ export default function ProgramsPage() {
             <p className="text-purple-200 text-sm">برامج الموهبة والابتكار وSTEAM</p>
           </div>
         </div>
-        <div className="bg-white/10 rounded-xl p-3 text-center w-32">
+        <div className="bg-black/15 rounded-xl p-3 text-center w-32">
           <div className="text-2xl font-bold text-yellow-300">{programs.length}</div>
           <div className="text-purple-100 text-sm">برنامج نشط</div>
         </div>

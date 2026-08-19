@@ -77,7 +77,7 @@ export default function LivePage() {
             </p>
           </div>
           {config.isLive && (
-            <div className="flex items-center gap-1.5 bg-white/10 rounded-xl px-3 py-1.5">
+            <div className="flex items-center gap-1.5 bg-black/15 rounded-xl px-3 py-1.5">
               <Eye className="w-4 h-4 text-white/70" />
               <span className="text-sm font-bold">{viewers}</span>
               <span className="text-xs text-white/70">مشاهد</span>

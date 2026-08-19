@@ -72,7 +72,7 @@ export default function GalleryPage() {
             { n: totalPhotos, l: "صورة", emoji: "🖼️" },
             { n: totalVideos, l: "فيديو", emoji: "🎬" },
           ].map(s => (
-            <div key={s.l} className="bg-white/10 rounded-xl p-2 text-center">
+            <div key={s.l} className="bg-black/15 rounded-xl p-2 text-center">
               <div className="text-lg">{s.emoji}</div>
               <div className="text-xl font-bold">{s.n}</div>
               <div className="text-blue-200 text-[10px]">{s.l}</div>

@@ -62,7 +62,7 @@ export default function ProjectBankPage() {
         </div>
         <div className="flex gap-3 flex-wrap">
           {categories.filter(c => c !== "الكل").map(c => (
-            <div key={c} className="bg-white/10 rounded-xl px-3 py-2 text-center">
+            <div key={c} className="bg-black/15 rounded-xl px-3 py-2 text-center">
               <span className="text-sm">{catEmoji[c] || "📁"} {c}</span>
               <span className="text-white/60 text-xs mr-1">({projects.filter(p => p.category === c).length})</span>
             </div>

@@ -96,7 +96,7 @@ export default function EmergingTechPage() {
             <p className="text-blue-200 text-sm">تعلم واستكشف أحدث التقنيات في عالم اليوم</p>
           </div>
         </div>
-        <div className="bg-white/10 rounded-xl p-3 text-center w-28">
+        <div className="bg-black/15 rounded-xl p-3 text-center w-28">
           <div className="text-2xl font-bold text-yellow-300">{allTechs.length}</div>
           <div className="text-blue-100 text-sm">تقنية</div>
         </div>

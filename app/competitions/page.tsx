@@ -1,13 +1,22 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Trophy, Calendar, Search, Globe, ChevronLeft, ChevronDown, ChevronUp, ExternalLink, ClipboardList, Users, ImageIcon, Building2 } from "lucide-react";
-import { cloudGet } from "@/lib/cloud";
+import { Trophy, Calendar, Search, Globe, ChevronDown, ChevronUp, ExternalLink, ClipboardList, Users, ImageIcon, Building2, X, Send, AlertTriangle, CheckCircle } from "lucide-react";
+import { cloudGet, cloudTransact } from "@/lib/cloud";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Competition {
   id: string; title: string; description: string; type: string;
   subject: string; date: string; status: string; organizer?: string;
   rules?: string; participants?: string[]; prepPhotos?: string[];
   registrationLink?: string; tags?: string[]; image?: string;
+  mandatory?: string; deadline?: string;
+}
+
+interface ParticipationEntry {
+  coordinatorId: string; coordinatorName: string;
+  participating: "نعم" | "لا";
+  projectType: string; topic: string; code: string;
+  submittedAt: string;
 }
 
 function load(): Competition[] {
@@ -25,11 +34,55 @@ const typeColor = (t: string) =>
   t === "محلية" ? "bg-green-100 text-green-700" :
   "bg-gray-100 text-gray-500";
 
+const EMPTY_PFORM = { participating: "نعم" as "نعم" | "لا", projectType: "", topic: "", code: "" };
+
 export default function CompetitionsPage() {
+  const { user, isCoordinator } = useAuth();
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState("الكل");
+
+  const [participateFor, setParticipateFor] = useState<Competition | null>(null);
+  const [pForm, setPForm] = useState(EMPTY_PFORM);
+  const [pLoading, setPLoading] = useState(false);
+  const [pSaving, setPSaving] = useState(false);
+  const [pSaved, setPSaved] = useState(false);
+
+  const openParticipation = async (comp: Competition) => {
+    setParticipateFor(comp);
+    setPForm(EMPTY_PFORM);
+    setPSaved(false);
+    if (!user) return;
+    setPLoading(true);
+    const list = await cloudGet<ParticipationEntry[]>(`kc_comp_participation_${comp.id}`);
+    const mine = Array.isArray(list) ? list.find(e => e.coordinatorId === user.id) : null;
+    if (mine) setPForm({ participating: mine.participating, projectType: mine.projectType, topic: mine.topic, code: mine.code });
+    setPLoading(false);
+  };
+
+  const submitParticipation = async () => {
+    if (!participateFor || !user) return;
+    setPSaving(true);
+    const entry: ParticipationEntry = {
+      coordinatorId: user.id,
+      coordinatorName: user.name,
+      participating: pForm.participating,
+      projectType: pForm.projectType,
+      topic: pForm.topic,
+      code: pForm.code,
+      submittedAt: new Date().toISOString(),
+    };
+    const key = `kc_comp_participation_${participateFor.id}`;
+    await cloudTransact<ParticipationEntry[]>(key, current => {
+      const list = Array.isArray(current) ? current : [];
+      const others = list.filter(e => e.coordinatorId !== user.id);
+      return [...others, entry];
+    });
+    setPSaving(false);
+    setPSaved(true);
+    setTimeout(() => setParticipateFor(null), 1200);
+  };
 
   useEffect(() => {
     setCompetitions(load());
@@ -65,9 +118,9 @@ export default function CompetitionsPage() {
             { n: competitions.filter(c => c.status === "قادم").length, l: "قادم" },
             { n: competitions.length, l: "إجمالي" },
           ].map(s => (
-            <div key={s.l} className="bg-white/10 rounded-xl p-3 text-center">
+            <div key={s.l} className="bg-black/15 rounded-xl p-3 text-center">
               <div className="text-2xl font-bold text-white">{s.n}</div>
-              <div className="text-yellow-100 text-xs mt-0.5">{s.l}</div>
+              <div className="text-white/90 text-xs mt-0.5">{s.l}</div>
             </div>
           ))}
         </div>
@@ -109,6 +162,11 @@ export default function CompetitionsPage() {
                   <div className="flex flex-col gap-1">
                     {comp.status && <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor(comp.status)}`}>{comp.status}</span>}
                     {comp.type && <span className={`text-xs px-2 py-0.5 rounded-full ${typeColor(comp.type)}`}>{comp.type}</span>}
+                    {comp.mandatory === "إلزامي" && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 flex items-center gap-1 font-bold">
+                        <AlertTriangle className="w-3 h-3" /> إلزامي
+                      </span>
+                    )}
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 leading-relaxed mb-3">{comp.description}</p>
@@ -118,6 +176,11 @@ export default function CompetitionsPage() {
                   {comp.organizer && <span className="flex items-center gap-1"><Building2 className="w-3 h-3" /> {comp.organizer}</span>}
                   {comp.participants && comp.participants.length > 0 && <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {comp.participants.length} طالب</span>}
                 </div>
+                {comp.mandatory === "إلزامي" && comp.deadline && (
+                  <div className="bg-red-50 border border-red-100 text-red-700 text-xs rounded-xl px-3 py-2 mb-3 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" /> آخر موعد لإرسال مشاركتك: <strong>{comp.deadline}</strong>
+                  </div>
+                )}
                 {comp.tags && comp.tags.length > 0 && (
                   <div className="flex gap-1 flex-wrap mb-3">
                     {comp.tags.map((t, i) => <span key={i} className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{t}</span>)}
@@ -158,6 +221,12 @@ export default function CompetitionsPage() {
                   </div>
                 )}
 
+                {isCoordinator && (
+                  <button onClick={() => openParticipation(comp)}
+                    className="w-full py-2.5 rounded-xl text-white text-sm font-bold bg-violet-700 hover:bg-violet-600 flex items-center justify-center gap-2 transition-colors mb-2">
+                    <Send className="w-4 h-4" /> سجّل مشاركتك بهذه المسابقة
+                  </button>
+                )}
                 {comp.registrationLink && (
                   <a href={comp.registrationLink} target="_blank" rel="noopener noreferrer"
                     className="w-full py-2.5 rounded-xl text-white text-sm font-medium bg-yellow-600 hover:bg-yellow-500 flex items-center justify-center gap-2 transition-colors">
@@ -167,6 +236,69 @@ export default function CompetitionsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* نافذة تسجيل المشاركة */}
+      {participateFor && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setParticipateFor(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h2 className="text-base font-bold text-gray-800">تسجيل المشاركة — {participateFor.title}</h2>
+              <button onClick={() => setParticipateFor(null)} className="p-2 hover:bg-gray-100 rounded-xl"><X className="w-5 h-5 text-gray-400" /></button>
+            </div>
+
+            {pLoading ? (
+              <div className="p-10 text-center text-gray-400 text-sm">جارٍ التحميل...</div>
+            ) : pSaved ? (
+              <div className="p-10 text-center space-y-2">
+                <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
+                <p className="font-bold text-gray-700">تم إرسال مشاركتك ✓</p>
+              </div>
+            ) : (
+              <div className="p-5 space-y-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">هل ستشارك بهذه المسابقة؟</label>
+                  <div className="flex gap-2">
+                    {(["نعم", "لا"] as const).map(opt => (
+                      <button key={opt} onClick={() => setPForm(p => ({ ...p, participating: opt }))}
+                        className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${pForm.participating === opt ? "bg-violet-700 text-white border-violet-700" : "bg-gray-50 text-gray-600 border-gray-200"}`}>
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {pForm.participating === "نعم" && (
+                  <>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 mb-1 block">نوع المشروع</label>
+                      <input value={pForm.projectType} onChange={e => setPForm(p => ({ ...p, projectType: e.target.value }))}
+                        placeholder="مثال: نموذج روبوت بيئي"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-violet-400" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 mb-1 block">عن ماذا يتحدث المشروع؟</label>
+                      <textarea value={pForm.topic} onChange={e => setPForm(p => ({ ...p, topic: e.target.value }))}
+                        rows={3} placeholder="فكرة المشروع والمشكلة التي يحلها..."
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-violet-400 resize-y" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 mb-1 block">الكود (إن وُجد) <span className="text-gray-400 font-normal">اختياري</span></label>
+                      <textarea value={pForm.code} onChange={e => setPForm(p => ({ ...p, code: e.target.value }))}
+                        rows={4} dir="ltr" placeholder="// الصق الكود هنا..."
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs bg-gray-50 outline-none focus:border-violet-400 resize-y font-mono" />
+                    </div>
+                  </>
+                )}
+
+                <button onClick={submitParticipation} disabled={pSaving}
+                  className="w-full bg-violet-700 text-white py-3 rounded-xl font-bold hover:bg-violet-600 disabled:opacity-50 flex items-center justify-center gap-2">
+                  <Send className="w-4 h-4" /> {pSaving ? "جارٍ الإرسال..." : "إرسال المشاركة"}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
