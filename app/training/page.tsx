@@ -5,6 +5,7 @@ import {
   GraduationCap, Play, FileText, CheckCircle, Circle, ChevronRight,
   Award, Download, Search, BookOpen, User, PenLine
 } from "lucide-react";
+import { cloudGet } from "@/lib/cloud";
 
 interface Lesson {
   id: string;
@@ -13,6 +14,7 @@ interface Lesson {
   pdfUrl: string;
   pdfName: string;
   duration: string;
+  content?: string;
 }
 
 interface Course {
@@ -139,6 +141,13 @@ export default function TrainingPage() {
     setProgress(loadProgress());
     const n = localStorage.getItem("kc_student_name");
     if (n) setStudentName(n);
+    cloudGet<Course[]>("kc_courses").then(data => {
+      if (Array.isArray(data)) {
+        const normalized = data.map(c => ({ ...c, lessons: c.lessons || [] }));
+        localStorage.setItem("kc_courses", JSON.stringify(normalized));
+        setCourses(normalized);
+      }
+    });
   }, []);
 
   const toggleLesson = (courseId: string, lessonId: string) => {
@@ -279,7 +288,11 @@ export default function TrainingPage() {
                   </a>
                 </div>
               );
-            })() : (
+            })() : selectedLesson.content ? (
+              <div className="p-6 bg-white">
+                <p className="text-gray-700 text-sm leading-loose whitespace-pre-line">{selectedLesson.content}</p>
+              </div>
+            ) : (
               <div className="p-6 bg-gray-50 text-center text-gray-400 text-sm">لا يوجد فيديو لهذا الدرس</div>
             )}
             <div className="p-4 flex items-center justify-between gap-3 bg-gray-50">

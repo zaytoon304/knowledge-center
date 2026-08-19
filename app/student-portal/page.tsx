@@ -1,14 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth, StudentProfile } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import {
   Users, BookOpen, Play, Lightbulb, Radio, CreditCard,
-  MessageSquare, LogIn, Clock, XCircle, ExternalLink, ChevronDown, ChevronUp, Code
+  MessageSquare, LogIn, Clock, XCircle, ExternalLink, ChevronDown, ChevronUp, Code, ClipboardList
 } from "lucide-react";
 import GroupsSection from "@/components/student/GroupsSection";
 import { getDeviceId } from "@/lib/deviceCode";
 import { whatsappLink } from "@/lib/whatsapp";
+import { cloudListen } from "@/lib/cloud";
 
 const tabs = [
   { id: "dashboard", label: "رئيسيتي", icon: Users },
@@ -36,6 +37,15 @@ export default function StudentPortalPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showCard, setShowCard] = useState(false);
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
+  const [tasks, setTasks] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !isApproved || !user) return;
+    const unsub = cloudListen<string[]>(`kc_student_tasks_${user.id}`, data => {
+      setTasks(Array.isArray(data) ? data : []);
+    });
+    return unsub;
+  }, [isLoggedIn, isApproved, user]);
 
   const courses = getCourses();
   const videos = getVideos();
@@ -138,6 +148,18 @@ export default function StudentPortalPage() {
       {/* Dashboard */}
       {activeTab === "dashboard" && (
         <div className="space-y-4">
+          {tasks.length > 0 && (
+            <div className="card p-5 bg-amber-50 border border-amber-100">
+              <h3 className="font-bold text-amber-800 mb-3 flex items-center gap-2">
+                <ClipboardList className="w-5 h-5" /> مهامي ({tasks.length})
+              </h3>
+              <div className="space-y-1.5 max-h-56 overflow-y-auto">
+                {[...tasks].reverse().map((t, i) => (
+                  <p key={i} className="text-sm text-amber-900 bg-white/60 rounded-lg px-3 py-2">📌 {t}</p>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-4">
             {[
               { label: "دوراتي", value: courses.length, icon: "📚", color: "bg-blue-50 text-blue-700" },

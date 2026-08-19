@@ -4,7 +4,7 @@ import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
-  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink
+  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
@@ -209,7 +209,7 @@ export default function AdminPage() {
   const [cForm, setCForm] = useState({ title: "", description: "", emoji: "📚", instructor: "", duration: "" });
   const [showCForm, setShowCForm] = useState(false);
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
-  const [lessonForm, setLessonForm] = useState({ title: "", videoUrl: "", pdfUrl: "", pdfName: "", duration: "" });
+  const [lessonForm, setLessonForm] = useState({ title: "", videoUrl: "", pdfUrl: "", pdfName: "", duration: "", content: "" });
   const [showLessonForm, setShowLessonForm] = useState<string | null>(null);
   const [vForm, setVForm] = useState({ title: "", description: "", link: "", emoji: "🎬" });
   const [showVForm, setShowVForm] = useState(false);
@@ -223,6 +223,10 @@ export default function AdminPage() {
   const [dailyLog, setDailyLog] = useState<DailyLogEntry[]>([]);
   const [showDForm, setShowDForm] = useState(false);
   const [studentSearch, setStudentSearch] = useState("");
+  const [taskSearch, setTaskSearch] = useState("");
+  const [taskSelectedIds, setTaskSelectedIds] = useState<string[]>([]);
+  const [taskText, setTaskText] = useState("");
+  const [taskSentMsg, setTaskSentMsg] = useState("");
   const [coordSearch, setCoordSearch] = useState("");
   const [studentNoteInputs, setStudentNoteInputs] = useState<Record<string, string>>({});
   const [coordNoteInputs, setCoordNoteInputs] = useState<Record<string, string>>({});
@@ -319,6 +323,7 @@ export default function AdminPage() {
     { id: "coordinators", label: "طلبات المنسقين", icon: Briefcase, badge: pendingCoords.length },
     { id: "approved", label: "الطلاب المعتمدون", icon: CheckCircle },
     { id: "student_tracking", label: "متابعة الطلاب", icon: Users },
+    { id: "student_tasks", label: "مهام الطلاب", icon: ClipboardList },
     { id: "coord_tracking", label: "متابعة المنسقين", icon: Briefcase },
     { id: "groups", label: "الجروبات", icon: MessageSquare },
     { id: "live", label: "البث المباشر", icon: Radio },
@@ -555,6 +560,58 @@ export default function AdminPage() {
           }
         </div>
       )}
+
+      {/* مهام الطلاب — إرسال مهمة لطلاب محددين أو للجميع */}
+      {tab === "student_tasks" && (() => {
+        const approvedStudents = students.filter(s => s.status === "approved" && (s.name.includes(taskSearch) || s.school.includes(taskSearch) || s.grade.includes(taskSearch)));
+        const allSelected = approvedStudents.length > 0 && approvedStudents.every(s => taskSelectedIds.includes(s.id));
+        const toggleAll = () => setTaskSelectedIds(allSelected ? [] : approvedStudents.map(s => s.id));
+        const toggleOne = (id: string) => setTaskSelectedIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+        const sendTask = async () => {
+          const txt = taskText.trim();
+          if (!txt || taskSelectedIds.length === 0) return;
+          await Promise.all(taskSelectedIds.map(id => addNote(`kc_student_tasks_${id}`, txt)));
+          setTaskSentMsg(`✅ أُرسلت المهمة لـ ${taskSelectedIds.length} طالب`);
+          setTaskText("");
+          setTaskSelectedIds([]);
+          setTimeout(() => setTaskSentMsg(""), 3000);
+        };
+        return (
+          <div className="space-y-4">
+            <h2 className="font-bold text-gray-800 text-lg">إرسال مهمة للطلاب</h2>
+            <div className="card p-4 space-y-3">
+              <textarea value={taskText} onChange={e => setTaskText(e.target.value)}
+                placeholder="اكتب نص المهمة..." rows={3}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none resize-y" />
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <input value={taskSearch} onChange={e => setTaskSearch(e.target.value)} placeholder="🔍 ابحث بالاسم أو المدرسة أو الصف..." className="input w-64 text-sm" />
+                <button onClick={toggleAll} className="text-xs bg-blue-50 text-blue-700 px-3 py-2 rounded-xl font-semibold hover:bg-blue-100">
+                  {allSelected ? "إلغاء تحديد الكل" : `تحديد الكل (${approvedStudents.length})`}
+                </button>
+              </div>
+              <div className="max-h-64 overflow-y-auto space-y-1.5 border border-gray-100 rounded-xl p-2">
+                {approvedStudents.length === 0
+                  ? <p className="text-xs text-gray-400 text-center py-4">لا يوجد طلاب</p>
+                  : approvedStudents.map(s => (
+                    <label key={s.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <input type="checkbox" checked={taskSelectedIds.includes(s.id)} onChange={() => toggleOne(s.id)} className="w-4 h-4" />
+                      <span className="text-sm text-gray-700 flex-1">{s.name}</span>
+                      <span className="text-xs text-gray-400">{s.grade} • {s.school}</span>
+                    </label>
+                  ))
+                }
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={sendTask} disabled={!taskText.trim() || taskSelectedIds.length === 0}
+                  className="bg-violet-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-violet-600 disabled:opacity-40">
+                  إرسال إلى {taskSelectedIds.length} طالب
+                </button>
+                {taskSentMsg && <span className="text-sm text-green-700 font-semibold">{taskSentMsg}</span>}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* متابعة المنسقين */}
       {tab === "coord_tracking" && (
@@ -866,6 +923,9 @@ export default function AdminPage() {
                             <input value={lessonForm.title} onChange={e => setLessonForm(p => ({ ...p, title: e.target.value }))}
                               placeholder="عنوان الدرس *"
                               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" />
+                            <textarea value={lessonForm.content} onChange={e => setLessonForm(p => ({ ...p, content: e.target.value }))}
+                              placeholder="نص الدرس المباشر (اختياري — لدرس نصي بدون فيديو)" rows={4}
+                              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none resize-y" />
                             <input value={lessonForm.videoUrl} onChange={e => setLessonForm(p => ({ ...p, videoUrl: e.target.value }))}
                               placeholder="رابط فيديو YouTube (اختياري)"
                               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none font-mono" dir="ltr" />
@@ -884,7 +944,8 @@ export default function AdminPage() {
                                 const updatedLessons = [...lessons, newLesson];
                                 const allCourses = courses.map(cc => cc.id === c.id ? { ...cc, lessons: updatedLessons } : cc);
                                 localStorage.setItem("kc_courses", JSON.stringify(allCourses));
-                                setLessonForm({ title: "", videoUrl: "", pdfUrl: "", pdfName: "", duration: "" });
+                                cloudSet("kc_courses", allCourses);
+                                setLessonForm({ title: "", videoUrl: "", pdfUrl: "", pdfName: "", duration: "", content: "" });
                                 setShowLessonForm(null);
                                 refresh();
                               }} className="bg-green-700 text-white px-4 py-1.5 rounded-xl text-xs font-semibold">إضافة الدرس</button>
@@ -1553,11 +1614,11 @@ export default function AdminPage() {
             إذا تركت الرمز فارغاً يمكن لأي شخص التسجيل بدون رمز. إذا حددت رمزاً فلن يستطيع التسجيل إلا من يعرفه.
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">رمز تسجيل الطلاب</label>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">رمز تسجيل الطلاب <span className="text-gray-400 font-normal">(غير مُفعّل حالياً — تسجيل الطلاب صار بدون رمز تسهيلاً عليهم)</span></label>
             <input
               value={regCodes.studentCode}
               onChange={e => setRegCodesState(p => ({ ...p, studentCode: e.target.value }))}
-              placeholder="اتركه فارغاً للسماح للجميع"
+              placeholder="غير مستخدم حالياً"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-blue-500"
             />
           </div>

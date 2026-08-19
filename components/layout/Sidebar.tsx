@@ -86,19 +86,21 @@ export default function Sidebar({ isOpen, onClose, studentMode = false, coordina
   const { user, logout, isLoggedIn } = useAuth();
   const isSupervisor = isLoggedIn && (user as CoordinatorProfile)?.isSupervisor;
 
-  // تنبيه صوتي فوري لأي منسّق لما تصله ملاحظة متابعة جديدة من الإدارة، بأي صفحة يكون فاتحها
+  // تنبيه صوتي فوري لمنسّق وصلته ملاحظة، أو طالب وصلته مهمة جديدة من الإدارة، بأي صفحة يكون فاتحها
   const firstNotesLoad = useRef(true);
   useEffect(() => {
     firstNotesLoad.current = true;
-    if (!isLoggedIn || user?.role !== "coordinator") return;
-    const unsub = cloudListen<string[]>(`kc_cnotes_${user.id}`, data => {
+    if (!isLoggedIn || !user || (user.role !== "coordinator" && user.role !== "student")) return;
+    const key = user.role === "coordinator" ? `kc_cnotes_${user.id}` : `kc_student_tasks_${user.id}`;
+    const storageKey = `kc_last_note_count_${user.id}`;
+    const unsub = cloudListen<string[]>(key, data => {
       const count = Array.isArray(data) ? data.length : 0;
       if (!firstNotesLoad.current) {
-        const prev = Number(sessionStorage.getItem("kc_last_note_count") || "0");
+        const prev = Number(sessionStorage.getItem(storageKey) || "0");
         if (count > prev) playNotificationBeep();
       }
       firstNotesLoad.current = false;
-      sessionStorage.setItem("kc_last_note_count", String(count));
+      sessionStorage.setItem(storageKey, String(count));
     });
     return unsub;
     // eslint-disable-next-line react-hooks/exhaustive-deps

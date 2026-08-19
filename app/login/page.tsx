@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, DEPARTMENTS, DEPARTMENT_COORDINATOR } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Camera, LogIn, UserPlus, Briefcase, FileText, Globe, GraduationCap, ShoppingBag, Rss, CheckCircle, Copy, KeyRound } from "lucide-react";
 import CenterLogo from "@/components/icons/CenterLogo";
@@ -52,7 +52,7 @@ export default function LoginPage() {
   const cvRef = useRef<HTMLInputElement>(null);
 
   const [loginData, setLoginData] = useState({ identifier: "", password: "", accessCode: "", type: "student" as "student" | "coordinator" | "visitor" });
-  const [regData, setRegData] = useState({ name: "", nationalId: "", school: "", grade: grades[0], phone: "", email: "", parentPhone: "", birthDate: "", photo: "", password: "", confirmPassword: "", teams: [] as string[], regCode: "" });
+  const [regData, setRegData] = useState({ name: "", nationalId: "", school: "", grade: grades[0], department: DEPARTMENTS[0] as string, classroom: "", phone: "", email: "", parentPhone: "", birthDate: "", photo: "", password: "", confirmPassword: "", teams: [] as string[] });
   const [copiedDeviceId, setCopiedDeviceId] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [deviceId, setDeviceId] = useState(""); // يُملأ بعد التركيب لتفادي مشاكل SSR/hydration
@@ -99,8 +99,8 @@ export default function LoginPage() {
     if (!regData.name || !regData.nationalId || !regData.school || !regData.phone) { setError("يرجى تعبئة الحقول المطلوبة"); return; }
     if (submitting) return;
     setSubmitting(true);
-    const { confirmPassword, regCode, ...data } = regData;
-    const result = await register(data, regCode);
+    const { confirmPassword, ...data } = regData;
+    const result = await register({ ...data, coordinatorName: DEPARTMENT_COORDINATOR[data.department] || "" });
     setSubmitting(false);
     if (result.success) { setSuccess("تم إرسال بياناتك! أرسل رمز جهازك للإدارة عشان يعطونك رمز الدخول."); }
     else { setError(result.message); }
@@ -378,11 +378,13 @@ export default function LoginPage() {
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">تاريخ الميلاد</label><input type="date" value={regData.birthDate} onChange={e => setRegData(p => ({ ...p, birthDate: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" /></div>
                 <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-0.5 block">المدرسة *</label><input value={regData.school} onChange={e => setRegData(p => ({ ...p, school: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
                 <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-0.5 block">الصف الدراسي</label><select value={regData.grade} onChange={e => setRegData(p => ({ ...p, grade: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none">{grades.map(g => <option key={g}>{g}</option>)}</select></div>
+                <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">القسم *</label><select value={regData.department} onChange={e => setRegData(p => ({ ...p, department: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none">{DEPARTMENTS.map(d => <option key={d}>{d}</option>)}</select></div>
+                <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">الفصل</label><input value={regData.classroom} onChange={e => setRegData(p => ({ ...p, classroom: e.target.value }))} placeholder="مثال: 4/2" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" /></div>
+                <div className="col-span-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 text-xs text-blue-700">👤 المنسق المسؤول عن قسمك: <strong>{DEPARTMENT_COORDINATOR[regData.department] || "—"}</strong></div>
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">الجوال *</label><input value={regData.phone} onChange={e => setRegData(p => ({ ...p, phone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">جوال ولي الأمر</label><input value={regData.parentPhone} onChange={e => setRegData(p => ({ ...p, parentPhone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" /></div>
                 <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-0.5 block">البريد الإلكتروني</label><input type="email" value={regData.email} onChange={e => setRegData(p => ({ ...p, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" /></div>
               </div>
-              <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">رمز التسجيل <span className="text-gray-400 font-normal">(إن وجد)</span></label><input value={regData.regCode} onChange={e => setRegData(p => ({ ...p, regCode: e.target.value }))} placeholder="أدخل الرمز إن طُلب منك" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" /></div>
               <button type="submit" disabled={submitting} className="w-full bg-emerald-700 text-white py-3 rounded-xl font-bold hover:bg-emerald-600 disabled:opacity-50">{submitting ? "جارٍ الإرسال..." : "إرسال بياناتي للإدارة"}</button>
             </form>
           )}

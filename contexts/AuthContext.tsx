@@ -9,7 +9,19 @@ export interface StudentProfile {
   photo: string; password: string; role: "student"; teams: string[];
   registeredAt: string; status: "pending" | "approved" | "rejected";
   deviceId?: string; // نفس رمز جهاز الطالب — يُستخدم لتوليد والتحقق من رمز الدخول (نظام أكاديمية زيتون)
+  department?: string; // القسم: ابتدائي عام / ابتدائي تحفيظ / متوسط / ثانوي
+  classroom?: string; // الفصل
+  coordinatorName?: string; // يُشتق تلقائياً من القسم عند التسجيل
 }
+
+// كل قسم مرتبط بمنسّق مسؤول عنه — تُستخدم لتحديد "المنسق التابع له" تلقائياً وقت تسجيل الطالب
+export const DEPARTMENTS = ["ابتدائي عام", "ابتدائي تحفيظ", "متوسط", "ثانوي"] as const;
+export const DEPARTMENT_COORDINATOR: Record<string, string> = {
+  "ابتدائي عام": "سمير علي أنور علي عوض",
+  "ابتدائي تحفيظ": "محمد ضيف عبد الغني سعيد",
+  "متوسط": "فتحي محفوظ عبد الله",
+  "ثانوي": "خالد علي محمد شعبان",
+};
 
 export interface CoordinatorProfile {
   id: string; name: string; email: string; phone: string;
@@ -42,6 +54,7 @@ export interface LiveStreamSettings {
 
 export interface LessonItem {
   id: string; title: string; videoUrl: string; pdfUrl: string; pdfName: string; duration: string;
+  content?: string; // نص الدرس المباشر — لدروس نصية بدون فيديو (مثل عناصر اللوائح والأدلة)
 }
 
 export interface CourseItem {
@@ -106,7 +119,7 @@ interface AuthContextType {
   login: (id: string, pw: string) => Promise<{ success: boolean; message: string }>;
   loginWithAccessCode: (code: string) => Promise<{ success: boolean; message: string }>;
   loginCoordinator: (email: string, pw: string) => Promise<{ success: boolean; message: string }>;
-  register: (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">, code: string) => Promise<{ success: boolean; message: string }>;
+  register: (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">) => Promise<{ success: boolean; message: string }>;
   registerCoordinator: (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">, code: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   updateProfile: (data: Partial<AnyUser>) => void;
@@ -278,10 +291,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: false, message: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
   };
 
-  const register = async (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">, code: string) => {
-    const codes = getRegCodes();
-    if (codes.studentCode && code !== codes.studentCode)
-      return { success: false, message: "رمز التسجيل غير صحيح" };
+  const register = async (data: Omit<StudentProfile, "id" | "role" | "registeredAt" | "status">) => {
+    // تسجيل الطلاب لا يحتاج رمز تسجيل عمداً — تسهيلاً عليهم، والموافقة تتم لاحقاً من الإدارة أو أي منسّق
     // تحقق من السحابة الحقيقية مباشرة — مو من نسخة الجهاز المحلية اللي ممكن تكون قديمة أو فيها بقايا محاولة سابقة فشلت
     const cloudStudents = await cloudGet<StudentProfile[]>("kc_students");
     const all = Array.isArray(cloudStudents) ? cloudStudents : getAllStudents();
