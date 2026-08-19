@@ -32,6 +32,9 @@ export interface CoordinatorProfile {
   // صلاحية محدودة يمنحها الأدمن: متابعة المنسقين والطلاب وإرسال ملاحظات فقط —
   // بدون دخول لوحة الإدارة أو التحكم بأي محتوى/أيقونة بالمنصة
   isSupervisor?: boolean;
+  // يضبطها الأدمن لإنهاء جلسة المنسق فوراً — أي دخول محفوظ محلياً قبل هذا التاريخ
+  // يُرفض تلقائياً بأول فتح للتطبيق، ويضطر يدخل بالإيميل وكلمة المرور من جديد
+  sessionRevokedAt?: string;
 }
 
 export type AnyUser = StudentProfile | CoordinatorProfile;
@@ -133,6 +136,7 @@ interface AuthContextType {
   rejectCoordinator: (id: string) => void;
   deleteCoordinator: (id: string) => void;
   toggleSupervisor: (id: string) => void;
+  endCoordinatorSession: (id: string) => void;
   getGroups: () => ChatGroup[];
   createGroup: (g: Omit<ChatGroup, "id" | "createdAt">) => void;
   deleteGroup: (id: string) => void;
@@ -169,6 +173,7 @@ const KEYS = {
   courses: "kc_courses", videos: "kc_videos", projects: "kc_projects",
   shop: "kc_shop", achievements: "kc_platform_achievements",
   regCodes: "kc_reg_codes", dailyLog: "kc_daily_log",
+  sessionStartedAt: "kc_session_started_at",
 };
 
 function load<T>(key: string, fallback: T): T {
@@ -191,8 +196,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // مزامنة البيانات من Firebase عند فتح التطبيق
     const syncs: Promise<unknown>[] = [
       cloudGet<CoordinatorProfile[]>("kc_coordinators").then(data => {
-        if (Array.isArray(data) && data.length > 0)
+        if (Array.isArray(data) && data.length > 0) {
           localStorage.setItem(KEYS.coordinators, JSON.stringify(data));
+          // تحقق بأحدث بيانات فعلية من السحابة (لا نعتمد على النسخة المحلية القديمة) —
+          // لو الأدمن أنهى جلسة هذا المنسّق من جهاز ثاني، أخرجه فوراً من هنا
+          const storedNow = load<AnyUser | null>(KEYS.currentUser, null);
+          if (storedNow && storedNow.role === "coordinator") {
+            const freshC = data.find(c => c.id === storedNow.id);
+            const sessionStartedAt = localStorage.getItem(KEYS.sessionStartedAt);
+            if (freshC?.sessionRevokedAt && (!sessionStartedAt || new Date(sessionStartedAt) < new Date(freshC.sessionRevokedAt))) {
+              setUser(null);
+              localStorage.removeItem(KEYS.currentUser);
+              localStorage.removeItem(KEYS.sessionStartedAt);
+            }
+          }
+        }
       }),
       cloudGet<StudentProfile[]>("kc_students").then(data => {
         if (Array.isArray(data) && data.length > 0)
@@ -285,6 +303,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const c = all.find(c => c.email === email && c.password === pw);
     if (c) {
       setUser(c); save(KEYS.currentUser, c);
+      localStorage.setItem(KEYS.sessionStartedAt, new Date().toISOString());
       if (c.status === "pending") return { success: true, message: "pending" };
       if (c.status === "rejected") return { success: false, message: "تم رفض طلبك. تواصل مع الإدارة" };
       return { success: true, message: "ok" };
@@ -341,7 +360,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: true, message: "pending" };
   };
 
-  const logout = () => { setUser(null); localStorage.removeItem(KEYS.currentUser); revokeAccess(); };
+  const logout = () => { setUser(null); localStorage.removeItem(KEYS.currentUser); localStorage.removeItem(KEYS.sessionStartedAt); revokeAccess(); };
 
   const updateProfile = (data: Partial<AnyUser>) => {
     if (!user) return;
@@ -418,6 +437,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return list.map(c => c.id === id ? { ...c, isSupervisor: !c.isSupervisor } : c);
     });
     if (user?.id === id) { const u = { ...user, isSupervisor: !(user as CoordinatorProfile).isSupervisor }; setUser(u); save(KEYS.currentUser, u); }
+  };
+
+  // ينهي جلسة منسّق فوراً — تُتحقق بأول فتح تطبيق قادم (راجع useEffect بالأعلى)، تجبره يدخل من جديد
+  const endCoordinatorSession = (id: string) => {
+    const revokedAt = new Date().toISOString();
+    const all = getAllCoordinators().map(c => c.id === id ? { ...c, sessionRevokedAt: revokedAt } : c);
+    save(KEYS.coordinators, all);
+    cloudTransact<CoordinatorProfile[]>("kc_coordinators", current => {
+      const list = Array.isArray(current) && current.length > 0 ? current : all;
+      return list.map(c => c.id === id ? { ...c, sessionRevokedAt: revokedAt } : c);
+    });
   };
 
   const getGroups = () => load<ChatGroup[]>(KEYS.groups, []);
@@ -504,7 +534,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login, loginWithAccessCode, loginCoordinator, register, registerCoordinator,
       logout, updateProfile,
       getAllStudents, approveStudent, rejectStudent, deleteStudent,
-      getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor,
+      getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor, endCoordinatorSession,
       getGroups, createGroup, deleteGroup,
       getLiveStream, updateLiveStream,
       getCourses, addCourse, deleteCourse,

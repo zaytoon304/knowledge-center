@@ -80,6 +80,7 @@ export default function GroupsPage() {
   const [memberSearch, setMemberSearch] = useState("");
   const [recording, setRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -440,23 +441,31 @@ export default function GroupsPage() {
               )}
 
               {/* Input */}
-              <div className="p-3 border-t bg-white flex gap-2">
-                <label className="w-10 h-10 flex-shrink-0 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-100 cursor-pointer" title="إرفاق صورة">
-                  <ImageIcon className="w-4 h-4" />
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImage} />
-                </label>
-                <label className="w-10 h-10 flex-shrink-0 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-100 cursor-pointer" title="إرفاق ملف / خطاب">
+              <div className="p-3 border-t bg-white flex gap-2 relative">
+                {showAttachMenu && (
+                  <div className="absolute bottom-14 right-3 bg-white border border-gray-200 rounded-xl shadow-lg p-1.5 flex flex-col gap-0.5 z-20 w-48">
+                    <label className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-gray-50 cursor-pointer text-sm text-gray-700">
+                      <ImageIcon className="w-4 h-4 text-blue-600 flex-shrink-0" /> صورة
+                      <input type="file" accept="image/*" className="hidden" onChange={e => { handleImage(e); setShowAttachMenu(false); }} />
+                    </label>
+                    <label className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-gray-50 cursor-pointer text-sm text-gray-700">
+                      <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" /> ملف / خطاب
+                      <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*" className="hidden" onChange={e => { handleFile(e); setShowAttachMenu(false); }} />
+                    </label>
+                    <label className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-gray-50 cursor-pointer text-sm text-gray-700">
+                      <Upload className="w-4 h-4 text-blue-600 flex-shrink-0" /> فيديو من الجهاز
+                      <input type="file" accept="video/*" className="hidden" onChange={e => { handleVideoUpload(e); setShowAttachMenu(false); }} />
+                    </label>
+                    <button onClick={() => { setShowVideoInput(true); setShowAttachMenu(false); }}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-sm text-gray-700 text-right">
+                      <Video className="w-4 h-4 text-blue-600 flex-shrink-0" /> رابط فيديو
+                    </button>
+                  </div>
+                )}
+                <button onClick={() => setShowAttachMenu(v => !v)}
+                  className={`w-10 h-10 flex-shrink-0 border rounded-xl flex items-center justify-center transition-colors ${showAttachMenu ? "bg-blue-100 border-blue-200 text-blue-700" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}
+                  title="إرفاق">
                   <Paperclip className="w-4 h-4" />
-                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*" className="hidden" onChange={handleFile} />
-                </label>
-                <label className="w-10 h-10 flex-shrink-0 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-100 cursor-pointer" title="رفع فيديو من الجهاز">
-                  <Upload className="w-4 h-4" />
-                  <input type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} />
-                </label>
-                <button onClick={() => setShowVideoInput(v => !v)}
-                  className={`w-10 h-10 flex-shrink-0 border rounded-xl flex items-center justify-center transition-colors ${showVideoInput ? "bg-blue-100 border-blue-200 text-blue-700" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}
-                  title="إرفاق رابط فيديو">
-                  <Video className="w-4 h-4" />
                 </button>
                 <button onClick={recording ? stopRecording : startRecording}
                   className={`w-10 h-10 flex-shrink-0 border rounded-xl flex items-center justify-center transition-colors ${recording ? "bg-red-600 border-red-600 text-white animate-pulse" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}

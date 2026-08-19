@@ -4,7 +4,7 @@ import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
-  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList
+  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
@@ -175,7 +175,7 @@ const EMOJIS = ["🤖", "🏆", "🧠", "🔬", "💡", "🚀", "⭐", "📚", "
 
 export default function AdminPage() {
   const { getAllStudents, approveStudent, rejectStudent, deleteStudent,
-    getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor,
+    getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor, endCoordinatorSession,
     getGroups, createGroup, deleteGroup,
     getLiveStream, updateLiveStream, getCourses, addCourse, deleteCourse,
     getVideos, addVideo, deleteVideo, getProjects, addProject, deleteProject,
@@ -652,6 +652,11 @@ export default function AdminPage() {
                         title="صلاحية محدودة: متابعة المنسقين والطلاب وإرسال ملاحظات فقط، بدون دخول لوحة الإدارة"
                         className={`text-xs px-2 py-1 rounded-lg font-semibold flex items-center gap-1 ${c.isSupervisor ? "bg-violet-600 text-white hover:bg-violet-500" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
                         <Shield className="w-3 h-3" /> {c.isSupervisor ? "مشرف متابعة ✓" : "منح صلاحية متابعة"}
+                      </button>
+                      <button onClick={() => { if (confirm(`متأكد تبي تنهي جلسة ${c.name}؟ هيحتاج يدخل بالإيميل وكلمة المرور من جديد.`)) endCoordinatorSession(c.id); }}
+                        title="إنهاء الجلسة الحالية فوراً — يحتاج يدخل بالإيميل وكلمة المرور من جديد بأول فتح قادم للتطبيق"
+                        className="text-xs px-2 py-1 rounded-lg font-semibold flex items-center gap-1 bg-red-50 text-red-600 hover:bg-red-100">
+                        <LogOut className="w-3 h-3" /> إنهاء الجلسة
                       </button>
                     </div>
                   </div>
