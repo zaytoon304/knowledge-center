@@ -1,14 +1,23 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, Send, Users, ArrowRight, Lock, Hash, Paperclip, Video, FileText, X, Image as ImageIcon } from "lucide-react";
+import { MessageSquare, Send, Users, ArrowRight, Lock, Hash, Paperclip, Video, FileText, X, Image as ImageIcon, Mic, Square, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cloudListen, cloudTransact, cloudSet } from "@/lib/cloud";
 
 interface Attachment {
-  kind: "image" | "file" | "video";
-  data?: string;   // صورة أو ملف — Base64
-  name?: string;   // اسم الملف
-  url?: string;    // فيديو — رابط
+  kind: "image" | "file" | "video" | "audio";
+  data?: string;   // صورة أو ملف أو فيديو مرفوع أو تسجيل صوتي — Base64
+  name?: string;   // اسم الملف أو مدة التسجيل الصوتي/الفيديو
+  url?: string;    // فيديو — رابط (الطريقة القديمة، لسه شغالة)
+}
+
+const MAX_VIDEO_BYTES = 15 * 1024 * 1024; // 15 ميجا — حماية لقاعدة البيانات من ملفات ضخمة
+const MAX_RECORD_SECONDS = 120; // حد أقصى دقيقتين للتسجيل الصوتي
+
+function formatDuration(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
+  const s = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
 }
 
 interface ChatMessage {
@@ -69,7 +78,13 @@ export default function GroupsPage() {
   const [videoUrl, setVideoUrl] = useState("");
   const [showMembers, setShowMembers] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordStartRef = useRef<number>(0);
 
   useEffect(() => {
     setAdminCheck(typeof window !== "undefined" && localStorage.getItem("kc_admin_auth") === "1");
@@ -94,6 +109,10 @@ export default function GroupsPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    return () => { if (recordTimerRef.current) clearInterval(recordTimerRef.current); };
+  }, []);
 
   const currentId = adminCheck ? ADMIN_ID : (user?.id || "");
   const currentName = adminCheck ? ADMIN_NAME : (user?.name || "زائر");
@@ -120,6 +139,52 @@ export default function GroupsPage() {
     if (!videoUrl.trim()) return;
     setPendingAttachment({ kind: "video", url: videoUrl.trim() });
     setVideoUrl(""); setShowVideoInput(false);
+  };
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    if (f.size > MAX_VIDEO_BYTES) {
+      alert("حجم الفيديو كبير جداً (الحد الأقصى 15 ميجابايت). اختر مقطعاً أقصر أو بجودة أقل.");
+      e.target.value = ""; return;
+    }
+    setPendingAttachment({ kind: "video", data: await fileToBase64(f), name: f.name });
+    e.target.value = "";
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = ev => { if (ev.data.size > 0) chunksRef.current.push(ev.data); };
+      mr.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
+        const durationSec = Math.round((Date.now() - recordStartRef.current) / 1000);
+        const fr = new FileReader();
+        fr.onload = ev => {
+          setPendingAttachment({ kind: "audio", data: ev.target?.result as string, name: formatDuration(durationSec) });
+        };
+        fr.readAsDataURL(blob);
+      };
+      mediaRecorderRef.current = mr;
+      recordStartRef.current = Date.now();
+      mr.start();
+      setRecordSeconds(0);
+      setRecording(true);
+      recordTimerRef.current = setInterval(() => {
+        setRecordSeconds(s => {
+          if (s + 1 >= MAX_RECORD_SECONDS) { stopRecording(); return s; }
+          return s + 1;
+        });
+      }, 1000);
+    } catch {
+      alert("تعذّر الوصول للمايكروفون. تأكد من السماح للمتصفح باستخدام المايك.");
+    }
+  };
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setRecording(false);
+    if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
   };
 
   const sendMessage = async () => {
@@ -302,11 +367,19 @@ export default function GroupsPage() {
                             {msg.attachment?.kind === "image" && (
                               <img src={msg.attachment.data} alt={msg.attachment.name || ""} className="rounded-xl max-w-full max-h-64 object-cover mb-2" />
                             )}
-                            {msg.attachment?.kind === "video" && (
+                            {msg.attachment?.kind === "video" && msg.attachment.data && (
+                              <video src={msg.attachment.data} controls className="rounded-xl max-w-full max-h-64 mb-2" />
+                            )}
+                            {msg.attachment?.kind === "video" && msg.attachment.url && (
                               <a href={msg.attachment.url} target="_blank" rel="noopener noreferrer"
                                 className={`flex items-center gap-2 rounded-xl px-3 py-2 mb-2 text-xs font-medium ${isMe ? "bg-white/15 text-white" : "bg-blue-50 text-blue-700"}`}>
                                 <Video className="w-4 h-4 flex-shrink-0" /> رابط فيديو
                               </a>
+                            )}
+                            {msg.attachment?.kind === "audio" && (
+                              <div className="mb-2">
+                                <audio src={msg.attachment.data} controls className="max-w-full" style={{ height: "36px" }} />
+                              </div>
                             )}
                             {msg.attachment?.kind === "file" && (
                               <a href={msg.attachment.data} download={msg.attachment.name}
@@ -338,8 +411,11 @@ export default function GroupsPage() {
                   <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 text-xs text-blue-700">
                     {pendingAttachment.kind === "image" && <ImageIcon className="w-4 h-4 flex-shrink-0" />}
                     {pendingAttachment.kind === "video" && <Video className="w-4 h-4 flex-shrink-0" />}
+                    {pendingAttachment.kind === "audio" && <Mic className="w-4 h-4 flex-shrink-0" />}
                     {pendingAttachment.kind === "file" && <FileText className="w-4 h-4 flex-shrink-0" />}
-                    <span className="flex-1 truncate">{pendingAttachment.name || pendingAttachment.url || "مرفق"}</span>
+                    <span className="flex-1 truncate">
+                      {pendingAttachment.kind === "audio" ? `تسجيل صوتي — ${pendingAttachment.name}` : (pendingAttachment.name || pendingAttachment.url || "مرفق")}
+                    </span>
                     <button onClick={() => setPendingAttachment(null)} className="text-blue-400 hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
@@ -353,6 +429,15 @@ export default function GroupsPage() {
                   <button onClick={() => { setShowVideoInput(false); setVideoUrl(""); }} className="bg-gray-100 text-gray-500 px-3 py-2 rounded-xl text-sm">إلغاء</button>
                 </div>
               )}
+              {recording && (
+                <div className="px-3 pt-2 border-t bg-red-50 flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse flex-shrink-0" />
+                  <span className="text-sm text-red-700 font-semibold flex-1">جارِ التسجيل... {formatDuration(recordSeconds)}</span>
+                  <button onClick={stopRecording} className="bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1">
+                    <Square className="w-3 h-3" /> إيقاف وإرفاق
+                  </button>
+                </div>
+              )}
 
               {/* Input */}
               <div className="p-3 border-t bg-white flex gap-2">
@@ -364,10 +449,19 @@ export default function GroupsPage() {
                   <Paperclip className="w-4 h-4" />
                   <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*" className="hidden" onChange={handleFile} />
                 </label>
+                <label className="w-10 h-10 flex-shrink-0 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-100 cursor-pointer" title="رفع فيديو من الجهاز">
+                  <Upload className="w-4 h-4" />
+                  <input type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} />
+                </label>
                 <button onClick={() => setShowVideoInput(v => !v)}
                   className={`w-10 h-10 flex-shrink-0 border rounded-xl flex items-center justify-center transition-colors ${showVideoInput ? "bg-blue-100 border-blue-200 text-blue-700" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}
                   title="إرفاق رابط فيديو">
                   <Video className="w-4 h-4" />
+                </button>
+                <button onClick={recording ? stopRecording : startRecording}
+                  className={`w-10 h-10 flex-shrink-0 border rounded-xl flex items-center justify-center transition-colors ${recording ? "bg-red-600 border-red-600 text-white animate-pulse" : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"}`}
+                  title={recording ? "إيقاف التسجيل" : "تسجيل رسالة صوتية"}>
+                  {recording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </button>
                 <input
                   value={input}
