@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Lightbulb, ChevronRight, Wrench, ListOrdered, Code2, Sparkles } from "lucide-react";
+import { Lightbulb, ChevronRight, Wrench, ListOrdered, Code2, Sparkles, ExternalLink, Info } from "lucide-react";
 
 interface Lesson {
   id: string;
@@ -617,6 +617,25 @@ export default function LetsLearnPage() {
         <div className="bg-white/10 rounded-xl p-2 text-center mt-4 w-fit px-4">
           <span className="text-xl font-bold">{LESSONS.length}</span>
           <span className="text-indigo-200 text-xs mr-2">درس</span>
+        </div>
+      </div>
+
+      <div className="card p-5">
+        <h3 className="font-bold text-gray-700 mb-1">جرّب الدروس بمحاكاة إلكترونية قبل التوصيل الحقيقي</h3>
+        <p className="text-xs text-gray-400 mb-3">مواقع مجانية تفتح بصفحة جديدة — سجّل فيها بنفس البريد الإلكتروني اللي تستخدمه بهذه المنصة عشان تسهل عليك تتذكره.</p>
+        <div className="flex flex-wrap gap-3">
+          <a href="https://www.tinkercad.com/circuits" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-100">
+            <ExternalLink className="w-4 h-4" /> Tinkercad
+          </a>
+          <a href="https://wokwi.com" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-purple-50 border border-purple-100 text-purple-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-purple-100">
+            <ExternalLink className="w-4 h-4" /> Wokwi
+          </a>
+        </div>
+        <div className="flex items-start gap-2 mt-3 text-xs text-gray-400">
+          <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+          هذي مواقع مستقلة، ما فيها دخول تلقائي بحساب المنصة — سجّل فيها مرة واحدة بنفس بريدك.
         </div>
       </div>
 
