@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, FileText, Download, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 interface PlanItem {
   id: string; type: "annual" | "monthly" | "weekly";
@@ -22,9 +23,12 @@ export default function PlansSection() {
   useEffect(() => {
     const s = localStorage.getItem(key);
     setPlans(s ? JSON.parse(s) : []);
-  }, []);
+    cloudGet<PlanItem[]>(key).then(data => {
+      if (Array.isArray(data)) { localStorage.setItem(key, JSON.stringify(data)); setPlans(data); }
+    });
+  }, [key]);
 
-  const save = (updated: PlanItem[]) => { setPlans(updated); localStorage.setItem(key, JSON.stringify(updated)); };
+  const save = (updated: PlanItem[]) => { setPlans(updated); localStorage.setItem(key, JSON.stringify(updated)); cloudSet(key, updated); };
 
   const add = () => {
     if (!form.title.trim() || !form.period.trim()) return;

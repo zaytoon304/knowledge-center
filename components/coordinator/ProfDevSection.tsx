@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, GraduationCap, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 interface ProfDevItem {
   id: string; title: string; provider: string; date: string;
@@ -18,8 +19,14 @@ export default function ProfDevSection() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", provider: "", date: "", hours: "", type: "دورة تدريبية", certificate: "", certificateName: "" });
 
-  useEffect(() => { const s = localStorage.getItem(key); setItems(s ? JSON.parse(s) : []); }, []);
-  const save = (u: ProfDevItem[]) => { setItems(u); localStorage.setItem(key, JSON.stringify(u)); };
+  useEffect(() => {
+    const s = localStorage.getItem(key);
+    setItems(s ? JSON.parse(s) : []);
+    cloudGet<ProfDevItem[]>(key).then(data => {
+      if (Array.isArray(data)) { localStorage.setItem(key, JSON.stringify(data)); setItems(data); }
+    });
+  }, [key]);
+  const save = (u: ProfDevItem[]) => { setItems(u); localStorage.setItem(key, JSON.stringify(u)); cloudSet(key, u); };
 
   const add = () => {
     if (!form.title.trim()) return;

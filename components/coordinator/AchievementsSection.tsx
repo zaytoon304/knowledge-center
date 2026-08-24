@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 interface AchievItem {
   id: string; title: string; description: string; date: string;
@@ -18,8 +19,14 @@ export default function AchievementsSection() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", date: "", type: "جائزة", photo: "", photoName: "" });
 
-  useEffect(() => { const s = localStorage.getItem(key); setItems(s ? JSON.parse(s) : []); }, []);
-  const save = (u: AchievItem[]) => { setItems(u); localStorage.setItem(key, JSON.stringify(u)); };
+  useEffect(() => {
+    const s = localStorage.getItem(key);
+    setItems(s ? JSON.parse(s) : []);
+    cloudGet<AchievItem[]>(key).then(data => {
+      if (Array.isArray(data)) { localStorage.setItem(key, JSON.stringify(data)); setItems(data); }
+    });
+  }, [key]);
+  const save = (u: AchievItem[]) => { setItems(u); localStorage.setItem(key, JSON.stringify(u)); cloudSet(key, u); };
 
   const add = () => {
     if (!form.title.trim()) return;

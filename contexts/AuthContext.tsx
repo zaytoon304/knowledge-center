@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { cloudGet, cloudSet, cloudPush, cloudTransact } from "@/lib/cloud";
 import { getDeviceId, validateAccessCode, grantAccess, hasAccess as hasDeviceAccess, revokeAccess } from "@/lib/deviceCode";
+import { hashPassword, verifyPassword, isHashed } from "@/lib/password";
 
 export interface StudentProfile {
   id: string; name: string; nationalId: string; school: string; grade: string;
@@ -276,8 +277,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (identifier: string, pw: string) => {
     const all = await freshStudents();
-    const s = all.find(s => s.nationalId === identifier && s.password === pw);
-    if (s) {
+    const candidate = all.find(s => s.nationalId === identifier);
+    const ok = candidate ? await verifyPassword(pw, candidate.password) : false;
+    if (candidate && ok) {
+      let s = candidate;
+      // ترقية تلقائية: حساب قديم بكلمة مرور نص عادي يتشفّر بأول دخول ناجح له
+      if (!isHashed(candidate.password)) {
+        s = { ...candidate, password: await hashPassword(pw) };
+        cloudTransact<StudentProfile[]>("kc_students", current => {
+          const list = Array.isArray(current) && current.length > 0 ? current : all;
+          return list.map(x => x.id === s.id ? s : x);
+        });
+      }
       setUser(s); save(KEYS.currentUser, s);
       if (s.status === "pending") return { success: true, message: "pending" };
       if (s.status === "rejected") return { success: false, message: "تم رفض طلبك. تواصل مع الإدارة" };
@@ -307,8 +318,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginCoordinator = async (email: string, pw: string) => {
     const all = await freshCoordinators();
-    const c = all.find(c => c.email === email && c.password === pw);
-    if (c) {
+    const candidate = all.find(c => c.email === email);
+    const ok = candidate ? await verifyPassword(pw, candidate.password) : false;
+    if (candidate && ok) {
+      let c = candidate;
+      // ترقية تلقائية: حساب قديم بكلمة مرور نص عادي يتشفّر بأول دخول ناجح له
+      if (!isHashed(candidate.password)) {
+        c = { ...candidate, password: await hashPassword(pw) };
+        cloudTransact<CoordinatorProfile[]>("kc_coordinators", current => {
+          const list = Array.isArray(current) && current.length > 0 ? current : all;
+          return list.map(x => x.id === c.id ? c : x);
+        });
+      }
       setUser(c); save(KEYS.currentUser, c);
       localStorage.setItem(KEYS.sessionStartedAt, new Date().toISOString());
       if (c.status === "pending") return { success: true, message: "pending" };
@@ -323,9 +344,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // تحقق من السحابة الحقيقية مباشرة — مو من نسخة الجهاز المحلية اللي ممكن تكون قديمة أو فيها بقايا محاولة سابقة فشلت
     const cloudStudents = await cloudGet<StudentProfile[]>("kc_students");
     const all = Array.isArray(cloudStudents) ? cloudStudents : getAllStudents();
-    if (all.find(s => s.nationalId === data.nationalId))
-      return { success: false, message: "رقم الهوية مسجل مسبقاً" };
-    const student: StudentProfile = { ...data, deviceId: getDeviceId(), id: Date.now().toString(), role: "student", registeredAt: new Date().toISOString(), status: "pending" };
+    const existing = all.find(s => s.nationalId === data.nationalId);
+    if (existing) {
+      // نفس رقم الهوية مسجل مسبقاً — نتعامل معه كطلب "رمز جهاز جديد" بدل رفضه، لأن هذا أغلب سبب
+      // تكرار التسجيل فعلياً (جهاز جديد/مسح المتصفح، أو حساب قديم بكلمة مرور من قبل نظام رمز الجهاز
+      // ما عنده deviceId أصلاً ولا طريقة رجوع غيرها). لا نلمس حالة الموافقة الحالية (معلق/مقبول/مرفوض).
+      const updated: StudentProfile = { ...existing, ...data, password: existing.password, deviceId: getDeviceId() };
+      const ok = await cloudTransact<StudentProfile[]>("kc_students", current => {
+        const list = Array.isArray(current) && current.length > 0 ? current : all;
+        return list.map(s => s.id === existing.id ? updated : s);
+      });
+      if (!ok) return { success: false, message: "تعذّر الاتصال بالإنترنت — تأكد من الشبكة/الواي فاي وحاول مرة أخرى" };
+      save(KEYS.students, all.map(s => s.id === existing.id ? updated : s));
+      setUser(updated); save(KEYS.currentUser, updated);
+      return { success: true, message: "relinked" };
+    }
+    // تسجيل الطلاب الجدد صار برمز الجهاز بدون كلمة مرور — نشفّرها فقط لو أُرسلت فعلاً (توافق تسجيل قديم)
+    const student: StudentProfile = { ...data, password: data.password ? await hashPassword(data.password) : data.password, deviceId: getDeviceId(), id: Date.now().toString(), role: "student", registeredAt: new Date().toISOString(), status: "pending" };
     // يحفظ بالسحابة أولاً — لو فشل (لا يوجد إنترنت مثلاً) ما نقول للطالب "تم" وهو ما وصل فعلياً
     const ok = await cloudPush("kc_students", student);
     if (!ok) return { success: false, message: "تعذّر الاتصال بالإنترنت — تأكد من الشبكة/الواي فاي وحاول التسجيل مرة أخرى" };
@@ -336,7 +371,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerCoordinator = async (data: Omit<CoordinatorProfile, "id" | "role" | "registeredAt" | "status">, code: string) => {
     const codes = getRegCodes();
-    if (codes.coordCode && code !== codes.coordCode)
+    if (!codes.coordCode || code !== codes.coordCode)
       return { success: false, message: "رمز التسجيل غير صحيح" };
     // تحقق من السحابة الحقيقية مباشرة — مو من نسخة الجهاز المحلية اللي ممكن تكون قديمة أو فيها بقايا محاولة سابقة فشلت
     const cloudCoords = await cloudGet<CoordinatorProfile[]>("kc_coordinators");
@@ -344,9 +379,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (all.find(c => c.email === data.email))
       return { success: false, message: "البريد الإلكتروني مسجل مسبقاً" };
     const baseId = Date.now().toString();
+    const hashedPw = await hashPassword(data.password);
     // نسخة خفيفة بدون ملفات ثقيلة (تُحفظ في قائمة المنسقين لتجنب تجاوز حد localStorage)
     const coord: CoordinatorProfile = {
       ...data,
+      password: hashedPw,
       photo: "",
       cv: "",
       id: baseId,
@@ -362,7 +399,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(KEYS.coordinators, JSON.stringify(saved));
     } catch { /* التخزين المحلي ثانوي هنا — النسخة الأساسية وصلت للسحابة فعلاً */ }
     // الجلسة الحالية تحتفظ بالبيانات الكاملة (صورة + CV)
-    const fullCoord: CoordinatorProfile = { ...data, id: baseId, role: "coordinator", registeredAt: new Date().toISOString(), status: "pending" };
+    const fullCoord: CoordinatorProfile = { ...data, password: hashedPw, id: baseId, role: "coordinator", registeredAt: new Date().toISOString(), status: "pending" };
     setUser(fullCoord); save(KEYS.currentUser, fullCoord);
     return { success: true, message: "pending" };
   };
@@ -372,12 +409,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = (data: Partial<AnyUser>) => {
     if (!user) return;
     const updated = { ...user, ...data } as AnyUser;
-    if (user.role === "coordinator") {
-      save(KEYS.coordinators, getAllCoordinators().map(c => c.id === user.id ? updated as CoordinatorProfile : c));
-    } else {
-      save(KEYS.students, getAllStudents().map(s => s.id === user.id ? updated as StudentProfile : s));
-    }
     setUser(updated); save(KEYS.currentUser, updated);
+    if (user.role === "coordinator") {
+      const all = getAllCoordinators().map(c => c.id === user.id ? updated as CoordinatorProfile : c);
+      save(KEYS.coordinators, all);
+      cloudTransact<CoordinatorProfile[]>(KEYS.coordinators, current => {
+        const list = Array.isArray(current) && current.length > 0 ? current : all;
+        return list.map(c => c.id === user.id ? updated as CoordinatorProfile : c);
+      });
+    } else {
+      const all = getAllStudents().map(s => s.id === user.id ? updated as StudentProfile : s);
+      save(KEYS.students, all);
+      cloudTransact<StudentProfile[]>(KEYS.students, current => {
+        const list = Array.isArray(current) && current.length > 0 ? current : all;
+        return list.map(s => s.id === user.id ? updated as StudentProfile : s);
+      });
+    }
   };
 
   // نستخدم معاملة (transaction) حقيقية بدل استبدال القائمة كاملة، لأن أكثر من منسّق

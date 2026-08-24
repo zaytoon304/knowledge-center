@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Layers, Download, Image as Img } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 interface ProgramItem {
   id: string; name: string; date: string; description: string;
@@ -22,8 +23,17 @@ export default function ProgramsSection() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", date: "", description: "", certificates: [] as Array<{ data: string; name: string }>, photos: [] as Array<{ data: string; name: string }> });
 
-  useEffect(() => { const s = localStorage.getItem(key); setPrograms(s ? JSON.parse(s) : []); }, []);
-  const save = (u: ProgramItem[]) => { setPrograms(u); localStorage.setItem(key, JSON.stringify(u)); };
+  useEffect(() => {
+    const s = localStorage.getItem(key);
+    setPrograms(s ? JSON.parse(s) : []);
+    cloudGet<ProgramItem[]>(key).then(data => {
+      if (Array.isArray(data)) {
+        const normalized = data.map(p => ({ ...p, certificates: p.certificates || [], photos: p.photos || [] }));
+        localStorage.setItem(key, JSON.stringify(normalized)); setPrograms(normalized);
+      }
+    });
+  }, [key]);
+  const save = (u: ProgramItem[]) => { setPrograms(u); localStorage.setItem(key, JSON.stringify(u)); cloudSet(key, u); };
 
   const add = () => {
     if (!form.name.trim() || !form.date) return;

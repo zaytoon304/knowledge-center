@@ -31,7 +31,10 @@ export default function ArchiveSection() {
     const s = localStorage.getItem(key);
     setItems(s ? JSON.parse(s) : []);
     cloudGet<ArchiveItem[]>(key).then(data => {
-      if (Array.isArray(data)) { localStorage.setItem(key, JSON.stringify(data)); setItems(data); }
+      if (Array.isArray(data)) {
+        const normalized = data.map(i => ({ ...i, photos: i.photos || [], videos: i.videos || [] }));
+        localStorage.setItem(key, JSON.stringify(normalized)); setItems(normalized);
+      }
     });
   }, [key]);
   const save = (u: ArchiveItem[]) => { setItems(u); localStorage.setItem(key, JSON.stringify(u)); cloudSet(key, u); };

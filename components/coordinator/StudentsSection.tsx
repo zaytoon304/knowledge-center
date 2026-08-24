@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Users, ChevronDown, ChevronUp, UserPlus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 interface CoordStudent {
   id: string;
@@ -66,11 +67,18 @@ export default function StudentsSection() {
   useEffect(() => {
     const s = localStorage.getItem(key);
     setTeams(s ? JSON.parse(s) : []);
+    cloudGet<CoordTeam[]>(key).then(data => {
+      if (Array.isArray(data)) {
+        const normalized = data.map(t => ({ ...t, students: t.students || [] }));
+        localStorage.setItem(key, JSON.stringify(normalized)); setTeams(normalized);
+      }
+    });
   }, [key]);
 
   const persist = (updated: CoordTeam[]) => {
     setTeams(updated);
     localStorage.setItem(key, JSON.stringify(updated));
+    cloudSet(key, updated);
   };
 
   const addTeam = (name: string, category: string) => {

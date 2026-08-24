@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Trophy, Play, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { cloudGet, cloudSet } from "@/lib/cloud";
 
 interface CompItem {
   id: string; name: string; date: string; level: string;
@@ -26,8 +27,17 @@ export default function CompetitionsSection() {
   const [form, setForm] = useState({ name: "", date: "", level: "وطني", result: "", participants: "", videos: [] as Array<{ url: string; title: string }>, photos: [] as Array<{ data: string; name: string }> });
   const [videoInput, setVideoInput] = useState({ url: "", title: "" });
 
-  useEffect(() => { const s = localStorage.getItem(key); setItems(s ? JSON.parse(s) : []); }, []);
-  const save = (u: CompItem[]) => { setItems(u); localStorage.setItem(key, JSON.stringify(u)); };
+  useEffect(() => {
+    const s = localStorage.getItem(key);
+    setItems(s ? JSON.parse(s) : []);
+    cloudGet<CompItem[]>(key).then(data => {
+      if (Array.isArray(data)) {
+        const normalized = data.map(c => ({ ...c, videos: c.videos || [], photos: c.photos || [] }));
+        localStorage.setItem(key, JSON.stringify(normalized)); setItems(normalized);
+      }
+    });
+  }, [key]);
+  const save = (u: CompItem[]) => { setItems(u); localStorage.setItem(key, JSON.stringify(u)); cloudSet(key, u); };
 
   const add = () => {
     if (!form.name.trim()) return;
