@@ -52,6 +52,9 @@ export default function LoginPage() {
   const cvRef = useRef<HTMLInputElement>(null);
 
   const [loginData, setLoginData] = useState({ identifier: "", password: "", accessCode: "", type: "student" as "student" | "coordinator" | "visitor" });
+  // حسابات طلاب قديمة (قبل نظام رمز الجهاز) لسه تدخل برقم الهوية وكلمة المرور — كان هذا الخيار
+  // مفقوداً تماماً من الواجهة (لا يوجد أي زر يوصله)، فأي حساب قديم كان محظوراً من الدخول نهائياً
+  const [useOldStudentLogin, setUseOldStudentLogin] = useState(false);
   const [regData, setRegData] = useState({ name: "", nationalId: "", school: "", grade: grades[0], department: DEPARTMENTS[0] as string, classroom: "", phone: "", email: "", parentPhone: "", birthDate: "", photo: "", password: "", confirmPassword: "", teams: [] as string[] });
   const [copiedDeviceId, setCopiedDeviceId] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -87,7 +90,7 @@ export default function LoginPage() {
     const result = loginData.type === "coordinator"
       ? await loginCoordinator(loginData.identifier, loginData.password)
       : loginData.type === "student"
-        ? await loginWithAccessCode(loginData.accessCode)
+        ? (useOldStudentLogin ? await login(loginData.identifier, loginData.password) : await loginWithAccessCode(loginData.accessCode))
         : await login(loginData.identifier, loginData.password);
     setSubmitting(false);
     if (result.success) { router.push(loginData.type === "coordinator" ? "/coordinator-portal" : "/student-portal"); }
@@ -226,7 +229,7 @@ export default function LoginPage() {
                   </button>
                 ))}
               </div>
-              {loginData.type === "student" && (
+              {loginData.type === "student" && !useOldStudentLogin && (
                 <>
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
                     <p className="text-xs text-blue-700 mb-1">رمز جهازك</p>
@@ -242,6 +245,31 @@ export default function LoginPage() {
                     </div>
                     <p className="text-[11px] text-gray-400 mt-1">ما عندك رمز؟ سجّل بياناتك من تبويب "طالب جديد" وأرسل رمز جهازك للإدارة</p>
                   </div>
+                  <button type="button" onClick={() => setUseOldStudentLogin(true)} className="text-xs text-blue-600 hover:underline">
+                    عندك حساب قديم برقم الهوية وكلمة المرور؟ اضغط هنا
+                  </button>
+                </>
+              )}
+              {loginData.type === "student" && useOldStudentLogin && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">رقم الهوية</label>
+                    <input value={loginData.identifier} onChange={e => setLoginData(p => ({ ...p, identifier: e.target.value }))}
+                      placeholder="رقم الهوية"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 outline-none focus:border-blue-500" required />
+                  </div>
+                  <div className="relative">
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">كلمة المرور</label>
+                    <input type={showPass ? "text" : "password"} value={loginData.password} onChange={e => setLoginData(p => ({ ...p, password: e.target.value }))}
+                      placeholder="أدخل كلمة المرور"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 outline-none focus:border-blue-500" required />
+                    <button type="button" onClick={() => setShowPass(!showPass)} className="absolute left-3 bottom-3 text-gray-400">
+                      {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <button type="button" onClick={() => setUseOldStudentLogin(false)} className="text-xs text-blue-600 hover:underline">
+                    الدخول برمز الجهاز بدل ذلك
+                  </button>
                 </>
               )}
               {loginData.type === "coordinator" && (
