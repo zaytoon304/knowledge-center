@@ -10,7 +10,7 @@ import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
 import { signInAsAdmin } from "@/lib/firebase";
 import { generateAccessCode } from "@/lib/deviceCode";
-import { InterestSurveyResponse, COMPETITION_INTERESTS, TALENT_INTERESTS, GENERAL_INTERESTS } from "@/lib/interestSurvey";
+import { InterestSurveyResponse, COMPETITION_INTERESTS, PROGRAM_INTERESTS, TALENT_INTERESTS } from "@/lib/interestSurvey";
 import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
 
@@ -2174,7 +2174,7 @@ export default function AdminPage() {
       {tab === "interest_survey" && (() => {
         const counts: Record<string, number> = {};
         interestSurvey.forEach(r => r.interests.forEach(i => { counts[i] = (counts[i] || 0) + 1; }));
-        const allItems = [...COMPETITION_INTERESTS, ...TALENT_INTERESTS, ...GENERAL_INTERESTS];
+        const allItems = [...COMPETITION_INTERESTS, ...PROGRAM_INTERESTS, ...TALENT_INTERESTS];
         const sortedCounts = allItems
           .map(item => ({ item, count: counts[item] || 0 }))
           .sort((a, b) => b.count - a.count);
@@ -2198,7 +2198,7 @@ export default function AdminPage() {
                   <div className="space-y-2">
                     {sortedCounts.filter(s => s.count > 0).map(s => (
                       <div key={s.item} className="flex items-center gap-3">
-                        <span className="text-xs text-gray-600 w-40 flex-shrink-0 truncate">{s.item}</span>
+                        <span className="text-xs text-gray-600 w-56 flex-shrink-0" title={s.item}>{s.item}</span>
                         <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
                           <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${(s.count / maxCount) * 100}%` }} />
                         </div>

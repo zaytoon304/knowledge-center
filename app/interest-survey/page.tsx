@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Heart, CheckCircle } from "lucide-react";
 import { cloudPush } from "@/lib/cloud";
 import { GRADES } from "@/lib/grades";
-import { InterestSurveyResponse, COMPETITION_INTERESTS, TALENT_INTERESTS, GENERAL_INTERESTS, MAX_INTERESTS } from "@/lib/interestSurvey";
+import { InterestSurveyResponse, COMPETITION_INTERESTS, PROGRAM_INTERESTS, TALENT_INTERESTS, MAX_INTERESTS } from "@/lib/interestSurvey";
 import CenterLogo from "@/components/icons/CenterLogo";
 
 const emptyForm = { parentName: "", parentPhone: "", childName: "", grade: "", notes: "" };
@@ -59,11 +59,11 @@ export default function InterestSurveyPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-900 to-teal-800 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md text-center space-y-5">
-          <div className="flex items-center justify-center gap-3">
-            <CenterLogo className="w-12 h-12 drop-shadow-lg" />
-            <div className="bg-white rounded-2xl px-2 py-1.5 shadow border border-gray-100">
-              <img src="/arqam-logo.png" alt="شعار مدارس الأرقم" className="w-16 object-contain" />
+          <div className="flex flex-col items-center justify-center gap-2">
+            <div className="bg-white rounded-2xl px-2.5 py-1.5 shadow border border-gray-100">
+              <img src="/arqam-logo.png" alt="شعار مدارس الأرقم" className="w-24 object-contain" />
             </div>
+            <CenterLogo className="w-10 h-10 drop-shadow-lg" />
           </div>
           <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto">
             <CheckCircle className="w-9 h-9 text-emerald-600" />
@@ -92,11 +92,11 @@ export default function InterestSurveyPage() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-900 to-teal-800 flex items-center justify-center p-4 py-10">
       <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-lg space-y-6">
         <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-3">
-            <CenterLogo className="w-14 h-14 drop-shadow-lg" />
-            <div className="bg-white rounded-2xl px-2 py-1.5 shadow border border-gray-100">
-              <img src="/arqam-logo.png" alt="شعار مدارس الأرقم" className="w-20 object-contain" />
+          <div className="flex flex-col items-center justify-center gap-2">
+            <div className="bg-white rounded-2xl px-3 py-2 shadow border border-gray-100">
+              <img src="/arqam-logo.png" alt="شعار مدارس الأرقم" className="w-28 object-contain" />
             </div>
+            <CenterLogo className="w-12 h-12 drop-shadow-lg" />
           </div>
           <h1 className="text-xl font-bold text-gray-800 flex items-center justify-center gap-2">
             <Heart className="w-5 h-5 text-emerald-600" /> استبانة اهتمامات الطلاب
@@ -143,8 +143,8 @@ export default function InterestSurveyPage() {
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-gray-700 mb-2">مسابقات علمية وتقنية</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <h3 className="text-sm font-bold text-gray-700 mb-2">المسابقات</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {COMPETITION_INTERESTS.map(item => {
                 const checked = interests.includes(item);
                 const disabled = !checked && interests.length >= MAX_INTERESTS;
@@ -160,9 +160,9 @@ export default function InterestSurveyPage() {
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-gray-700 mb-2">فنون ومواهب</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {TALENT_INTERESTS.map(item => {
+            <h3 className="text-sm font-bold text-gray-700 mb-2">البرامج</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {PROGRAM_INTERESTS.map(item => {
                 const checked = interests.includes(item);
                 const disabled = !checked && interests.length >= MAX_INTERESTS;
                 return (
@@ -177,9 +177,9 @@ export default function InterestSurveyPage() {
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-gray-700 mb-2">برامج عامة</h3>
+            <h3 className="text-sm font-bold text-gray-700 mb-2">فنون ومواهب</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {GENERAL_INTERESTS.map(item => {
+              {TALENT_INTERESTS.map(item => {
                 const checked = interests.includes(item);
                 const disabled = !checked && interests.length >= MAX_INTERESTS;
                 return (
