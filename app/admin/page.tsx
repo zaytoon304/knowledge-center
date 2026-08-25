@@ -10,7 +10,7 @@ import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
 import { signInAsAdmin } from "@/lib/firebase";
 import { generateAccessCode } from "@/lib/deviceCode";
-import { InterestSurveyResponse, COMPETITION_INTERESTS, TALENT_INTERESTS } from "@/lib/interestSurvey";
+import { InterestSurveyResponse, COMPETITION_INTERESTS, TALENT_INTERESTS, GENERAL_INTERESTS } from "@/lib/interestSurvey";
 import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
 
@@ -2174,7 +2174,7 @@ export default function AdminPage() {
       {tab === "interest_survey" && (() => {
         const counts: Record<string, number> = {};
         interestSurvey.forEach(r => r.interests.forEach(i => { counts[i] = (counts[i] || 0) + 1; }));
-        const allItems = [...COMPETITION_INTERESTS, ...TALENT_INTERESTS];
+        const allItems = [...COMPETITION_INTERESTS, ...TALENT_INTERESTS, ...GENERAL_INTERESTS];
         const sortedCounts = allItems
           .map(item => ({ item, count: counts[item] || 0 }))
           .sort((a, b) => b.count - a.count);

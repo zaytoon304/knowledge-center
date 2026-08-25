@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Heart, CheckCircle } from "lucide-react";
 import { cloudPush } from "@/lib/cloud";
 import { GRADES } from "@/lib/grades";
-import { InterestSurveyResponse, COMPETITION_INTERESTS, TALENT_INTERESTS, MAX_INTERESTS } from "@/lib/interestSurvey";
+import { InterestSurveyResponse, COMPETITION_INTERESTS, TALENT_INTERESTS, GENERAL_INTERESTS, MAX_INTERESTS } from "@/lib/interestSurvey";
 import CenterLogo from "@/components/icons/CenterLogo";
 
 const emptyForm = { parentName: "", parentPhone: "", childName: "", grade: "", notes: "" };
@@ -59,7 +59,12 @@ export default function InterestSurveyPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-900 to-teal-800 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md text-center space-y-5">
-          <CenterLogo className="w-14 h-14 mx-auto drop-shadow-lg" />
+          <div className="flex items-center justify-center gap-3">
+            <CenterLogo className="w-12 h-12 drop-shadow-lg" />
+            <div className="bg-white rounded-2xl px-2 py-1.5 shadow border border-gray-100">
+              <img src="/arqam-logo.png" alt="شعار مدارس الأرقم" className="w-16 object-contain" />
+            </div>
+          </div>
           <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto">
             <CheckCircle className="w-9 h-9 text-emerald-600" />
           </div>
@@ -87,7 +92,12 @@ export default function InterestSurveyPage() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-900 to-teal-800 flex items-center justify-center p-4 py-10">
       <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-lg space-y-6">
         <div className="text-center space-y-2">
-          <CenterLogo className="w-16 h-16 mx-auto drop-shadow-lg" />
+          <div className="flex items-center justify-center gap-3">
+            <CenterLogo className="w-14 h-14 drop-shadow-lg" />
+            <div className="bg-white rounded-2xl px-2 py-1.5 shadow border border-gray-100">
+              <img src="/arqam-logo.png" alt="شعار مدارس الأرقم" className="w-20 object-contain" />
+            </div>
+          </div>
           <h1 className="text-xl font-bold text-gray-800 flex items-center justify-center gap-2">
             <Heart className="w-5 h-5 text-emerald-600" /> استبانة اهتمامات الطلاب
           </h1>
@@ -153,6 +163,23 @@ export default function InterestSurveyPage() {
             <h3 className="text-sm font-bold text-gray-700 mb-2">فنون ومواهب</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {TALENT_INTERESTS.map(item => {
+                const checked = interests.includes(item);
+                const disabled = !checked && interests.length >= MAX_INTERESTS;
+                return (
+                  <label key={item}
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${checked ? "bg-emerald-700 text-white border-emerald-700" : disabled ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
+                    <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggleInterest(item)} className="hidden" />
+                    {item}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-gray-700 mb-2">برامج عامة</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {GENERAL_INTERESTS.map(item => {
                 const checked = interests.includes(item);
                 const disabled = !checked && interests.length >= MAX_INTERESTS;
                 return (

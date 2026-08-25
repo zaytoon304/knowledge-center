@@ -25,4 +25,6 @@ export const COMPETITION_INTERESTS = [
 
 export const TALENT_INTERESTS = ["مسرح", "إنشاد", "تمثيل", "شعر"];
 
+export const GENERAL_INTERESTS = ["تحفيظ"];
+
 export const MAX_INTERESTS = 3;
