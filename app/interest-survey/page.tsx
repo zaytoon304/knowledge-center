@@ -5,6 +5,7 @@ import { Heart, CheckCircle } from "lucide-react";
 import { cloudPush } from "@/lib/cloud";
 import { GRADES } from "@/lib/grades";
 import { InterestSurveyResponse, COMPETITION_INTERESTS, TALENT_INTERESTS, MAX_INTERESTS } from "@/lib/interestSurvey";
+import CenterLogo from "@/components/icons/CenterLogo";
 
 const emptyForm = { parentName: "", parentPhone: "", childName: "", grade: "", notes: "" };
 
@@ -58,6 +59,7 @@ export default function InterestSurveyPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-900 to-teal-800 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md text-center space-y-5">
+          <CenterLogo className="w-14 h-14 mx-auto drop-shadow-lg" />
           <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto">
             <CheckCircle className="w-9 h-9 text-emerald-600" />
           </div>
@@ -85,10 +87,10 @@ export default function InterestSurveyPage() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-900 to-teal-800 flex items-center justify-center p-4 py-10">
       <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-lg space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto">
-            <Heart className="w-8 h-8 text-emerald-700" />
-          </div>
-          <h1 className="text-xl font-bold text-gray-800">استبانة اهتمامات الطلاب</h1>
+          <CenterLogo className="w-16 h-16 mx-auto drop-shadow-lg" />
+          <h1 className="text-xl font-bold text-gray-800 flex items-center justify-center gap-2">
+            <Heart className="w-5 h-5 text-emerald-600" /> استبانة اهتمامات الطلاب
+          </h1>
           <p className="text-sm text-gray-500">مركز المعرفة والابتكار STEAM بمدارس الأرقم</p>
           <p className="text-sm text-gray-600 leading-relaxed">ساعدنا نعرف وش يحب طفلك عشان نجهّز له أنسب البرامج — تعبئتها لا تلزمك بالتسجيل، بس رأيك يهمنا 🌱</p>
         </div>
