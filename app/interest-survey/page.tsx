@@ -167,7 +167,7 @@ export default function InterestSurveyPage() {
                       className="w-4 h-4 accent-emerald-700" />
                     <span className={`text-sm font-bold ${catChecked ? "text-emerald-800" : "text-gray-700"}`}>{cat.id}</span>
                   </label>
-                  {catChecked && (
+                  {catChecked && cat.subItems.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 px-3 pb-3">
                       {cat.subItems.map(item => {
                         const checked = interests.includes(item);
