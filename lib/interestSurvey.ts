@@ -27,7 +27,6 @@ export const PROGRAM_INTERESTS = [
   "صناعة الألعاب",
   "صناعة التطبيقات",
   "تعلم الذكاء الاصطناعي",
-  "تحفيظ",
 ];
 
 export const TALENT_INTERESTS = ["مسرح", "إنشاد", "تمثيل", "شعر"];
