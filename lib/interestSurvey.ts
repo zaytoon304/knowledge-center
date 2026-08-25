@@ -10,23 +10,39 @@ export interface InterestSurveyResponse {
   submittedAt: string;
 }
 
-export const COMPETITION_INTERESTS = [
-  "مسابقة الأولمبياد العالمي للروبوت WRO",
+// برامج الوحدة — كل تصنيف رئيسي يكشف عن خيارات فرعية أدق عند اختياره
+export interface ProgramCategory {
+  id: string;
+  subItems: string[];
+}
+
+export const PROGRAM_CATEGORIES: ProgramCategory[] = [
+  {
+    id: "الروبوت والذكاء الاصطناعي",
+    subItems: ["تركيب ليجو", "سكراتش", "البرمجة", "صناعة الألعاب", "صناعة التطبيقات", "تعلم الروبوت"],
+  },
+  {
+    id: "الموهبة والابتكار",
+    subItems: ["مسرح", "إنشاد", "شعر", "الحساب الذهني", "مهارات التفكير"],
+  },
+];
+
+// مسابقات مفتوحة للجميع دون اشتراطات مسبقة
+export const OPEN_COMPETITIONS = [
   "مسابقة بيبراس الدولية للمعلوماتية",
   "مسابقة كانجارو في الرياضيات",
   "مسابقة نسمو",
+];
+
+// مسابقات تحتاج تدريباً مسبقاً واجتياز شروط معيّنة للاشتراك فيها
+export const TRAINING_COMPETITIONS = [
+  "مسابقة الأولمبياد العالمي للروبوت WRO",
   "مسابقة الأفرو آسيوي للروبوت والذكاء الاصطناعي",
   "مسابقة RoboRAVE",
 ];
 
-export const PROGRAM_INTERESTS = [
-  "الحساب الذهني",
-  "الروبوت والليجو",
-  "البرمجة",
-  "الموهبة والابتكار",
-  "صناعة الألعاب",
-  "صناعة التطبيقات",
-  "تعلم الذكاء الاصطناعي",
+export const ALL_INTEREST_ITEMS = [
+  ...PROGRAM_CATEGORIES.flatMap(c => [c.id, ...c.subItems]),
+  ...OPEN_COMPETITIONS,
+  ...TRAINING_COMPETITIONS,
 ];
-
-export const TALENT_INTERESTS = ["مسرح", "إنشاد", "تمثيل", "شعر"];
