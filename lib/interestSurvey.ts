@@ -30,5 +30,3 @@ export const PROGRAM_INTERESTS = [
 ];
 
 export const TALENT_INTERESTS = ["مسرح", "إنشاد", "تمثيل", "شعر"];
-
-export const MAX_INTERESTS = 3;

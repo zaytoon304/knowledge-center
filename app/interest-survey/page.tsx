@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Heart, CheckCircle } from "lucide-react";
 import { cloudPush } from "@/lib/cloud";
 import { GRADES } from "@/lib/grades";
-import { InterestSurveyResponse, COMPETITION_INTERESTS, PROGRAM_INTERESTS, TALENT_INTERESTS, MAX_INTERESTS } from "@/lib/interestSurvey";
+import { InterestSurveyResponse, COMPETITION_INTERESTS, PROGRAM_INTERESTS, TALENT_INTERESTS } from "@/lib/interestSurvey";
 import CenterLogo from "@/components/icons/CenterLogo";
 
 const emptyForm = { parentName: "", parentPhone: "", childName: "", grade: "", section: "" as "" | "عام" | "تحفيظ", notes: "" };
@@ -18,11 +18,7 @@ export default function InterestSurveyPage() {
   const [done, setDone] = useState(false);
 
   const toggleInterest = (item: string) => {
-    setInterests(prev => {
-      if (prev.includes(item)) return prev.filter(i => i !== item);
-      if (prev.length >= MAX_INTERESTS) return prev;
-      return [...prev, item];
-    });
+    setInterests(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
   };
 
   const reset = () => { setForm(emptyForm); setInterests([]); setDone(false); };
@@ -111,7 +107,7 @@ export default function InterestSurveyPage() {
             <Heart className="w-5 h-5 text-emerald-600" /> استبانة اهتمامات الطلاب
           </h1>
           <p className="text-sm text-gray-500">مركز المعرفة والابتكار STEAM بمدارس الأرقم</p>
-          <p className="text-sm text-gray-600 leading-relaxed">ساعدنا نعرف وش يحب طفلك عشان نجهّز له أنسب البرامج — تعبئتها لا تلزمك بالتسجيل، بس رأيك يهمنا 🌱</p>
+          <p className="text-sm text-gray-600 leading-relaxed">ساعدونا في التعرّف على ما يحبّه طفلكم لنُعِدَّ له أنسب البرامج — تعبئة الاستبانة لا تُلزمكم بالتسجيل، لكنّ رأيكم يهمّنا 🌱</p>
         </div>
 
         <form onSubmit={submit} className="space-y-5">
@@ -159,21 +155,15 @@ export default function InterestSurveyPage() {
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
-            <p className="text-sm font-bold text-amber-800">اختر ٣ اهتمامات كحد أقصى فقط 📌</p>
-            <p className="text-xs text-amber-700 mt-0.5">اخترت {interests.length} من {MAX_INTERESTS}</p>
-          </div>
-
           <div>
             <h3 className="text-sm font-bold text-gray-700 mb-2">المسابقات</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {COMPETITION_INTERESTS.map(item => {
                 const checked = interests.includes(item);
-                const disabled = !checked && interests.length >= MAX_INTERESTS;
                 return (
                   <label key={item}
-                    className={`flex items-center justify-center text-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${checked ? "bg-emerald-700 text-white border-emerald-700" : disabled ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
-                    <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggleInterest(item)} className="hidden" />
+                    className={`flex items-center justify-center text-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${checked ? "bg-emerald-700 text-white border-emerald-700" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleInterest(item)} className="hidden" />
                     {item}
                   </label>
                 );
@@ -186,11 +176,10 @@ export default function InterestSurveyPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {PROGRAM_INTERESTS.map(item => {
                 const checked = interests.includes(item);
-                const disabled = !checked && interests.length >= MAX_INTERESTS;
                 return (
                   <label key={item}
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${checked ? "bg-emerald-700 text-white border-emerald-700" : disabled ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
-                    <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggleInterest(item)} className="hidden" />
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${checked ? "bg-emerald-700 text-white border-emerald-700" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleInterest(item)} className="hidden" />
                     {item}
                   </label>
                 );
@@ -203,11 +192,10 @@ export default function InterestSurveyPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {TALENT_INTERESTS.map(item => {
                 const checked = interests.includes(item);
-                const disabled = !checked && interests.length >= MAX_INTERESTS;
                 return (
                   <label key={item}
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${checked ? "bg-emerald-700 text-white border-emerald-700" : disabled ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
-                    <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggleInterest(item)} className="hidden" />
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${checked ? "bg-emerald-700 text-white border-emerald-700" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleInterest(item)} className="hidden" />
                     {item}
                   </label>
                 );
