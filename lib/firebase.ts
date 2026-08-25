@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, signInAnonymously } from "firebase/auth";
+import { getAuth, signInAnonymously, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { getDatabase } from "firebase/database";
 
 const firebaseConfig = {
@@ -30,4 +30,18 @@ export function ensureSignedIn(): Promise<void> {
       throw e;
     });
   return signInPromise;
+}
+
+// هوية الأدمن الحقيقية بـFirebase Auth — تحل محل مقارنة كلمة مرور محلية
+// بالكود (كانت مستخرَجة بسهولة من ملف JS). التحقق يصير على سيرفر Firebase
+// فعلياً، وقواعد الأمان تقدر تميّز هذا المستخدم عن أي زائر مجهول عادي
+// عبر auth.token.email.
+export const ADMIN_EMAIL = "admin@arqam-knowledge-center.app";
+
+export async function signInAsAdmin(password: string): Promise<void> {
+  await signInWithEmailAndPassword(auth, ADMIN_EMAIL, password);
+}
+
+export async function signOutAdmin(): Promise<void> {
+  if (auth.currentUser?.email === ADMIN_EMAIL) await signOut(auth);
 }

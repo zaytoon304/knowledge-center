@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
-import { auth, ensureSignedIn } from "@/lib/firebase";
+import { signInAsAdmin } from "@/lib/firebase";
 import { generateAccessCode } from "@/lib/deviceCode";
 import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
@@ -128,15 +128,23 @@ function saveVisitorRequests(data: VisitorRequest[]) {
   cloudSet("kc_visitor_requests", data); // مزامنة مع Firebase عند القبول/الرفض
 }
 
-const ADMIN_PASSWORD = "arqam2025";
-
 function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
   const [pw, setPw] = useState("");
   const [error, setError] = useState(false);
-  const check = (e: React.FormEvent) => {
+  const [busy, setBusy] = useState(false);
+  const check = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pw === ADMIN_PASSWORD) { localStorage.setItem("kc_admin_auth", "1"); onSuccess(); }
-    else { setError(true); setPw(""); }
+    setBusy(true);
+    try {
+      await signInAsAdmin(pw);
+      localStorage.setItem("kc_admin_auth", "1");
+      onSuccess();
+    } catch {
+      setError(true);
+      setPw("");
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
@@ -156,7 +164,7 @@ function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
               placeholder="أدخل كلمة المرور" autoFocus
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 outline-none focus:border-red-400" />
           </div>
-          <button type="submit" className="w-full bg-red-700 text-white py-3 rounded-xl font-bold hover:bg-red-600">دخول</button>
+          <button type="submit" disabled={busy} className="w-full bg-red-700 text-white py-3 rounded-xl font-bold hover:bg-red-600 disabled:opacity-60">{busy ? "جاري الدخول..." : "دخول"}</button>
         </form>
       </div>
     </div>
@@ -292,15 +300,9 @@ export default function AdminPage() {
     refresh();
   };
 
-  const [adminUid, setAdminUid] = useState("");
   useEffect(() => {
     if (localStorage.getItem("kc_admin_auth") === "1") setAuthed(true);
   }, []);
-
-  useEffect(() => {
-    if (!authed) return;
-    ensureSignedIn().then(() => setAdminUid(auth.currentUser?.uid || ""));
-  }, [authed]);
 
   useEffect(() => {
     if (!authed) return;
@@ -371,14 +373,6 @@ export default function AdminPage() {
             <p className="text-white font-semibold text-base">إدارة الطلاب والجروبات والمحتوى</p>
           </div>
         </div>
-        {adminUid && (
-          <div className="mt-3 flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5 w-fit">
-            <span className="text-[11px] text-white/70">معرّف جهازك للإدارة:</span>
-            <code className="text-[11px] text-white font-mono">{adminUid}</code>
-            <button type="button" onClick={() => navigator.clipboard.writeText(adminUid)}
-              className="text-[11px] text-white/90 underline">نسخ</button>
-          </div>
-        )}
       </div>
 
       {/* اختصارات سريعة — بضغطة واحدة توديك لأكثر الأقسام استخداماً */}
