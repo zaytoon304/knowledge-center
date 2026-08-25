@@ -249,7 +249,7 @@ export default function AdminPage() {
   const [notesMap, setNotesMap] = useState<Record<string, string[]>>({});
   const [dForm, setDForm] = useState({
     title: "", date: "", description: "", category: "نشاط",
-    images: [] as Array<{ data: string; name: string }>,
+    images: [] as Array<{ data: string; name: string; caption?: string }>,
     videoLinks: [""],
   });
 
@@ -1793,12 +1793,18 @@ export default function AdminPage() {
                     </p>
                   )}
                   {dForm.images.length > 0 && (
-                    <div className="flex gap-2 mt-2 flex-wrap">
+                    <div className="grid sm:grid-cols-2 gap-3 mt-3">
                       {dForm.images.map((img, i) => (
-                        <div key={i} className="relative">
-                          <img src={img.data} alt="" className="w-16 h-16 rounded-lg object-cover" />
-                          <button onClick={() => setDForm(p => ({ ...p, images: p.images.filter((_, j) => j !== i) }))}
-                            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">✕</button>
+                        <div key={i} className="flex gap-2 items-start bg-gray-50 border border-gray-200 rounded-xl p-2">
+                          <div className="relative flex-shrink-0">
+                            <img src={img.data} alt="" className="w-20 h-20 rounded-lg object-cover" />
+                            <button onClick={() => setDForm(p => ({ ...p, images: p.images.filter((_, j) => j !== i) }))}
+                              className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">✕</button>
+                          </div>
+                          <input value={img.caption || ""}
+                            onChange={e => setDForm(p => ({ ...p, images: p.images.map((im, j) => j === i ? { ...im, caption: e.target.value } : im) }))}
+                            placeholder="عنوان الصورة (اختياري)"
+                            className="flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-white outline-none focus:border-blue-500 self-center" />
                         </div>
                       ))}
                     </div>
@@ -1842,6 +1848,21 @@ export default function AdminPage() {
                   return (
                     <div key={entry.id} className="card overflow-hidden">
                       <div className="p-4">
+                        {(entry.images?.length ?? 0) > 0 && (
+                          <div className={`grid gap-2 mb-3 ${entry.images.length === 1 ? "grid-cols-1" : "grid-cols-3"}`}>
+                            {entry.images.map((img, i) => (
+                              <div key={i} className="relative">
+                                <img src={img.data} alt="" className="w-full h-24 rounded-xl object-cover" />
+                                {img.caption && <p className="text-[11px] text-gray-500 mt-1 truncate">{img.caption}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {(entry.videoLinks?.length ?? 0) > 0 && (
+                          <div className="mb-3 space-y-1">
+                            {entry.videoLinks.map((link, i) => <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-red-600 hover:text-red-500"><Play className="w-3.5 h-3.5" /> {link}</a>)}
+                          </div>
+                        )}
                         <div className="flex items-start justify-between gap-3 mb-2">
                           <div>
                             <h3 className="font-bold text-gray-800">{entry.title}</h3>
@@ -1853,16 +1874,6 @@ export default function AdminPage() {
                           <button onClick={() => { if(confirm("حذف هذه اليومية؟")) { deleteDailyLogEntry(entry.id); refresh(); } }} className="p-2 text-red-400 hover:bg-red-50 rounded-xl flex-shrink-0"><Trash2 className="w-4 h-4" /></button>
                         </div>
                         {entry.description && <p className="text-sm text-gray-600 leading-relaxed">{entry.description}</p>}
-                        {(entry.images?.length ?? 0) > 0 && (
-                          <div className="flex gap-2 mt-3 flex-wrap">
-                            {entry.images.map((img, i) => <img key={i} src={img.data} alt="" className="w-20 h-20 rounded-xl object-cover" />)}
-                          </div>
-                        )}
-                        {(entry.videoLinks?.length ?? 0) > 0 && (
-                          <div className="mt-3 space-y-1">
-                            {entry.videoLinks.map((link, i) => <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-red-600 hover:text-red-500"><Play className="w-3.5 h-3.5" /> {link}</a>)}
-                          </div>
-                        )}
                       </div>
                     </div>
                   );

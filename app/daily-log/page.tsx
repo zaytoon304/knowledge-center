@@ -88,40 +88,9 @@ export default function DailyLogPage() {
           {filtered.map(entry => (
             <div key={entry.id} className="card overflow-hidden">
               <div className="p-5">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-800">{entry.title}</h2>
-                    <div className="flex gap-2 mt-1.5 flex-wrap">
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${CAT_COLORS[entry.category] || CAT_COLORS["أخرى"]}`}>
-                        {entry.category}
-                      </span>
-                      {entry.date && (
-                        <span className="text-xs text-gray-400 flex items-center gap-1">
-                          📅 {new Date(entry.date).toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {entry.description && (
-                  <p className="text-gray-600 text-sm leading-relaxed mb-4 whitespace-pre-wrap">{entry.description}</p>
-                )}
-
-                {/* صور */}
-                {(entry.images?.length ?? 0) > 0 && (
-                  <div className={`grid gap-2 mb-4 ${entry.images.length === 1 ? "grid-cols-1" : entry.images.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
-                    {entry.images.map((img, i) => (
-                      <img key={i} src={img.data} alt="" onClick={() => setLightbox(img.data)}
-                        className="w-full rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                        style={{ maxHeight: entry.images.length === 1 ? "300px" : "160px" }} {...noDownloadProps} />
-                    ))}
-                  </div>
-                )}
-
                 {/* فيديوهات */}
                 {(entry.videoLinks?.length ?? 0) > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                     {entry.videoLinks.map((link, i) => {
                       const vid = extractYouTubeId(link);
                       return vid ? (
@@ -142,6 +111,40 @@ export default function DailyLogPage() {
                       );
                     })}
                   </div>
+                )}
+
+                {/* صور */}
+                {(entry.images?.length ?? 0) > 0 && (
+                  <div className={`grid gap-3 mb-4 ${entry.images.length === 1 ? "grid-cols-1" : entry.images.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                    {entry.images.map((img, i) => (
+                      <div key={i}>
+                        <img src={img.data} alt={img.caption || ""} onClick={() => setLightbox(img.data)}
+                          className="w-full rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                          style={{ maxHeight: entry.images.length === 1 ? "300px" : "160px" }} {...noDownloadProps} />
+                        {img.caption && <p className="text-xs text-gray-500 mt-1 text-center">{img.caption}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-800">{entry.title}</h2>
+                    <div className="flex gap-2 mt-1.5 flex-wrap">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${CAT_COLORS[entry.category] || CAT_COLORS["أخرى"]}`}>
+                        {entry.category}
+                      </span>
+                      {entry.date && (
+                        <span className="text-xs text-gray-400 flex items-center gap-1">
+                          📅 {new Date(entry.date).toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {entry.description && (
+                  <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{entry.description}</p>
                 )}
               </div>
             </div>

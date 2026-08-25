@@ -95,7 +95,7 @@ export interface ProjectItem {
 export interface DailyLogEntry {
   id: string; title: string; date: string; description: string;
   category: string;
-  images: Array<{ data: string; name: string }>;
+  images: Array<{ data: string; name: string; caption?: string }>;
   videoLinks: string[];
   createdAt: string;
 }
