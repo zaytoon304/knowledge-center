@@ -270,12 +270,13 @@ export default function AdminPage() {
 
   // يجلب أحدث البيانات من Firebase ثم يحدث الواجهة
   const refreshFromCloud = async () => {
-    const [cloudStudents, cloudCoords, cloudVisitors, cloudHotsSchedule, cloudHotsResults] = await Promise.all([
+    const [cloudStudents, cloudCoords, cloudVisitors, cloudHotsSchedule, cloudHotsResults, cloudInterestSurvey] = await Promise.all([
       cloudGet<StudentProfile[]>("kc_students"),
       cloudGet<CoordinatorProfile[]>("kc_coordinators"),
       cloudGet<VisitorRequest[]>("kc_visitor_requests"),
       cloudGet<HotsScheduleEntry[]>("kc_hots_schedule"),
       cloudGet<Record<string, HotsResult>>("kc_hots_results"),
+      cloudGet<InterestSurveyResponse[]>("kc_interest_survey"),
     ]);
     if (Array.isArray(cloudStudents) && cloudStudents.length > 0)
       localStorage.setItem("kc_students", JSON.stringify(cloudStudents));
@@ -285,6 +286,7 @@ export default function AdminPage() {
       localStorage.setItem("kc_visitor_requests", JSON.stringify(cloudVisitors));
     setHotsSchedule(Array.isArray(cloudHotsSchedule) ? cloudHotsSchedule : []);
     setHotsResults(cloudHotsResults ? Object.values(cloudHotsResults) : []);
+    setInterestSurvey(Array.isArray(cloudInterestSurvey) ? cloudInterestSurvey : []);
     refresh();
   };
 
