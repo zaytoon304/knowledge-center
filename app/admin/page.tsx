@@ -2215,7 +2215,7 @@ export default function AdminPage() {
                     <div key={r.id} className="card p-4">
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <div>
-                          <p className="font-bold text-gray-800 text-sm">{r.childName} — {r.grade}</p>
+                          <p className="font-bold text-gray-800 text-sm">{r.childName} — {r.grade} ({r.section})</p>
                           <p className="text-xs text-gray-400">ولي الأمر: {r.parentName} • {r.parentPhone}</p>
                         </div>
                         <p className="text-xs text-gray-300">{new Date(r.submittedAt).toLocaleDateString("ar-SA")}</p>

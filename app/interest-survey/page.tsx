@@ -7,7 +7,7 @@ import { GRADES } from "@/lib/grades";
 import { InterestSurveyResponse, COMPETITION_INTERESTS, PROGRAM_INTERESTS, TALENT_INTERESTS, MAX_INTERESTS } from "@/lib/interestSurvey";
 import CenterLogo from "@/components/icons/CenterLogo";
 
-const emptyForm = { parentName: "", parentPhone: "", childName: "", grade: "", notes: "" };
+const emptyForm = { parentName: "", parentPhone: "", childName: "", grade: "", section: "" as "" | "عام" | "تحفيظ", notes: "" };
 
 export default function InterestSurveyPage() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function InterestSurveyPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!form.parentName.trim() || !form.parentPhone.trim() || !form.childName.trim() || !form.grade) {
+    if (!form.parentName.trim() || !form.parentPhone.trim() || !form.childName.trim() || !form.grade || !form.section) {
       setError("عبّي كل الحقول المطلوبة أول (فيها علامة *)");
       return;
     }
@@ -45,6 +45,7 @@ export default function InterestSurveyPage() {
       parentPhone: form.parentPhone.trim(),
       childName: form.childName.trim(),
       grade: form.grade,
+      section: form.section,
       interests,
       notes: form.notes.trim(),
       submittedAt: new Date().toISOString(),
@@ -134,6 +135,19 @@ export default function InterestSurveyPage() {
                 <option value="">اختر الصف</option>
                 {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">القسم *</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(["عام", "تحفيظ"] as const).map(s => (
+                <label key={s}
+                  className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-semibold cursor-pointer transition-all ${form.section === s ? "bg-emerald-700 text-white border-emerald-700" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
+                  <input type="radio" name="section" checked={form.section === s} onChange={() => setForm({ ...form, section: s })} className="hidden" />
+                  {s}
+                </label>
+              ))}
             </div>
           </div>
 

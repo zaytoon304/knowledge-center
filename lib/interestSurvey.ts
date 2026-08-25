@@ -4,6 +4,7 @@ export interface InterestSurveyResponse {
   parentPhone: string;
   childName: string;
   grade: string;
+  section: "عام" | "تحفيظ";
   interests: string[];
   notes: string;
   submittedAt: string;
