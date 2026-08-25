@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Heart, CheckCircle } from "lucide-react";
 import { cloudPush } from "@/lib/cloud";
@@ -26,6 +26,13 @@ export default function InterestSurveyPage() {
   };
 
   const reset = () => { setForm(emptyForm); setInterests([]); setDone(false); };
+
+  // بعد الشكر، ننقله تلقائياً للصفحة الرئيسية للمنصة عشان يستكشفها ويتشجع ينضم
+  useEffect(() => {
+    if (!done) return;
+    const timer = setTimeout(() => router.push("/"), 2500);
+    return () => clearTimeout(timer);
+  }, [done, router]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,12 +81,13 @@ export default function InterestSurveyPage() {
             <p className="text-sm text-gray-500 mt-2">استفدنا من إجاباتك كثير، وبنراعيها ونحن نجهّز البرامج القادمة.</p>
           </div>
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-right space-y-1.5">
-            <p className="text-sm text-emerald-800 font-semibold">حاب تسجّل {form.childName || "طفلك"} بمنصتنا من الحين؟</p>
+            <p className="text-sm text-emerald-800 font-semibold">تفضّل، هذي منصتنا الكاملة 🌱</p>
             <p className="text-xs text-emerald-700">مركز المعرفة والابتكار STEAM بمدارس الأرقم — دورات ومسابقات وأنشطة حقيقية طول العام.</p>
           </div>
-          <button onClick={() => router.push("/login")}
+          <p className="text-xs text-gray-400">بنوديك تلقائياً للمنصة خلال لحظات...</p>
+          <button onClick={() => router.push("/")}
             className="w-full bg-emerald-700 text-white py-3 rounded-xl font-bold hover:bg-emerald-600">
-            سجّل الآن (اختياري)
+            تصفّح المنصة الآن
           </button>
           <button onClick={reset} className="w-full text-gray-400 text-xs hover:underline">
             تعبئة استبانة لطفل آخر
