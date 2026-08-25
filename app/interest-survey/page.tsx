@@ -1,0 +1,181 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Heart, CheckCircle } from "lucide-react";
+import { cloudPush } from "@/lib/cloud";
+import { GRADES } from "@/lib/grades";
+import { InterestSurveyResponse, COMPETITION_INTERESTS, TALENT_INTERESTS, MAX_INTERESTS } from "@/lib/interestSurvey";
+
+const emptyForm = { parentName: "", parentPhone: "", childName: "", grade: "", notes: "" };
+
+export default function InterestSurveyPage() {
+  const router = useRouter();
+  const [form, setForm] = useState(emptyForm);
+  const [interests, setInterests] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  const toggleInterest = (item: string) => {
+    setInterests(prev => {
+      if (prev.includes(item)) return prev.filter(i => i !== item);
+      if (prev.length >= MAX_INTERESTS) return prev;
+      return [...prev, item];
+    });
+  };
+
+  const reset = () => { setForm(emptyForm); setInterests([]); setDone(false); };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!form.parentName.trim() || !form.parentPhone.trim() || !form.childName.trim() || !form.grade) {
+      setError("عبّي كل الحقول المطلوبة أول (فيها علامة *)");
+      return;
+    }
+    if (interests.length === 0) {
+      setError("اختر اهتمام واحد على الأقل");
+      return;
+    }
+    setBusy(true);
+    const response: InterestSurveyResponse = {
+      id: Date.now().toString(),
+      parentName: form.parentName.trim(),
+      parentPhone: form.parentPhone.trim(),
+      childName: form.childName.trim(),
+      grade: form.grade,
+      interests,
+      notes: form.notes.trim(),
+      submittedAt: new Date().toISOString(),
+    };
+    const ok = await cloudPush("kc_interest_survey", response);
+    setBusy(false);
+    if (!ok) { setError("تعذّر الإرسال — تأكد من الإنترنت وحاول مرة أخرى"); return; }
+    setDone(true);
+  };
+
+  if (done) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-900 to-teal-800 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md text-center space-y-5">
+          <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto">
+            <CheckCircle className="w-9 h-9 text-emerald-600" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">تم إرسال إجابتك، شكراً لك! 🎉</h1>
+            <p className="text-sm text-gray-500 mt-2">استفدنا من إجاباتك كثير، وبنراعيها ونحن نجهّز البرامج القادمة.</p>
+          </div>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-right space-y-1.5">
+            <p className="text-sm text-emerald-800 font-semibold">حاب تسجّل {form.childName || "طفلك"} بمنصتنا من الحين؟</p>
+            <p className="text-xs text-emerald-700">مركز المعرفة والابتكار STEAM بمدارس الأرقم — دورات ومسابقات وأنشطة حقيقية طول العام.</p>
+          </div>
+          <button onClick={() => router.push("/login")}
+            className="w-full bg-emerald-700 text-white py-3 rounded-xl font-bold hover:bg-emerald-600">
+            سجّل الآن (اختياري)
+          </button>
+          <button onClick={reset} className="w-full text-gray-400 text-xs hover:underline">
+            تعبئة استبانة لطفل آخر
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-emerald-900 to-teal-800 flex items-center justify-center p-4 py-10">
+      <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-lg space-y-6">
+        <div className="text-center space-y-2">
+          <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto">
+            <Heart className="w-8 h-8 text-emerald-700" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-800">استبانة اهتمامات الطلاب</h1>
+          <p className="text-sm text-gray-500">مركز المعرفة والابتكار STEAM بمدارس الأرقم</p>
+          <p className="text-sm text-gray-600 leading-relaxed">ساعدنا نعرف وش يحب طفلك عشان نجهّز له أنسب البرامج — تعبئتها لا تلزمك بالتسجيل، بس رأيك يهمنا 🌱</p>
+        </div>
+
+        <form onSubmit={submit} className="space-y-5">
+          {error && <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">{error}</div>}
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">اسم ولي الأمر *</label>
+              <input value={form.parentName} onChange={e => setForm({ ...form, parentName: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 outline-none focus:border-emerald-500" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">جوال ولي الأمر *</label>
+              <input value={form.parentPhone} onChange={e => setForm({ ...form, parentPhone: e.target.value })} type="tel" dir="ltr"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 outline-none focus:border-emerald-500" />
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">اسم الطالب/ة *</label>
+              <input value={form.childName} onChange={e => setForm({ ...form, childName: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 outline-none focus:border-emerald-500" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">الصف الدراسي *</label>
+              <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 outline-none focus:border-emerald-500">
+                <option value="">اختر الصف</option>
+                {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+            <p className="text-sm font-bold text-amber-800">اختر ٣ اهتمامات كحد أقصى فقط 📌</p>
+            <p className="text-xs text-amber-700 mt-0.5">اخترت {interests.length} من {MAX_INTERESTS}</p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-gray-700 mb-2">مسابقات علمية وتقنية</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {COMPETITION_INTERESTS.map(item => {
+                const checked = interests.includes(item);
+                const disabled = !checked && interests.length >= MAX_INTERESTS;
+                return (
+                  <label key={item}
+                    className={`flex items-center justify-center text-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${checked ? "bg-emerald-700 text-white border-emerald-700" : disabled ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
+                    <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggleInterest(item)} className="hidden" />
+                    {item}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-gray-700 mb-2">فنون ومواهب</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {TALENT_INTERESTS.map(item => {
+                const checked = interests.includes(item);
+                const disabled = !checked && interests.length >= MAX_INTERESTS;
+                return (
+                  <label key={item}
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${checked ? "bg-emerald-700 text-white border-emerald-700" : disabled ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
+                    <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggleInterest(item)} className="hidden" />
+                    {item}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">ملاحظات إضافية (اختياري)</label>
+            <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2}
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 outline-none focus:border-emerald-500 resize-none" />
+          </div>
+
+          <button type="submit" disabled={busy}
+            className="w-full bg-emerald-700 text-white py-3 rounded-xl font-bold hover:bg-emerald-600 disabled:opacity-60">
+            {busy ? "جاري الإرسال..." : "إرسال الاستبانة"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}

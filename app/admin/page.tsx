@@ -4,12 +4,13 @@ import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
-  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut
+  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
 import { signInAsAdmin } from "@/lib/firebase";
 import { generateAccessCode } from "@/lib/deviceCode";
+import { InterestSurveyResponse, COMPETITION_INTERESTS, TALENT_INTERESTS } from "@/lib/interestSurvey";
 import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
 
@@ -233,6 +234,7 @@ export default function AdminPage() {
   const [showVideoForm, setShowVideoForm] = useState<string | null>(null);
   const [videoForm, setVideoForm] = useState({ title: "", url: "", type: "journey" as ProjectVideo["type"], description: "" });
   const [dailyLog, setDailyLog] = useState<DailyLogEntry[]>([]);
+  const [interestSurvey, setInterestSurvey] = useState<InterestSurveyResponse[]>([]);
   const [showDForm, setShowDForm] = useState(false);
   const [dImagesUploading, setDImagesUploading] = useState(0);
   const [dSubmitting, setDSubmitting] = useState(false);
@@ -320,6 +322,8 @@ export default function AdminPage() {
     } else if (tab === "student_tracking") {
       Promise.all(students.map(async s => [s.id, await getNotes("kc_snotes_" + s.id)] as const))
         .then(entries => setNotesMap(prev => ({ ...prev, ...Object.fromEntries(entries) })));
+    } else if (tab === "interest_survey") {
+      cloudGet<InterestSurveyResponse[]>("kc_interest_survey").then(data => setInterestSurvey(Array.isArray(data) ? data : []));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed, tab]);
@@ -357,6 +361,7 @@ export default function AdminPage() {
     { id: "meetings_admin", label: "الاجتماعات", icon: Video },
     { id: "monthly_report", label: "التقرير الشهري", icon: BarChart3 },
     { id: "visitors", label: "طلبات الزوار", icon: Globe, badge: visitorRequests.filter(v => v.status === "pending").length || undefined },
+    { id: "interest_survey", label: "استبانة الاهتمامات", icon: Heart, badge: interestSurvey.length || undefined },
     { id: "whiteboard_admin", label: "السبورة الذكية", icon: BookOpen },
     { id: "supervisor_profile", label: "ملفي الشخصي", icon: UserSquare2 },
     { id: "permissions", label: "الصلاحيات", icon: Shield },
@@ -2164,6 +2169,71 @@ export default function AdminPage() {
           )}
         </div>
       )}
+
+      {/* استبانة الاهتمامات */}
+      {tab === "interest_survey" && (() => {
+        const counts: Record<string, number> = {};
+        interestSurvey.forEach(r => r.interests.forEach(i => { counts[i] = (counts[i] || 0) + 1; }));
+        const allItems = [...COMPETITION_INTERESTS, ...TALENT_INTERESTS];
+        const sortedCounts = allItems
+          .map(item => ({ item, count: counts[item] || 0 }))
+          .sort((a, b) => b.count - a.count);
+        const maxCount = Math.max(1, ...sortedCounts.map(s => s.count));
+        return (
+          <div className="space-y-4">
+            <h2 className="font-bold text-gray-800 flex items-center gap-2">
+              <Heart className="w-5 h-5 text-emerald-600" /> استبانة اهتمامات الطلاب ({interestSurvey.length} ردّ)
+            </h2>
+
+            {interestSurvey.length === 0 ? (
+              <div className="card p-10 text-center text-gray-400">
+                <Heart className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>ما وصل أي رد على الاستبانة بعد</p>
+              </div>
+            ) : (
+              <>
+                {/* إحصائية الاهتمامات — الأكثر طلباً أولاً */}
+                <div className="card p-4">
+                  <h3 className="text-sm font-bold text-gray-700 mb-3">الاهتمامات الأكثر طلباً</h3>
+                  <div className="space-y-2">
+                    {sortedCounts.filter(s => s.count > 0).map(s => (
+                      <div key={s.item} className="flex items-center gap-3">
+                        <span className="text-xs text-gray-600 w-40 flex-shrink-0 truncate">{s.item}</span>
+                        <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
+                          <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${(s.count / maxCount) * 100}%` }} />
+                        </div>
+                        <span className="text-xs font-bold text-gray-700 w-6 text-left flex-shrink-0">{s.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* الردود التفصيلية */}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-gray-500">كل الردود</h3>
+                  {[...interestSurvey].reverse().map(r => (
+                    <div key={r.id} className="card p-4">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div>
+                          <p className="font-bold text-gray-800 text-sm">{r.childName} — {r.grade}</p>
+                          <p className="text-xs text-gray-400">ولي الأمر: {r.parentName} • {r.parentPhone}</p>
+                        </div>
+                        <p className="text-xs text-gray-300">{new Date(r.submittedAt).toLocaleDateString("ar-SA")}</p>
+                      </div>
+                      <div className="flex gap-1.5 flex-wrap mt-2">
+                        {r.interests.map(i => (
+                          <span key={i} className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">{i}</span>
+                        ))}
+                      </div>
+                      {r.notes && <p className="text-xs text-gray-400 mt-2 bg-gray-50 rounded-lg px-2 py-1">"{r.notes}"</p>}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Permissions */}
       {tab === "permissions" && (
