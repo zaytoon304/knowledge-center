@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
+import { auth, ensureSignedIn } from "@/lib/firebase";
 import { generateAccessCode } from "@/lib/deviceCode";
 import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
@@ -291,9 +292,15 @@ export default function AdminPage() {
     refresh();
   };
 
+  const [adminUid, setAdminUid] = useState("");
   useEffect(() => {
     if (localStorage.getItem("kc_admin_auth") === "1") setAuthed(true);
   }, []);
+
+  useEffect(() => {
+    if (!authed) return;
+    ensureSignedIn().then(() => setAdminUid(auth.currentUser?.uid || ""));
+  }, [authed]);
 
   useEffect(() => {
     if (!authed) return;
@@ -364,6 +371,14 @@ export default function AdminPage() {
             <p className="text-white font-semibold text-base">إدارة الطلاب والجروبات والمحتوى</p>
           </div>
         </div>
+        {adminUid && (
+          <div className="mt-3 flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5 w-fit">
+            <span className="text-[11px] text-white/70">معرّف جهازك للإدارة:</span>
+            <code className="text-[11px] text-white font-mono">{adminUid}</code>
+            <button type="button" onClick={() => navigator.clipboard.writeText(adminUid)}
+              className="text-[11px] text-white/90 underline">نسخ</button>
+          </div>
+        )}
       </div>
 
       {/* اختصارات سريعة — بضغطة واحدة توديك لأكثر الأقسام استخداماً */}

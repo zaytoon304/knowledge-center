@@ -229,6 +229,18 @@ export default function LoginPage() {
                   </button>
                 ))}
               </div>
+              {loginData.type === "student" && (
+                <div className="flex gap-1.5 bg-gray-100 p-1 rounded-xl">
+                  <button type="button" onClick={() => setUseOldStudentLogin(false)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${!useOldStudentLogin ? "bg-white text-blue-800 shadow" : "text-gray-500"}`}>
+                    🔑 رمز الدخول
+                  </button>
+                  <button type="button" onClick={() => setUseOldStudentLogin(true)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${useOldStudentLogin ? "bg-white text-blue-800 shadow" : "text-gray-500"}`}>
+                    🆔 رقم الهوية وكلمة المرور
+                  </button>
+                </div>
+              )}
               {loginData.type === "student" && !useOldStudentLogin && (
                 <>
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
@@ -245,9 +257,6 @@ export default function LoginPage() {
                     </div>
                     <p className="text-[11px] text-gray-400 mt-1">ما عندك رمز؟ سجّل بياناتك من تبويب "طالب جديد" وأرسل رمز جهازك للإدارة</p>
                   </div>
-                  <button type="button" onClick={() => setUseOldStudentLogin(true)} className="text-xs text-blue-600 hover:underline">
-                    عندك حساب قديم برقم الهوية وكلمة المرور؟ اضغط هنا
-                  </button>
                 </>
               )}
               {loginData.type === "student" && useOldStudentLogin && (
@@ -267,9 +276,6 @@ export default function LoginPage() {
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <button type="button" onClick={() => setUseOldStudentLogin(false)} className="text-xs text-blue-600 hover:underline">
-                    الدخول برمز الجهاز بدل ذلك
-                  </button>
                 </>
               )}
               {loginData.type === "coordinator" && (
