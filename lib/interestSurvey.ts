@@ -20,7 +20,8 @@ export const COMPETITION_INTERESTS = [
 
 export const PROGRAM_INTERESTS = [
   "الحساب الذهني",
-  "الروبوت",
+  "الروبوت والليجو",
+  "البرمجة",
   "الموهبة والابتكار",
   "صناعة الألعاب",
   "صناعة التطبيقات",
