@@ -4,13 +4,13 @@ import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
-  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart
+  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart, Printer, X as XIcon
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
 import { signInAsAdmin } from "@/lib/firebase";
 import { generateAccessCode } from "@/lib/deviceCode";
-import { InterestSurveyResponse, ALL_INTEREST_ITEMS } from "@/lib/interestSurvey";
+import { InterestSurveyResponse, ALL_INTEREST_ITEMS, SurveyGroupKey, SURVEY_GROUPS, surveyGroupKey } from "@/lib/interestSurvey";
 import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
 
@@ -235,6 +235,7 @@ export default function AdminPage() {
   const [videoForm, setVideoForm] = useState({ title: "", url: "", type: "journey" as ProjectVideo["type"], description: "" });
   const [dailyLog, setDailyLog] = useState<DailyLogEntry[]>([]);
   const [interestSurvey, setInterestSurvey] = useState<InterestSurveyResponse[]>([]);
+  const [printGroup, setPrintGroup] = useState<SurveyGroupKey | null>(null);
   const [showDForm, setShowDForm] = useState(false);
   const [dImagesUploading, setDImagesUploading] = useState(0);
   const [dSubmitting, setDSubmitting] = useState(false);
@@ -307,6 +308,13 @@ export default function AdminPage() {
   useEffect(() => {
     if (localStorage.getItem("kc_admin_auth") === "1") setAuthed(true);
   }, []);
+
+  // يعزل الطباعة على تقرير الاستبانة فقط (يخفي بقية لوحة الإدارة أثناء الطباعة)
+  useEffect(() => {
+    if (!printGroup) return;
+    document.body.classList.add("printing-survey");
+    return () => document.body.classList.remove("printing-survey");
+  }, [printGroup]);
 
   useEffect(() => {
     if (!authed) return;
@@ -2197,6 +2205,26 @@ export default function AdminPage() {
               <Heart className="w-5 h-5 text-emerald-600" /> استبانة اهتمامات الطلاب ({interestSurvey.length} ردّ)
             </h2>
 
+            {interestSurvey.length > 0 && (
+              <div className="card p-4">
+                <h3 className="text-sm font-bold text-gray-700 mb-1">تقرير قابل للطباعة حسب المرحلة</h3>
+                <p className="text-xs text-gray-400 mb-3">اختر مرحلة لطباعة كل ردودها (لتسليمها للمدارس)</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {SURVEY_GROUPS.map(g => {
+                    const count = interestSurvey.filter(r => surveyGroupKey(r) === g.key).length;
+                    return (
+                      <button key={g.key} onClick={() => setPrintGroup(g.key)} disabled={count === 0}
+                        className="flex flex-col items-center gap-1 p-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-emerald-50 hover:border-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                        <Printer className="w-5 h-5 text-emerald-600" />
+                        <span className="text-xs font-bold text-gray-700">{g.label}</span>
+                        <span className="text-[11px] text-gray-400">{count} رد</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {interestSurvey.length === 0 ? (
               <div className="card p-10 text-center text-gray-400">
                 <Heart className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -2243,6 +2271,72 @@ export default function AdminPage() {
                 </div>
               </>
             )}
+          </div>
+        );
+      })()}
+
+      {/* تقرير الاستبانة القابل للطباعة — يظهر فوق كل شيء ويُعزل عند الطباعة الفعلية */}
+      {printGroup && (() => {
+        const group = SURVEY_GROUPS.find(g => g.key === printGroup)!;
+        const rows = interestSurvey.filter(r => surveyGroupKey(r) === printGroup);
+        return (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center overflow-auto p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-6">
+              <div className="no-print flex items-center justify-between p-4 border-b border-gray-100">
+                <h3 className="font-bold text-gray-800">معاينة قبل الطباعة — {group.label}</h3>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => window.print()}
+                    className="bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-600 flex items-center gap-2">
+                    <Printer className="w-4 h-4" /> طباعة الآن
+                  </button>
+                  <button onClick={() => setPrintGroup(null)}
+                    className="bg-gray-100 text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-200">
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div id="survey-print-area" className="p-6">
+                <div className="flex items-center justify-between border-b border-gray-200 pb-4 mb-4">
+                  <div>
+                    <h1 className="text-lg font-bold text-gray-800">مركز المعرفة والابتكار STEAM بمدارس الأرقم</h1>
+                    <p className="text-sm text-gray-500">تقرير استبانة اهتمامات الطلاب — {group.label}</p>
+                  </div>
+                  <p className="text-xs text-gray-400">{new Date().toLocaleDateString("ar-SA")}</p>
+                </div>
+
+                {rows.length === 0 ? (
+                  <p className="text-center text-gray-400 py-10">لا توجد ردود بهذه المرحلة</p>
+                ) : (
+                  <table className="w-full text-sm rtl-table border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-600 text-xs">
+                        <th className="border border-gray-200 px-2 py-2">#</th>
+                        <th className="border border-gray-200 px-2 py-2">اسم الطالب</th>
+                        <th className="border border-gray-200 px-2 py-2">الصف</th>
+                        <th className="border border-gray-200 px-2 py-2">ولي الأمر</th>
+                        <th className="border border-gray-200 px-2 py-2">جوال ولي الأمر</th>
+                        <th className="border border-gray-200 px-2 py-2">الاختيارات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((r, idx) => (
+                        <tr key={r.id} className="align-top">
+                          <td className="border border-gray-200 px-2 py-2 text-center text-gray-500">{idx + 1}</td>
+                          <td className="border border-gray-200 px-2 py-2 font-semibold text-gray-800">{r.childName}</td>
+                          <td className="border border-gray-200 px-2 py-2 text-gray-600">{r.grade}</td>
+                          <td className="border border-gray-200 px-2 py-2 text-gray-600">{r.parentName}</td>
+                          <td className="border border-gray-200 px-2 py-2 text-gray-600" dir="ltr">{r.parentPhone}</td>
+                          <td className="border border-gray-200 px-2 py-2 text-gray-600">{r.interests.join("، ")}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+
+                <p className="text-xs text-gray-400 mt-4">إجمالي الردود: {rows.length}</p>
+              </div>
+            </div>
           </div>
         );
       })()}

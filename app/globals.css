@@ -153,6 +153,15 @@ body {
   .main-content { margin-right: 0; }
 }
 
+/* طباعة تقرير الاستبانة فقط — تخفي كل شيء عدا صندوق التقرير */
+@media print {
+  body.printing-survey * { visibility: hidden; }
+  body.printing-survey #survey-print-area,
+  body.printing-survey #survey-print-area * { visibility: visible; }
+  body.printing-survey #survey-print-area { position: absolute; inset: 0; width: 100%; padding: 0; }
+  body.printing-survey .no-print { display: none !important; }
+}
+
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(100%);
