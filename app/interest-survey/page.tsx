@@ -4,10 +4,13 @@ import { useRouter } from "next/navigation";
 import { Heart, CheckCircle } from "lucide-react";
 import { cloudPush } from "@/lib/cloud";
 import { GRADES } from "@/lib/grades";
-import { InterestSurveyResponse, PROGRAM_CATEGORIES, OPEN_COMPETITIONS, TRAINING_COMPETITIONS, ACTIVITIES_CATEGORY_ID, MAX_ACTIVITY_PICKS, CLASSROOMS } from "@/lib/interestSurvey";
+import { InterestSurveyResponse, PROGRAM_CATEGORIES, OPEN_COMPETITIONS, TRAINING_COMPETITIONS, CLASSROOMS } from "@/lib/interestSurvey";
 import TalentActivityLogo from "@/components/icons/TalentActivityLogo";
 
 const emptyForm = { parentName: "", parentPhone: "", childName: "", grade: "", section: "" as "" | "عام" | "تحفيظ", classroom: "", notes: "" };
+
+// صياغة عربية لعدد الخيارات المسموحة بكل مجال
+const maxPicksLabel = (n: number) => n === 1 ? "خيار واحد فقط" : n === 2 ? "خيارين اثنين كحد أقصى" : `${n} خيارات كحد أقصى`;
 
 export default function InterestSurveyPage() {
   const router = useRouter();
@@ -17,15 +20,13 @@ export default function InterestSurveyPage() {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
-  const activitiesCat = PROGRAM_CATEGORIES.find(c => c.id === ACTIVITIES_CATEGORY_ID)!;
-
   const toggleInterest = (item: string) => {
-    const isActivityItem = activitiesCat.subItems.includes(item);
+    const ownerCat = PROGRAM_CATEGORIES.find(c => c.subItems.includes(item));
     const alreadyChecked = interests.includes(item);
-    if (!alreadyChecked && isActivityItem) {
-      const pickedCount = interests.filter(i => activitiesCat.subItems.includes(i)).length;
-      if (pickedCount >= MAX_ACTIVITY_PICKS) {
-        setError(`يمكن اختيار نشاطين اثنين فقط من "${ACTIVITIES_CATEGORY_ID}"`);
+    if (!alreadyChecked && ownerCat?.maxPicks) {
+      const pickedCount = interests.filter(i => ownerCat.subItems.includes(i)).length;
+      if (pickedCount >= ownerCat.maxPicks) {
+        setError(`يمكن اختيار ${maxPicksLabel(ownerCat.maxPicks)} من "${ownerCat.id}"`);
         return;
       }
     }
@@ -190,15 +191,15 @@ export default function InterestSurveyPage() {
                       className="w-4 h-4 accent-emerald-700" />
                     <span className={`text-sm font-bold ${catChecked ? "text-emerald-800" : "text-gray-700"}`}>{cat.id}</span>
                   </label>
-                  {catChecked && cat.id === ACTIVITIES_CATEGORY_ID && (
-                    <p className="text-[11px] text-emerald-700 px-3 pb-1 -mt-1">يُسمح باختيار نشاطين اثنين كحد أقصى</p>
+                  {catChecked && cat.maxPicks && (
+                    <p className="text-[11px] text-emerald-700 px-3 pb-1 -mt-1">يُسمح باختيار {maxPicksLabel(cat.maxPicks)}</p>
                   )}
                   {catChecked && cat.subItems.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 px-3 pb-3">
                       {cat.subItems.map(item => {
                         const checked = interests.includes(item);
-                        const limitReached = cat.id === ACTIVITIES_CATEGORY_ID && !checked
-                          && interests.filter(i => cat.subItems.includes(i)).length >= MAX_ACTIVITY_PICKS;
+                        const limitReached = !!cat.maxPicks && !checked
+                          && interests.filter(i => cat.subItems.includes(i)).length >= cat.maxPicks;
                         return (
                           <label key={item}
                             className={`flex items-center justify-center text-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${checked ? "bg-emerald-700 text-white border-emerald-700 cursor-pointer" : limitReached ? "bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50 cursor-pointer"}`}>
