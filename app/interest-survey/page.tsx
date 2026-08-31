@@ -5,7 +5,7 @@ import { Heart, CheckCircle } from "lucide-react";
 import { cloudPush } from "@/lib/cloud";
 import { GRADES } from "@/lib/grades";
 import { InterestSurveyResponse, PROGRAM_CATEGORIES, OPEN_COMPETITIONS, TRAINING_COMPETITIONS, ACTIVITIES_CATEGORY_ID, MAX_ACTIVITY_PICKS, CLASSROOMS } from "@/lib/interestSurvey";
-import CenterLogo from "@/components/icons/CenterLogo";
+import TalentActivityLogo from "@/components/icons/TalentActivityLogo";
 
 const emptyForm = { parentName: "", parentPhone: "", childName: "", grade: "", section: "" as "" | "عام" | "تحفيظ", classroom: "", notes: "" };
 
@@ -80,7 +80,7 @@ export default function InterestSurveyPage() {
             <div className="bg-white rounded-2xl px-2.5 py-1.5 shadow border border-gray-100">
               <img src="/arqam-logo.png" alt="شعار مدارس الأرقم" className="w-24 object-contain" />
             </div>
-            <CenterLogo className="w-10 h-10 drop-shadow-lg" />
+            <TalentActivityLogo className="w-10 h-10 drop-shadow-lg" />
           </div>
           <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto">
             <CheckCircle className="w-9 h-9 text-emerald-600" />
@@ -91,7 +91,7 @@ export default function InterestSurveyPage() {
           </div>
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-right space-y-1.5">
             <p className="text-sm text-emerald-800 font-semibold">تفضّلوا بزيارة منصتنا الكاملة 🌱</p>
-            <p className="text-xs text-emerald-700">مركز المعرفة والابتكار STEAM بمدارس الأرقم — دورات ومسابقات وأنشطة حقيقية على مدار العام.</p>
+            <p className="text-xs text-emerald-700">وحدة الموهبة والنشاط الطلابي بمدارس الأرقم — دورات ومسابقات وأنشطة حقيقية على مدار العام.</p>
           </div>
           <p className="text-xs text-gray-400">سيتم تحويلكم تلقائياً إلى المنصة خلال لحظات...</p>
           <button onClick={() => router.push("/")}
@@ -114,12 +114,12 @@ export default function InterestSurveyPage() {
             <div className="bg-white rounded-2xl px-3 py-2 shadow border border-gray-100">
               <img src="/arqam-logo.png" alt="شعار مدارس الأرقم" className="w-28 object-contain" />
             </div>
-            <CenterLogo className="w-12 h-12 drop-shadow-lg" />
+            <TalentActivityLogo className="w-12 h-12 drop-shadow-lg" />
           </div>
           <h1 className="text-xl font-bold text-gray-800 flex items-center justify-center gap-2">
             <Heart className="w-5 h-5 text-emerald-600" /> استبانة اهتمامات الطلاب
           </h1>
-          <p className="text-sm text-gray-500">مركز المعرفة والابتكار STEAM بمدارس الأرقم</p>
+          <p className="text-sm text-gray-500">وحدة الموهبة والنشاط الطلابي بمدارس الأرقم</p>
           <p className="text-sm text-gray-600 leading-relaxed">ساعدونا في التعرّف على ما يحبّه طفلكم لنُعِدَّ له أنسب البرامج — تعبئة الاستبانة لا تُلزمكم بالتسجيل، لكنّ رأيكم يهمّنا 🌱</p>
         </div>
 

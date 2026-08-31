@@ -2,11 +2,11 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Printer, Copy, CheckCircle, Settings2, Globe, MessageCircle, Heart } from "lucide-react";
-import CenterLogo from "@/components/icons/CenterLogo";
+import TalentActivityLogo from "@/components/icons/TalentActivityLogo";
 
 const QRCodeSVG = dynamic(() => import("qrcode.react").then(m => m.QRCodeSVG), { ssr: false });
 
-const WHATSAPP_MESSAGE = "أهلاً! 🌱 نحب نعرف وش يحب طفلك عشان نجهّز له أنسب البرامج بمركز المعرفة والابتكار STEAM. عبّي هذي الاستبانة القصيرة (دقيقة وحدة بس):";
+const WHATSAPP_MESSAGE = "أهلاً! 🌱 نحب نعرف وش يحب طفلك عشان نجهّز له أنسب البرامج بوحدة الموهبة والنشاط الطلابي. عبّي هذي الاستبانة القصيرة (دقيقة وحدة بس):";
 
 export default function SurveyQRPage() {
   const [url, setUrl] = useState("");
@@ -54,7 +54,7 @@ export default function SurveyQRPage() {
         {/* Header */}
         <div className="card p-5 bg-gradient-to-l from-emerald-800 to-teal-700 text-white no-print">
           <div className="flex items-center gap-3">
-            <CenterLogo className="w-11 h-11" />
+            <TalentActivityLogo className="w-11 h-11" />
             <div>
               <h1 className="font-bold text-lg">باركود استبانة الاهتمامات</h1>
               <p className="text-white font-semibold text-sm">شارك الاستبانة مع أولياء الأمور عبر واتساب أو الطباعة</p>
@@ -105,9 +105,9 @@ export default function SurveyQRPage() {
 
             <div className="bg-gradient-to-l from-emerald-800 to-teal-700 p-6 text-white text-center">
               <div className="flex justify-center mb-3">
-                <CenterLogo className="w-16 h-16 drop-shadow-lg" />
+                <TalentActivityLogo className="w-16 h-16 drop-shadow-lg" />
               </div>
-              <h2 className="text-xl font-bold">مركز المعرفة والابتكار STEAM</h2>
+              <h2 className="text-xl font-bold">وحدة الموهبة والنشاط الطلابي</h2>
               <p className="text-emerald-200 text-sm mt-1">بمدارس الأرقم</p>
               <p className="text-yellow-300 text-xs mt-2 font-semibold flex items-center justify-center gap-1">
                 <Heart className="w-3.5 h-3.5" /> استبانة اهتمامات الطلاب
