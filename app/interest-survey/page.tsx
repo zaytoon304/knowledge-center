@@ -117,10 +117,10 @@ export default function InterestSurveyPage() {
             <TalentActivityLogo className="w-12 h-12 drop-shadow-lg" />
           </div>
           <h1 className="text-xl font-bold text-gray-800 flex items-center justify-center gap-2">
-            <Heart className="w-5 h-5 text-emerald-600" /> استبانة اهتمامات الطلاب
+            <Heart className="w-5 h-5 text-emerald-600" /> استبانة مواهب الطلاب
           </h1>
           <p className="text-sm text-gray-500">وحدة الموهبة والنشاط الطلابي بمدارس الأرقم</p>
-          <p className="text-sm text-gray-600 leading-relaxed">ساعدونا في التعرّف على ما يحبّه طفلكم لنُعِدَّ له أنسب البرامج — تعبئة الاستبانة لا تُلزمكم بالتسجيل، لكنّ رأيكم يهمّنا 🌱</p>
+          <p className="text-sm text-gray-600 leading-relaxed">ساعدونا في التعرّف على ما يحبّه ابنكم لنُعِدَّ له أنسب البرامج — تعبئة الاستبانة لا تُلزمكم بالتسجيل، لكنّ رأيكم يهمّنا 🌱</p>
         </div>
 
         <form onSubmit={submit} className="space-y-5">
@@ -180,7 +180,7 @@ export default function InterestSurveyPage() {
 
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-gray-700">برامج الوحدة</h3>
-            <p className="text-xs text-gray-400 -mt-2">اختر المجال، ثم حدّد ما يناسب طفلكم من الخيارات التي تظهر تحته</p>
+            <p className="text-xs text-gray-400 -mt-2">اختر المجال، ثم حدّد ما يناسب ابنكم من الخيارات التي تظهر تحته</p>
             {PROGRAM_CATEGORIES.map(cat => {
               const catChecked = interests.includes(cat.id);
               return (

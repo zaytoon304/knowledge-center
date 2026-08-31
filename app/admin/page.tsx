@@ -371,7 +371,7 @@ export default function AdminPage() {
     { id: "meetings_admin", label: "الاجتماعات", icon: Video },
     { id: "monthly_report", label: "التقرير الشهري", icon: BarChart3 },
     { id: "visitors", label: "طلبات الزوار", icon: Globe, badge: visitorRequests.filter(v => v.status === "pending").length || undefined },
-    { id: "interest_survey", label: "استبانة الاهتمامات", icon: Heart, badge: interestSurvey.length || undefined },
+    { id: "interest_survey", label: "مواهب الطلاب", icon: Heart, badge: interestSurvey.length || undefined },
     { id: "whiteboard_admin", label: "السبورة الذكية", icon: BookOpen },
     { id: "supervisor_profile", label: "ملفي الشخصي", icon: UserSquare2 },
     { id: "permissions", label: "الصلاحيات", icon: Shield },
@@ -2191,7 +2191,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* استبانة الاهتمامات */}
+      {/* مواهب الطلاب */}
       {tab === "interest_survey" && (() => {
         const counts: Record<string, number> = {};
         interestSurvey.forEach(r => r.interests.forEach(i => { counts[i] = (counts[i] || 0) + 1; }));
@@ -2202,7 +2202,7 @@ export default function AdminPage() {
         return (
           <div className="space-y-4">
             <h2 className="font-bold text-gray-800 flex items-center gap-2">
-              <Heart className="w-5 h-5 text-emerald-600" /> استبانة اهتمامات الطلاب ({interestSurvey.length} ردّ)
+              <Heart className="w-5 h-5 text-emerald-600" /> استبانة مواهب الطلاب ({interestSurvey.length} ردّ)
             </h2>
 
             {interestSurvey.length > 0 && (
@@ -2302,7 +2302,7 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between border-b border-gray-200 pb-4 mb-4">
                   <div>
                     <h1 className="text-lg font-bold text-gray-800">مركز المعرفة والابتكار STEAM بمدارس الأرقم</h1>
-                    <p className="text-sm text-gray-500">تقرير استبانة اهتمامات الطلاب — {group.label}</p>
+                    <p className="text-sm text-gray-500">تقرير استبانة مواهب الطلاب — {group.label}</p>
                   </div>
                   <p className="text-xs text-gray-400">{new Date().toLocaleDateString("ar-SA")}</p>
                 </div>

@@ -6,7 +6,7 @@ import TalentActivityLogo from "@/components/icons/TalentActivityLogo";
 
 const QRCodeSVG = dynamic(() => import("qrcode.react").then(m => m.QRCodeSVG), { ssr: false });
 
-const WHATSAPP_MESSAGE = "أهلاً! 🌱 نحب نعرف وش يحب طفلك عشان نجهّز له أنسب البرامج بوحدة الموهبة والنشاط الطلابي. عبّي هذي الاستبانة القصيرة (دقيقة وحدة بس):";
+const WHATSAPP_MESSAGE = "أهلاً! 🌱 نحب نعرف وش يحب ابنك عشان نجهّز له أنسب البرامج بوحدة الموهبة والنشاط الطلابي. عبّي هذي الاستبانة القصيرة (دقيقة وحدة بس):";
 
 export default function SurveyQRPage() {
   const [url, setUrl] = useState("");
@@ -56,7 +56,7 @@ export default function SurveyQRPage() {
           <div className="flex items-center gap-3">
             <TalentActivityLogo className="w-11 h-11" />
             <div>
-              <h1 className="font-bold text-lg">باركود استبانة الاهتمامات</h1>
+              <h1 className="font-bold text-lg">باركود استبانة مواهب الطلاب</h1>
               <p className="text-white font-semibold text-sm">شارك الاستبانة مع أولياء الأمور عبر واتساب أو الطباعة</p>
             </div>
           </div>
@@ -110,7 +110,7 @@ export default function SurveyQRPage() {
               <h2 className="text-xl font-bold">وحدة الموهبة والنشاط الطلابي</h2>
               <p className="text-emerald-200 text-sm mt-1">بمدارس الأرقم</p>
               <p className="text-yellow-300 text-xs mt-2 font-semibold flex items-center justify-center gap-1">
-                <Heart className="w-3.5 h-3.5" /> استبانة اهتمامات الطلاب
+                <Heart className="w-3.5 h-3.5" /> استبانة مواهب الطلاب
               </p>
             </div>
 
@@ -120,7 +120,7 @@ export default function SurveyQRPage() {
               </div>
 
               <div className="text-center space-y-1">
-                <p className="font-bold text-gray-800 text-lg">وش يحب طفلك؟ 🌱</p>
+                <p className="font-bold text-gray-800 text-lg">وش يحب ابنك؟ 🌱</p>
                 <p className="text-gray-500 text-sm">امسح الرمز وعبّي الاستبانة (دقيقة وحدة)</p>
               </div>
 
