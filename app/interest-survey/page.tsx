@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation";
 import { Heart, CheckCircle } from "lucide-react";
 import { cloudPush } from "@/lib/cloud";
 import { GRADES } from "@/lib/grades";
-import { InterestSurveyResponse, PROGRAM_CATEGORIES, OPEN_COMPETITIONS, TRAINING_COMPETITIONS, ACTIVITIES_CATEGORY_ID, MAX_ACTIVITY_PICKS } from "@/lib/interestSurvey";
+import { InterestSurveyResponse, PROGRAM_CATEGORIES, OPEN_COMPETITIONS, TRAINING_COMPETITIONS, ACTIVITIES_CATEGORY_ID, MAX_ACTIVITY_PICKS, CLASSROOMS } from "@/lib/interestSurvey";
 import CenterLogo from "@/components/icons/CenterLogo";
 
-const emptyForm = { parentName: "", parentPhone: "", childName: "", grade: "", section: "" as "" | "عام" | "تحفيظ", notes: "" };
+const emptyForm = { parentName: "", parentPhone: "", childName: "", grade: "", section: "" as "" | "عام" | "تحفيظ", classroom: "", notes: "" };
 
 export default function InterestSurveyPage() {
   const router = useRouter();
@@ -45,7 +45,7 @@ export default function InterestSurveyPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!form.parentName.trim() || !form.parentPhone.trim() || !form.childName.trim() || !form.grade || !form.section) {
+    if (!form.parentName.trim() || !form.parentPhone.trim() || !form.childName.trim() || !form.grade || !form.section || !form.classroom) {
       setError("يُرجى تعبئة جميع الحقول المطلوبة (المشار إليها بعلامة *)");
       return;
     }
@@ -61,6 +61,7 @@ export default function InterestSurveyPage() {
       childName: form.childName.trim(),
       grade: form.grade,
       section: form.section,
+      classroom: form.classroom,
       interests,
       notes: form.notes.trim(),
       submittedAt: new Date().toISOString(),
@@ -154,16 +155,26 @@ export default function InterestSurveyPage() {
             </div>
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">القسم *</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["عام", "تحفيظ"] as const).map(s => (
-                <label key={s}
-                  className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-semibold cursor-pointer transition-all ${form.section === s ? "bg-emerald-700 text-white border-emerald-700" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
-                  <input type="radio" name="section" checked={form.section === s} onChange={() => setForm({ ...form, section: s })} className="hidden" />
-                  {s}
-                </label>
-              ))}
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">القسم *</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["عام", "تحفيظ"] as const).map(s => (
+                  <label key={s}
+                    className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-semibold cursor-pointer transition-all ${form.section === s ? "bg-emerald-700 text-white border-emerald-700" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
+                    <input type="radio" name="section" checked={form.section === s} onChange={() => setForm({ ...form, section: s })} className="hidden" />
+                    {s}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">الشعبة *</label>
+              <select value={form.classroom} onChange={e => setForm({ ...form, classroom: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 outline-none focus:border-emerald-500">
+                <option value="">اختر الشعبة</option>
+                {CLASSROOMS.map(c => <option key={c} value={c}>الشعبة {c}</option>)}
+              </select>
             </div>
           </div>
 

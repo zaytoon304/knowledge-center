@@ -2255,7 +2255,7 @@ export default function AdminPage() {
                     <div key={r.id} className="card p-4">
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <div>
-                          <p className="font-bold text-gray-800 text-sm">{r.childName} — {r.grade} ({r.section})</p>
+                          <p className="font-bold text-gray-800 text-sm">{r.childName} — {r.grade} ({r.section}) — شعبة {r.classroom}</p>
                           <p className="text-xs text-gray-400">ولي الأمر: {r.parentName} • {r.parentPhone}</p>
                         </div>
                         <p className="text-xs text-gray-300">{new Date(r.submittedAt).toLocaleDateString("ar-SA")}</p>
@@ -2278,7 +2278,9 @@ export default function AdminPage() {
       {/* تقرير الاستبانة القابل للطباعة — يظهر فوق كل شيء ويُعزل عند الطباعة الفعلية */}
       {printGroup && (() => {
         const group = SURVEY_GROUPS.find(g => g.key === printGroup)!;
-        const rows = interestSurvey.filter(r => surveyGroupKey(r) === printGroup);
+        const rows = interestSurvey
+          .filter(r => surveyGroupKey(r) === printGroup)
+          .sort((a, b) => GRADES.indexOf(a.grade) - GRADES.indexOf(b.grade) || (Number(a.classroom) || 0) - (Number(b.classroom) || 0));
         return (
           <div className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center overflow-auto p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-6">
@@ -2314,6 +2316,7 @@ export default function AdminPage() {
                         <th className="border border-gray-200 px-2 py-2">#</th>
                         <th className="border border-gray-200 px-2 py-2">اسم الطالب</th>
                         <th className="border border-gray-200 px-2 py-2">الصف</th>
+                        <th className="border border-gray-200 px-2 py-2">الشعبة</th>
                         <th className="border border-gray-200 px-2 py-2">ولي الأمر</th>
                         <th className="border border-gray-200 px-2 py-2">جوال ولي الأمر</th>
                         <th className="border border-gray-200 px-2 py-2">الاختيارات</th>
@@ -2325,6 +2328,7 @@ export default function AdminPage() {
                           <td className="border border-gray-200 px-2 py-2 text-center text-gray-500">{idx + 1}</td>
                           <td className="border border-gray-200 px-2 py-2 font-semibold text-gray-800">{r.childName}</td>
                           <td className="border border-gray-200 px-2 py-2 text-gray-600">{r.grade}</td>
+                          <td className="border border-gray-200 px-2 py-2 text-center text-gray-600">{r.classroom}</td>
                           <td className="border border-gray-200 px-2 py-2 text-gray-600">{r.parentName}</td>
                           <td className="border border-gray-200 px-2 py-2 text-gray-600" dir="ltr">{r.parentPhone}</td>
                           <td className="border border-gray-200 px-2 py-2 text-gray-600">{r.interests.join("، ")}</td>

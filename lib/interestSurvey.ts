@@ -5,10 +5,14 @@ export interface InterestSurveyResponse {
   childName: string;
   grade: string;
   section: "عام" | "تحفيظ";
+  classroom: string;
   interests: string[];
   notes: string;
   submittedAt: string;
 }
+
+// كل صف (من الأول الابتدائي للثالث الثانوي) مقسّم لـ6 شعب بالمدرسة
+export const CLASSROOMS = ["1", "2", "3", "4", "5", "6"];
 
 // برامج الوحدة — كل تصنيف رئيسي يكشف عن خيارات فرعية أدق عند اختياره
 export interface ProgramCategory {
@@ -27,7 +31,7 @@ export const PROGRAM_CATEGORIES: ProgramCategory[] = [
   },
   {
     id: "المناشط الطلابية",
-    subItems: ["سباحة", "كرة قدم", "لغة إنجليزية", "حاسب آلي", "كشافة", "تصوير فوتوغرافي", "الخط العربي", "التثقيف الصحي", "بادر التطوعي", "مركز التدريب"],
+    subItems: ["سباحة", "كرة قدم", "لغة إنجليزية", "حاسب آلي", "كشافة", "تصوير فوتوغرافي", "الخط العربي", "التثقيف الصحي", "بادر التطوعي", "مركز التدريب", "التوجيه والسلوك", "النادي العلمي", "الإذاعة المدرسية"],
   },
 ];
 
