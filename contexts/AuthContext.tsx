@@ -169,7 +169,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 const KEYS = {
   students: "kc_students", currentUser: "kc_currentUser",
-  coordinators: "kc_coordinators",
+  coordinators: "kc_coordinators", studentsContact: "kc_students_contact",
   groups: "kc_groups", liveStream: "kc_liveStream",
   courses: "kc_courses", videos: "kc_videos", projects: "kc_projects",
   shop: "kc_shop", achievements: "kc_platform_achievements",
@@ -182,6 +182,15 @@ function load<T>(key: string, fallback: T): T {
 }
 function save(key: string, val: unknown) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+
+// جوال الطالب وجوال ولي الأمر لا يُخزّنان بعد الآن داخل "kc_students" (يقدر أي زائر يقرأها) —
+// يُحفظان بعقدة منفصلة "kc_students_contact/{id}" مقروءة من الأدمن فقط بقواعد أمان Firebase،
+// بينما القراءة العامة لباقي بيانات الطالب (الاسم، الفريق...) تبقى كما هي (تحتاجها ميزات شغالة
+// زي بحث ولي الأمر ولوحة الصدارة). الكتابة تبقى مفتوحة (الطالب نفسه يسجّل جواله عند التسجيل).
+function splitStudentContact(s: StudentProfile): { pub: StudentProfile; contact: { phone: string; parentPhone: string } } {
+  const contact = { phone: s.phone || "", parentPhone: s.parentPhone || "" };
+  return { pub: { ...s, phone: "", parentPhone: "" }, contact };
 }
 
 const defaultLiveStream: LiveStreamSettings = {
@@ -243,7 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const all = stored.role === "coordinator"
         ? load<CoordinatorProfile[]>(KEYS.coordinators, [])
         : load<StudentProfile[]>(KEYS.students, []);
-      const fresh = (all as AnyUser[]).find(u => u.id === stored.id) || stored;
+      let fresh = (all as AnyUser[]).find(u => u.id === stored.id) || stored;
 
       // لو الطالب دخل بنظام رمز الجهاز الجديد وانتهت صلاحية رمزه، أخرجه
       // تلقائياً (نفس فكرة أكاديمية زيتون) — لا يمس الحسابات القديمة
@@ -252,6 +261,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isDeviceBoundStudent && !hasDeviceAccess()) {
         localStorage.removeItem(KEYS.currentUser);
       } else {
+        // جواله وجوال ولي أمره لم يعودا موجودين بالنسخة العامة المُزامَنة من السحابة (حماية أمنية) —
+        // نبقيهما زي ما كانا محفوظين محلياً بجهازه هو نفسه، عشان يقدر يشوفهما ببوابته زي المعتاد
+        if (fresh.role === "student") {
+          const sf = fresh as StudentProfile, ss = stored as StudentProfile;
+          if (!sf.phone && ss.phone) fresh = { ...sf, phone: ss.phone };
+          if (!(fresh as StudentProfile).parentPhone && ss.parentPhone) fresh = { ...(fresh as StudentProfile), parentPhone: ss.parentPhone };
+        }
         setUser(fresh);
       }
     }
@@ -350,21 +366,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // تكرار التسجيل فعلياً (جهاز جديد/مسح المتصفح، أو حساب قديم بكلمة مرور من قبل نظام رمز الجهاز
       // ما عنده deviceId أصلاً ولا طريقة رجوع غيرها). لا نلمس حالة الموافقة الحالية (معلق/مقبول/مرفوض).
       const updated: StudentProfile = { ...existing, ...data, password: existing.password, deviceId: getDeviceId() };
+      const { pub, contact } = splitStudentContact(updated);
       const ok = await cloudTransact<StudentProfile[]>("kc_students", current => {
         const list = Array.isArray(current) && current.length > 0 ? current : all;
-        return list.map(s => s.id === existing.id ? updated : s);
+        return list.map(s => s.id === existing.id ? pub : s);
       });
       if (!ok) return { success: false, message: "تعذّر الاتصال بالإنترنت — تأكد من الشبكة/الواي فاي وحاول مرة أخرى" };
-      save(KEYS.students, all.map(s => s.id === existing.id ? updated : s));
+      cloudSet(`${KEYS.studentsContact}/${existing.id}`, contact);
+      save(KEYS.students, all.map(s => s.id === existing.id ? pub : s));
       setUser(updated); save(KEYS.currentUser, updated);
       return { success: true, message: "relinked" };
     }
     // تسجيل الطلاب الجدد صار برمز الجهاز بدون كلمة مرور — نشفّرها فقط لو أُرسلت فعلاً (توافق تسجيل قديم)
     const student: StudentProfile = { ...data, password: data.password ? await hashPassword(data.password) : data.password, deviceId: getDeviceId(), id: Date.now().toString(), role: "student", registeredAt: new Date().toISOString(), status: "pending" };
+    const { pub, contact } = splitStudentContact(student);
     // يحفظ بالسحابة أولاً — لو فشل (لا يوجد إنترنت مثلاً) ما نقول للطالب "تم" وهو ما وصل فعلياً
-    const ok = await cloudPush("kc_students", student);
+    const ok = await cloudPush("kc_students", pub);
     if (!ok) return { success: false, message: "تعذّر الاتصال بالإنترنت — تأكد من الشبكة/الواي فاي وحاول التسجيل مرة أخرى" };
-    save(KEYS.students, [...all, student]);
+    cloudSet(`${KEYS.studentsContact}/${student.id}`, contact);
+    save(KEYS.students, [...all, pub]);
     setUser(student); save(KEYS.currentUser, student);
     return { success: true, message: "pending" };
   };

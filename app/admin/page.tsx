@@ -14,6 +14,14 @@ import { InterestSurveyResponse, ALL_INTEREST_ITEMS, SurveyGroupKey, SURVEY_GROU
 import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
 
+// جوال الطالب/ولي الأمر لم يعودا داخل "kc_students" العامة (حماية أمنية) — يُقرآن من عقدة
+// منفصلة "kc_students_contact" مقروءة للأدمن فقط بقواعد Firebase، ونُدمجهما هنا محلياً بجهاز الأدمن
+async function mergeStudentContacts<T extends { id: string; phone?: string; parentPhone?: string }>(students: T[]): Promise<T[]> {
+  const contacts = await cloudGet<Record<string, { phone: string; parentPhone: string }>>("kc_students_contact");
+  if (!contacts) return students;
+  return students.map(s => contacts[s.id] ? { ...s, phone: contacts[s.id].phone, parentPhone: contacts[s.id].parentPhone } : s);
+}
+
 interface HotsScheduleEntry { date: string; grade: string }
 interface HotsResult {
   studentId: string; studentName: string; grade: string; school: string;
@@ -280,7 +288,7 @@ export default function AdminPage() {
       cloudGet<InterestSurveyResponse[]>("kc_interest_survey"),
     ]);
     if (Array.isArray(cloudStudents) && cloudStudents.length > 0)
-      localStorage.setItem("kc_students", JSON.stringify(cloudStudents));
+      localStorage.setItem("kc_students", JSON.stringify(await mergeStudentContacts(cloudStudents)));
     if (Array.isArray(cloudCoords) && cloudCoords.length > 0)
       localStorage.setItem("kc_coordinators", JSON.stringify(cloudCoords));
     if (Array.isArray(cloudVisitors))
@@ -298,7 +306,7 @@ export default function AdminPage() {
       cloudGet<CoordinatorProfile[]>("kc_coordinators"),
     ]);
     if (Array.isArray(cloudStudents) && cloudStudents.length > 0)
-      localStorage.setItem("kc_students", JSON.stringify(cloudStudents));
+      localStorage.setItem("kc_students", JSON.stringify(await mergeStudentContacts(cloudStudents)));
     if (Array.isArray(cloudCoords) && cloudCoords.length > 0)
       localStorage.setItem("kc_coordinators", JSON.stringify(cloudCoords));
     fn();
@@ -1409,7 +1417,7 @@ export default function AdminPage() {
                 cloudGet<import("@/contexts/AuthContext").StudentProfile[]>("kc_students"),
               ]);
               if (Array.isArray(coords) && coords.length > 0) localStorage.setItem("kc_coordinators", JSON.stringify(coords));
-              if (Array.isArray(students) && students.length > 0) localStorage.setItem("kc_students", JSON.stringify(students));
+              if (Array.isArray(students) && students.length > 0) localStorage.setItem("kc_students", JSON.stringify(await mergeStudentContacts(students)));
               refresh();
             }} className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-500">
               ☁️ مزامنة من الإنترنت

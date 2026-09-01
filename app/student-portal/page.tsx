@@ -386,7 +386,7 @@ export default function StudentPortalPage() {
                   </div>
                   <div className="bg-black/15 rounded-xl p-3">
                     <p className="text-blue-300 text-xs mb-1">الجوال</p>
-                    <p className="font-bold">{student.phone}</p>
+                    <p className="font-bold">{student.phone || "—"}</p>
                   </div>
                   <div className="bg-black/15 rounded-xl p-3">
                     <p className="text-blue-300 text-xs mb-1">جوال ولي الأمر</p>
