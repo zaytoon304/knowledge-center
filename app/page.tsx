@@ -101,7 +101,7 @@ export default function HomePage() {
         <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-red-600" /> فيديوهات تعريفية
         </h2>
-        <div className="grid md:grid-cols-2 gap-5">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           <div className="card overflow-hidden">
             <video controls preload="metadata" className="w-full aspect-video bg-black" controlsList="nodownload" onContextMenu={e => e.preventDefault()}>
               <source src="/videos/citizenship.mp4" type="video/mp4" />
@@ -113,6 +113,12 @@ export default function HomePage() {
               <source src="/videos/choose-for-your-child.mp4" type="video/mp4" />
             </video>
             <div className="p-4"><h3 className="font-bold text-gray-800">اختر ما يناسب ابنكم</h3></div>
+          </div>
+          <div className="card overflow-hidden">
+            <video controls preload="metadata" className="w-full aspect-video bg-black" controlsList="nodownload" onContextMenu={e => e.preventDefault()}>
+              <source src="/videos/abaqreeno.mp4" type="video/mp4" />
+            </video>
+            <div className="p-4"><h3 className="font-bold text-gray-800">عبقرينو</h3></div>
           </div>
         </div>
       </div>
