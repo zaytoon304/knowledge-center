@@ -18,11 +18,13 @@ const ArchiveSection = dynamic(() => import("@/components/coordinator/ArchiveSec
 const ProfDevSection = dynamic(() => import("@/components/coordinator/ProfDevSection"), { ssr: false });
 const StudentsSection = dynamic(() => import("@/components/coordinator/StudentsSection"), { ssr: false });
 const PendingStudentsSection = dynamic(() => import("@/components/coordinator/PendingStudentsSection"), { ssr: false });
+const MyDepartmentStudents = dynamic(() => import("@/components/coordinator/MyDepartmentStudents"), { ssr: false });
 
 const tabs = [
   { id: "dashboard", label: "رئيسيتي", icon: Briefcase },
+  { id: "mydept", label: "طلاب قسمي", icon: Users },
   { id: "pending", label: "طلاب بانتظار الموافقة", icon: UserCheck },
-  { id: "students", label: "طلابي وفرقي", icon: Users },
+  { id: "students", label: "فرقي بالمسابقات", icon: Users },
   { id: "plans", label: "الخطط", icon: Calendar },
   { id: "programs", label: "البرامج", icon: Layers },
   { id: "competitions", label: "المسابقات", icon: Trophy },
@@ -227,6 +229,7 @@ export default function CoordinatorPortalPage() {
         </div>
       )}
 
+      {tab === "mydept" && <MyDepartmentStudents />}
       {tab === "pending" && <PendingStudentsSection />}
       {tab === "students" && <StudentsSection />}
       {tab === "plans" && <PlansSection />}
