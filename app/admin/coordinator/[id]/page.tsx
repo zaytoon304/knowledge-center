@@ -51,6 +51,12 @@ export default function CoordinatorProfilePage() {
         }
       }
       if (!found) { router.push("/admin"); return; }
+
+      // جوال المنسّق لم يعد داخل "kc_coordinators" العامة (حماية أمنية) — نجيبه من عقدة
+      // "kc_coordinators_contact" المقروءة للأدمن فقط، وندمجه بهذه الصفحة فقط
+      const contact = await cloudGet<{ phone: string }>(`kc_coordinators_contact/${id}`);
+      if (contact) found = { ...found, phone: contact.phone };
+
       setCoord(found);
 
       const allProjects = load<ProjectItem[]>("kc_projects", []);

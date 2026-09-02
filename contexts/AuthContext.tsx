@@ -170,6 +170,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const KEYS = {
   students: "kc_students", currentUser: "kc_currentUser",
   coordinators: "kc_coordinators", studentsContact: "kc_students_contact",
+  coordinatorsContact: "kc_coordinators_contact",
   groups: "kc_groups", liveStream: "kc_liveStream",
   courses: "kc_courses", videos: "kc_videos", projects: "kc_projects",
   shop: "kc_shop", achievements: "kc_platform_achievements",
@@ -191,6 +192,13 @@ function save(key: string, val: unknown) {
 function splitStudentContact(s: StudentProfile): { pub: StudentProfile; contact: { phone: string; parentPhone: string } } {
   const contact = { phone: s.phone || "", parentPhone: s.parentPhone || "" };
   return { pub: { ...s, phone: "", parentPhone: "" }, contact };
+}
+
+// نفس منطق حماية جوال الطالب، لكن للمنسّق — البريد يبقى بالمصفوفة العامة لأن دخول
+// المنسّق يبحث به مباشرة (نفس دور nationalId عند الطالب)، الجوال بس ينتقل للعقدة المحمية.
+function splitCoordinatorContact(c: CoordinatorProfile): { pub: CoordinatorProfile; contact: { phone: string } } {
+  const contact = { phone: c.phone || "" };
+  return { pub: { ...c, phone: "" }, contact };
 }
 
 const defaultLiveStream: LiveStreamSettings = {
@@ -267,6 +275,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const sf = fresh as StudentProfile, ss = stored as StudentProfile;
           if (!sf.phone && ss.phone) fresh = { ...sf, phone: ss.phone };
           if (!(fresh as StudentProfile).parentPhone && ss.parentPhone) fresh = { ...(fresh as StudentProfile), parentPhone: ss.parentPhone };
+        } else if (fresh.role === "coordinator") {
+          const cf = fresh as CoordinatorProfile, cs = stored as CoordinatorProfile;
+          if (!cf.phone && cs.phone) fresh = { ...cf, phone: cs.phone };
         }
         setUser(fresh);
       }
@@ -411,10 +422,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       registeredAt: new Date().toISOString(),
       status: "pending",
     };
+    const { pub: coordPub, contact } = splitCoordinatorContact(coord);
     // يحفظ بالسحابة أولاً — لو فشل (لا يوجد إنترنت مثلاً) ما نقول للمنسق "تم" وهو ما وصل فعلياً
-    const ok = await cloudPush("kc_coordinators", coord);
+    const ok = await cloudPush("kc_coordinators", coordPub);
     if (!ok) return { success: false, message: "تعذّر الاتصال بالإنترنت — تأكد من الشبكة/الواي فاي وحاول التسجيل مرة أخرى" };
-    const saved = [...all, coord];
+    cloudSet(`${KEYS.coordinatorsContact}/${baseId}`, contact);
+    const saved = [...all, coordPub];
     try {
       localStorage.setItem(KEYS.coordinators, JSON.stringify(saved));
     } catch { /* التخزين المحلي ثانوي هنا — النسخة الأساسية وصلت للسحابة فعلاً */ }
@@ -431,12 +444,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const updated = { ...user, ...data } as AnyUser;
     setUser(updated); save(KEYS.currentUser, updated);
     if (user.role === "coordinator") {
-      const all = getAllCoordinators().map(c => c.id === user.id ? updated as CoordinatorProfile : c);
+      const { pub: updatedPub, contact } = splitCoordinatorContact(updated as CoordinatorProfile);
+      const all = getAllCoordinators().map(c => c.id === user.id ? updatedPub : c);
       save(KEYS.coordinators, all);
       cloudTransact<CoordinatorProfile[]>(KEYS.coordinators, current => {
         const list = Array.isArray(current) && current.length > 0 ? current : all;
-        return list.map(c => c.id === user.id ? updated as CoordinatorProfile : c);
+        return list.map(c => c.id === user.id ? updatedPub : c);
       });
+      cloudSet(`${KEYS.coordinatorsContact}/${user.id}`, contact);
     } else {
       const all = getAllStudents().map(s => s.id === user.id ? updated as StudentProfile : s);
       save(KEYS.students, all);

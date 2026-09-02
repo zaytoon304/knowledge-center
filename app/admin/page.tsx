@@ -21,6 +21,12 @@ async function mergeStudentContacts<T extends { id: string; phone?: string; pare
   if (!contacts) return students;
   return students.map(s => contacts[s.id] ? { ...s, phone: contacts[s.id].phone, parentPhone: contacts[s.id].parentPhone } : s);
 }
+// نفس الشي لجوال المنسّق — عقدة منفصلة "kc_coordinators_contact" مقروءة للأدمن فقط
+async function mergeCoordinatorContacts<T extends { id: string; phone?: string }>(coords: T[]): Promise<T[]> {
+  const contacts = await cloudGet<Record<string, { phone: string }>>("kc_coordinators_contact");
+  if (!contacts) return coords;
+  return coords.map(c => contacts[c.id] ? { ...c, phone: contacts[c.id].phone } : c);
+}
 
 interface HotsScheduleEntry { date: string; grade: string }
 interface HotsResult {
@@ -290,7 +296,7 @@ export default function AdminPage() {
     if (Array.isArray(cloudStudents) && cloudStudents.length > 0)
       localStorage.setItem("kc_students", JSON.stringify(await mergeStudentContacts(cloudStudents)));
     if (Array.isArray(cloudCoords) && cloudCoords.length > 0)
-      localStorage.setItem("kc_coordinators", JSON.stringify(cloudCoords));
+      localStorage.setItem("kc_coordinators", JSON.stringify(await mergeCoordinatorContacts(cloudCoords)));
     if (Array.isArray(cloudVisitors))
       localStorage.setItem("kc_visitor_requests", JSON.stringify(cloudVisitors));
     setHotsSchedule(Array.isArray(cloudHotsSchedule) ? cloudHotsSchedule : []);
@@ -308,7 +314,7 @@ export default function AdminPage() {
     if (Array.isArray(cloudStudents) && cloudStudents.length > 0)
       localStorage.setItem("kc_students", JSON.stringify(await mergeStudentContacts(cloudStudents)));
     if (Array.isArray(cloudCoords) && cloudCoords.length > 0)
-      localStorage.setItem("kc_coordinators", JSON.stringify(cloudCoords));
+      localStorage.setItem("kc_coordinators", JSON.stringify(await mergeCoordinatorContacts(cloudCoords)));
     fn();
     refresh();
   };
@@ -1416,7 +1422,7 @@ export default function AdminPage() {
                 cloudGet<import("@/contexts/AuthContext").CoordinatorProfile[]>("kc_coordinators"),
                 cloudGet<import("@/contexts/AuthContext").StudentProfile[]>("kc_students"),
               ]);
-              if (Array.isArray(coords) && coords.length > 0) localStorage.setItem("kc_coordinators", JSON.stringify(coords));
+              if (Array.isArray(coords) && coords.length > 0) localStorage.setItem("kc_coordinators", JSON.stringify(await mergeCoordinatorContacts(coords)));
               if (Array.isArray(students) && students.length > 0) localStorage.setItem("kc_students", JSON.stringify(await mergeStudentContacts(students)));
               refresh();
             }} className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-500">
