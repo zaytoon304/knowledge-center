@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Award, Plus, Trash2, Printer, Eye, Star, Search } from "lucide-react";
+import { Award, Plus, Trash2, Printer, Eye, Star, Search, MessageCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cloudGet, cloudSet } from "@/lib/cloud";
+import { whatsappLinkTo } from "@/lib/whatsapp";
 
 interface Certificate {
   id: string;
@@ -36,12 +37,24 @@ export default function CertificatesPage() {
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({ studentId: "", studentName: "", type: "program" as Certificate["type"], title: "", description: "", date: new Date().toISOString().split("T")[0], issuedBy: "إدارة مركز المعرفة والابتكار STEAM" });
   const printRef = useRef<HTMLDivElement>(null);
+  // جوالات أولياء الأمور — تُقرأ فقط لو المستخدم أدمن حقيقي (قواعد Firebase تمنع أي حد ثاني من قراءتها)
+  const [parentPhones, setParentPhones] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setCerts(load());
     cloudGet<Certificate[]>("kc_certificates").then(data => {
       if (Array.isArray(data)) { localStorage.setItem("kc_certificates", JSON.stringify(data)); setCerts(data); }
     });
+    if (admin) {
+      cloudGet<Record<string, { phone: string; parentPhone: string }>>("kc_students_contact").then(data => {
+        if (data) {
+          const map: Record<string, string> = {};
+          Object.entries(data).forEach(([id, c]) => { if (c.parentPhone) map[id] = c.parentPhone; });
+          setParentPhones(map);
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const students = getAllStudents().filter(s => s.status === "approved");
@@ -194,6 +207,14 @@ export default function CertificatesPage() {
                         className="p-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors">
                         <Eye className="w-4 h-4" />
                       </button>
+                      {admin && parentPhones[cert.studentId] && (
+                        <a href={whatsappLinkTo(parentPhones[cert.studentId],
+                            `🎉 تهانينا! نُسعد بإخباركم أن ${cert.studentName} حصل/ت على شهادة "${cert.title}" من ${cert.issuedBy}. نفتخر بتميزكم! 🌟`)}
+                          target="_blank" rel="noopener noreferrer"
+                          className="p-2 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-colors" title="شارك مع ولي الأمر">
+                          <MessageCircle className="w-4 h-4" />
+                        </a>
+                      )}
                       {admin && (
                         <button onClick={() => deleteCert(cert.id)}
                           className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors">
