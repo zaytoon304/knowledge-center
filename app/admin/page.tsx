@@ -11,6 +11,7 @@ import { cloudGet, cloudSet } from "@/lib/cloud";
 import { signInAsAdmin } from "@/lib/firebase";
 import { generateAccessCode } from "@/lib/deviceCode";
 import { InterestSurveyResponse, ALL_INTEREST_ITEMS, SurveyGroupKey, SURVEY_GROUPS, surveyGroupKey } from "@/lib/interestSurvey";
+import type { ProgramRegistration } from "@/app/programs/register/page";
 import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
 
@@ -249,6 +250,7 @@ export default function AdminPage() {
   const [videoForm, setVideoForm] = useState({ title: "", url: "", type: "journey" as ProjectVideo["type"], description: "" });
   const [dailyLog, setDailyLog] = useState<DailyLogEntry[]>([]);
   const [interestSurvey, setInterestSurvey] = useState<InterestSurveyResponse[]>([]);
+  const [programRegistrations, setProgramRegistrations] = useState<ProgramRegistration[]>([]);
   const [printGroup, setPrintGroup] = useState<SurveyGroupKey | null>(null);
   const [showDForm, setShowDForm] = useState(false);
   const [dImagesUploading, setDImagesUploading] = useState(0);
@@ -348,6 +350,8 @@ export default function AdminPage() {
         .then(entries => setNotesMap(prev => ({ ...prev, ...Object.fromEntries(entries) })));
     } else if (tab === "interest_survey") {
       cloudGet<InterestSurveyResponse[]>("kc_interest_survey").then(data => setInterestSurvey(Array.isArray(data) ? data : []));
+    } else if (tab === "program_regs") {
+      cloudGet<ProgramRegistration[]>("kc_program_registrations").then(data => setProgramRegistrations(Array.isArray(data) ? data : []));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed, tab]);
@@ -378,6 +382,7 @@ export default function AdminPage() {
     { id: "daily", label: "يوميات المركز", icon: CalendarDays, badge: dailyLog.length || undefined },
     { id: "knowledge", label: "مركز المعرفة", icon: BookOpen },
     { id: "programs_cms", label: "البرامج", icon: Layers },
+    { id: "program_regs", label: "تسجيلات البرامج", icon: UserSquare2, badge: programRegistrations.length || undefined },
     { id: "competitions_cms", label: "المسابقات", icon: Trophy },
     { id: "project_bank_cms", label: "بنك المشاريع", icon: Archive },
     { id: "emerging_tech_cms", label: "التقنيات الناشئة", icon: Cpu },
@@ -2284,6 +2289,43 @@ export default function AdminPage() {
                   ))}
                 </div>
               </>
+            )}
+          </div>
+        );
+      })()}
+
+      {tab === "program_regs" && (() => {
+        const byProgram: Record<string, ProgramRegistration[]> = {};
+        programRegistrations.forEach(r => {
+          const key = r.programTitle || "بدون برنامج";
+          (byProgram[key] ||= []).push(r);
+        });
+        return (
+          <div className="space-y-4">
+            <h2 className="font-bold text-gray-800 flex items-center gap-2">
+              <UserSquare2 className="w-5 h-5 text-violet-600" /> تسجيلات البرامج ({programRegistrations.length})
+            </h2>
+            {programRegistrations.length === 0 ? (
+              <div className="card p-10 text-center text-gray-400">
+                <UserSquare2 className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>ما وصل أي طلب تسجيل ببرنامج بعد</p>
+              </div>
+            ) : (
+              Object.entries(byProgram).map(([title, regs]) => (
+                <div key={title} className="space-y-2">
+                  <h3 className="text-sm font-bold text-gray-700">{title} ({regs.length})</h3>
+                  {[...regs].reverse().map(r => (
+                    <div key={r.id} className="card p-4 flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <p className="font-bold text-gray-800 text-sm">{r.name}{r.gradeOrRole && ` — ${r.gradeOrRole}`}</p>
+                        <p className="text-xs text-gray-400" dir="ltr">{r.phone}</p>
+                        {r.notes && <p className="text-xs text-gray-400 mt-1 bg-gray-50 rounded-lg px-2 py-1">"{r.notes}"</p>}
+                      </div>
+                      <p className="text-xs text-gray-300">{new Date(r.submittedAt).toLocaleDateString("ar-SA")}</p>
+                    </div>
+                  ))}
+                </div>
+              ))
             )}
           </div>
         );

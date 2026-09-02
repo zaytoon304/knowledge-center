@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Layers, Search, ChevronLeft, Users, Target, Clock } from "lucide-react";
 import { cloudGet } from "@/lib/cloud";
 import { noDownloadProps } from "@/lib/imageProtect";
@@ -96,10 +97,11 @@ export default function ProgramsPage() {
                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {program.duration}</span>
                   )}
                 </div>
-                <button className={`w-full py-2 rounded-xl text-white text-sm font-medium bg-gradient-to-l ${program.gradient || "from-purple-700 to-violet-500"} flex items-center justify-center gap-2 group-hover:opacity-90 transition-opacity`}>
+                <Link href={`/programs/register?id=${program.id}&title=${encodeURIComponent(program.title)}`}
+                  className={`w-full py-2 rounded-xl text-white text-sm font-medium bg-gradient-to-l ${program.gradient || "from-purple-700 to-violet-500"} flex items-center justify-center gap-2 group-hover:opacity-90 transition-opacity`}>
                   <span>التفاصيل والتسجيل</span>
                   <ChevronLeft className="w-4 h-4" />
-                </button>
+                </Link>
               </div>
             </div>
           ))}
