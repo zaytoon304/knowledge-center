@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ClipboardList, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Target, Boxes, ListChecks, HelpCircle, PenLine, BookmarkPlus, BookmarkCheck } from "lucide-react";
-import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
+import { getGroqKey, callGroqText, extractJson, TEACHER_EXPERT_SYSTEM_PROMPT } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
 import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
@@ -52,7 +52,8 @@ function buildPrompt(subject: string, grade: string, topic: string, duration: st
 مدة الحصة: ${duration} دقيقة
 ${notes ? `ملاحظات إضافية من المعلم: ${notes}` : ""}
 
-اجعل خطوات "steps" تغطي مدة الحصة كاملة (${duration} دقيقة) بمجموع أوقات منطقي، والمحتوى مناسباً تماماً للمرحلة العمرية.`;
+اجعل خطوات "steps" تغطي مدة الحصة كاملة (${duration} دقيقة) بمجموع أوقات منطقي، والمحتوى مناسباً تماماً للمرحلة العمرية.
+كل نشاط بخطوة "العرض" و"التطبيق" يجب أن يكون نشاطاً حقيقياً محدداً (تجربة عملية، لعبة تعليمية، مناقشة موجّهة بأسئلة محددة...) لا مجرد "اشرح المعلم الدرس" أو "يستمع الطلاب" — تخيّل أنك تكتب سيناريو تنفيذ فعلي دقيقة بدقيقة.`;
 }
 
 export default function LessonPlanPage() {
@@ -86,9 +87,12 @@ export default function LessonPlanPage() {
     setSaved(false);
     try {
       const raw = await callGroqText(
-        [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), duration, notes.trim()) }],
+        [
+          { role: "system", content: TEACHER_EXPERT_SYSTEM_PROMPT },
+          { role: "user", content: buildPrompt(subject, grade, topic.trim(), duration, notes.trim()) },
+        ],
         apiKey || "",
-        3000
+        3500
       );
       const parsed = extractJson<LessonPlan>(raw);
       if (!parsed || !parsed.steps) throw new Error("تعذّر فهم رد الذكاء الاصطناعي، حاول مرة أخرى");

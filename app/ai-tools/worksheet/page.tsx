@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { FileText, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Eye, EyeOff, CheckCircle2, BookmarkPlus, BookmarkCheck } from "lucide-react";
-import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
+import { getGroqKey, callGroqText, extractJson, TEACHER_EXPERT_SYSTEM_PROMPT } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
 import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
@@ -41,7 +41,8 @@ function buildPrompt(subject: string, grade: string, topic: string, count: numbe
 مستوى الصعوبة: ${difficulty}
 ${notes ? `ملاحظات إضافية من المعلم: ${notes}` : ""}
 
-اجعل التمارين مناسبة تماماً للمرحلة العمرية ومتدرجة منطقياً.`;
+اجعل التمارين مناسبة تماماً للمرحلة العمرية ومتدرجة منطقياً.
+اجعل نصف التمارين تقريباً مرتبطة بمواقف حياتية واقعية يعرفها الطالب (مثال بمادة الرياضيات: حساب فكة مشترى من البقالة، لا مجرد "5+3=؟" مجردة) بدل التمارين المجردة البحتة.`;
 }
 
 export default function WorksheetPage() {
@@ -77,9 +78,12 @@ export default function WorksheetPage() {
     setSaved(false);
     try {
       const raw = await callGroqText(
-        [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), count, difficulty, notes.trim()) }],
+        [
+          { role: "system", content: TEACHER_EXPERT_SYSTEM_PROMPT },
+          { role: "user", content: buildPrompt(subject, grade, topic.trim(), count, difficulty, notes.trim()) },
+        ],
         apiKey || "",
-        3500
+        4000
       );
       const parsed = extractJson<Worksheet>(raw);
       if (!parsed || !Array.isArray(parsed.exercises) || parsed.exercises.length === 0) {

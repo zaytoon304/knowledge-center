@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Network, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, BookmarkPlus, BookmarkCheck } from "lucide-react";
-import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
+import { getGroqKey, callGroqText, extractJson, TEACHER_EXPERT_SYSTEM_PROMPT } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
 import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
@@ -75,9 +75,12 @@ export default function MindMapPage() {
     setSaved(false);
     try {
       const raw = await callGroqText(
-        [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), branchCount, notes.trim()) }],
+        [
+          { role: "system", content: TEACHER_EXPERT_SYSTEM_PROMPT },
+          { role: "user", content: buildPrompt(subject, grade, topic.trim(), branchCount, notes.trim()) },
+        ],
         apiKey || "",
-        2500
+        3000
       );
       const parsed = extractJson<MindMap>(raw);
       if (!parsed || !Array.isArray(parsed.branches) || parsed.branches.length === 0) {

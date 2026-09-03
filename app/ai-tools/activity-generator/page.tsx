@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Puzzle, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Clock, Users, Boxes, ListChecks, Lightbulb, BookmarkPlus, BookmarkCheck } from "lucide-react";
-import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
+import { getGroqKey, callGroqText, extractJson, TEACHER_EXPERT_SYSTEM_PROMPT } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
 import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
@@ -38,7 +38,8 @@ function buildPrompt(subject: string, grade: string, topic: string, style: strin
 مدة النشاط: ${duration} دقيقة
 ${notes ? `ملاحظات إضافية من المعلم: ${notes}` : ""}
 
-اجعل النشاط ممتعاً وعملياً وقابلاً للتنفيذ فعلياً داخل الفصل بأدوات بسيطة متاحة عادة، ومناسباً تماماً للمرحلة العمرية.`;
+اجعل النشاط ممتعاً وعملياً وقابلاً للتنفيذ فعلياً داخل الفصل بأدوات بسيطة متاحة عادة، ومناسباً تماماً للمرحلة العمرية.
+اكتب خطوات "steps" بتفصيل كافٍ يجعل معلماً لم يجرّب النشاط من قبل يقدر ينفّذه فوراً بدون أي سؤال إضافي — رقم كل خطوة زمنياً تقريبياً إن أمكن.`;
 }
 
 export default function ActivityGeneratorPage() {
@@ -73,9 +74,12 @@ export default function ActivityGeneratorPage() {
     setSaved(false);
     try {
       const raw = await callGroqText(
-        [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), style, duration, notes.trim()) }],
+        [
+          { role: "system", content: TEACHER_EXPERT_SYSTEM_PROMPT },
+          { role: "user", content: buildPrompt(subject, grade, topic.trim(), style, duration, notes.trim()) },
+        ],
         apiKey || "",
-        2000
+        3000
       );
       const parsed = extractJson<Activity>(raw);
       if (!parsed || !Array.isArray(parsed.steps)) throw new Error("تعذّر فهم رد الذكاء الاصطناعي، حاول مرة أخرى");

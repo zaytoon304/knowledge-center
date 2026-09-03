@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ClipboardList, FileQuestion, FileText, Network, Bot, Sparkles, Lock, Puzzle, ScanText, Trophy, History } from "lucide-react";
+import { ClipboardList, FileQuestion, FileText, Network, Bot, Sparkles, Lock, Puzzle, ScanText, Trophy, History, CircuitBoard, Bug } from "lucide-react";
 import { useAiOwner } from "@/lib/aiHistory";
 
 interface AiTool {
@@ -67,6 +67,22 @@ const TOOLS: AiTool[] = [
     description: "ارفع صورة ورقة الطالب ويصححها الذكاء الاصطناعي تلقائياً.",
     icon: ScanText,
     color: "from-indigo-700 to-blue-500",
+    ready: true,
+  },
+  {
+    href: "/ai-tools/robotics-lesson-plan",
+    title: "مولّد خطة درس الروبوتات",
+    description: "خطة حصة روبوتات/ذكاء اصطناعي كاملة بالعتاد والكود والتوصيلات وتنبيهات السلامة.",
+    icon: CircuitBoard,
+    color: "from-orange-700 to-red-500",
+    ready: true,
+  },
+  {
+    href: "/ai-tools/code-helper",
+    title: "مساعد كود الروبوتات",
+    description: "الصق كود Arduino/ESP32 — يشرحه أو يكتشف الخطأ ويصححه لك فوراً.",
+    icon: Bug,
+    color: "from-slate-700 to-slate-500",
     ready: true,
   },
   {

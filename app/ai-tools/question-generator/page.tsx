@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { FileQuestion, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Eye, EyeOff, CheckCircle2, BookmarkPlus, BookmarkCheck } from "lucide-react";
-import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
+import { getGroqKey, callGroqText, extractJson, TEACHER_EXPERT_SYSTEM_PROMPT } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
 import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
@@ -46,7 +46,8 @@ function buildPrompt(subject: string, grade: string, topic: string, mcqCount: nu
 مستوى الصعوبة: ${difficulty}
 ${notes ? `ملاحظات إضافية من المعلم: ${notes}` : ""}
 
-اجعل الأسئلة مناسبة تماماً للمرحلة العمرية ومرتبطة مباشرة بالموضوع، وتأكد أن answer بأسئلة الاختيار من متعدد مطابق حرفياً لأحد عناصر options.`;
+اجعل الأسئلة مناسبة تماماً للمرحلة العمرية ومرتبطة مباشرة بالموضوع، وتأكد أن answer بأسئلة الاختيار من متعدد مطابق حرفياً لأحد عناصر options.
+اجعل خيارات الاختيار من متعدد (options) كلها معقولة وقريبة من الإجابة الصحيحة (مشتتات ذكية تعكس أخطاء شائعة فعلية للطلاب)، لا خيارات سخيفة أو واضحة الاستبعاد. نوّع مستويات التفكير بين الأسئلة (تذكّر، فهم، تطبيق، تحليل) بدل الاكتفاء بأسئلة حفظ سطحية.`;
 }
 
 export default function QuestionGeneratorPage() {
@@ -85,9 +86,12 @@ export default function QuestionGeneratorPage() {
     setSaved(false);
     try {
       const raw = await callGroqText(
-        [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), mcqCount, tfCount, essayCount, difficulty, notes.trim()) }],
+        [
+          { role: "system", content: TEACHER_EXPERT_SYSTEM_PROMPT },
+          { role: "user", content: buildPrompt(subject, grade, topic.trim(), mcqCount, tfCount, essayCount, difficulty, notes.trim()) },
+        ],
         apiKey || "",
-        3500
+        4000
       );
       const parsed = extractJson<QuestionSet>(raw);
       if (!parsed || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Trophy, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Clock, Users, ListChecks, Award, Lightbulb, BookmarkPlus, BookmarkCheck } from "lucide-react";
-import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
+import { getGroqKey, callGroqText, extractJson, TEACHER_EXPERT_SYSTEM_PROMPT } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
 import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
@@ -75,9 +75,12 @@ export default function CompetitionGeneratorPage() {
     setSaved(false);
     try {
       const raw = await callGroqText(
-        [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), format, duration, notes.trim()) }],
+        [
+          { role: "system", content: TEACHER_EXPERT_SYSTEM_PROMPT },
+          { role: "user", content: buildPrompt(subject, grade, topic.trim(), format, duration, notes.trim()) },
+        ],
         apiKey || "",
-        2000
+        3000
       );
       const parsed = extractJson<Competition>(raw);
       if (!parsed || !Array.isArray(parsed.rules)) throw new Error("تعذّر فهم رد الذكاء الاصطناعي، حاول مرة أخرى");
