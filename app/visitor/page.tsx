@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, Play, BookOpen, Star, ShoppingBag, ExternalLink, LogIn, Phone } from "lucide-react";
-import { CourseItem, VideoItem, ShopItem, PlatformAchievement } from "@/contexts/AuthContext";
+import { CourseItem, VideoItem, ShopItem, PlatformAchievement, useAuth } from "@/contexts/AuthContext";
 
 const KEYS = {
   courses: "kc_courses", videos: "kc_videos",
@@ -22,18 +22,22 @@ const tabs = [
 
 export default function VisitorPage() {
   const router = useRouter();
+  const { cloudSyncTick } = useAuth();
   const [tab, setTab] = useState("videos");
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [shop, setShop] = useState<ShopItem[]>([]);
   const [achievements, setAchievements] = useState<PlatformAchievement[]>([]);
 
+  // إعادة القراءة من localStorage عند أول تحميل، وأيضاً فور اكتمال مزامنة السحابة
+  // (بدونها، زائر جديد بدون كاش محلي سابق كان يشوف "لا توجد منتجات بعد" باستمرار
+  // لأن قراءة localStorage تصير قبل ما تخلص مزامنة Firebase بالخلفية)
   useEffect(() => {
     setVideos(load(KEYS.videos, []));
     setCourses(load(KEYS.courses, []));
     setShop(load(KEYS.shop, []));
     setAchievements(load(KEYS.achievements, []));
-  }, []);
+  }, [cloudSyncTick]);
 
   const Empty = ({ icon, text }: { icon: string; text: string }) => (
     <div className="card p-14 text-center text-gray-400">

@@ -116,6 +116,7 @@ export interface RegCodes {
 }
 
 interface AuthContextType {
+  cloudSyncTick: number;
   user: AnyUser | null;
   isLoggedIn: boolean;
   isStudent: boolean;
@@ -626,6 +627,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{
+      cloudSyncTick,
       user, isLoggedIn: !!user, isStudent: user?.role === "student",
       isCoordinator: user?.role === "coordinator",
       isApproved: user?.status === "approved",
