@@ -26,7 +26,7 @@ const TOOLS: AiTool[] = [
     description: "أسئلة اختيار من متعدد وصح/خطأ ومقالية جاهزة لأي موضوع ومرحلة دراسية.",
     icon: FileQuestion,
     color: "from-blue-700 to-cyan-500",
-    ready: false,
+    ready: true,
   },
   {
     href: "/ai-tools/worksheet",
@@ -34,7 +34,7 @@ const TOOLS: AiTool[] = [
     description: "ورقة عمل جاهزة للطباعة مع تدريبات متدرجة الصعوبة.",
     icon: FileText,
     color: "from-emerald-700 to-teal-500",
-    ready: false,
+    ready: true,
   },
   {
     href: "/ai-tools/mind-map",
@@ -42,7 +42,7 @@ const TOOLS: AiTool[] = [
     description: "حوّل أي موضوع درس إلى خريطة ذهنية بصرية واضحة.",
     icon: Network,
     color: "from-amber-600 to-orange-500",
-    ready: false,
+    ready: true,
   },
   {
     href: "/ai-assistant",
