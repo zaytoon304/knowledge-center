@@ -1569,7 +1569,7 @@ export default function AdminPage() {
                     <div className="p-4">
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <div><p className="font-bold text-gray-800">{s.name}</p><span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{s.category}</span></div>
-                        <span className="font-bold text-green-600">{s.price} ر.س</span>
+                        <span className="font-bold text-green-600">{s.price}{/^\d+(\.\d+)?$/.test(s.price) ? " ر.س" : ""}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-1 mb-3">{s.description}</p>
                       <button onClick={() => { if(confirm("حذف هذا المنتج؟")) { deleteShopItem(s.id); refresh(); } }} className="flex items-center gap-2 text-red-500 text-xs hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /> حذف</button>

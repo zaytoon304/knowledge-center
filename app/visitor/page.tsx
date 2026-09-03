@@ -175,7 +175,7 @@ export default function VisitorPage() {
                           <h3 className="font-bold text-gray-800">{s.name}</h3>
                           <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{s.category}</span>
                         </div>
-                        <span className="text-lg font-bold text-green-600 flex-shrink-0">{s.price} ر.س</span>
+                        <span className="text-lg font-bold text-green-600 flex-shrink-0">{s.price}{/^\d+(\.\d+)?$/.test(s.price) ? " ر.س" : ""}</span>
                       </div>
                       <p className="text-sm text-gray-500 mb-3">{s.description}</p>
                       {s.contact && (
