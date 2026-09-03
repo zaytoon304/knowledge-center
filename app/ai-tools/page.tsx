@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ClipboardList, FileQuestion, FileText, Network, Bot, Sparkles, Lock, Puzzle, ScanText } from "lucide-react";
+import { ClipboardList, FileQuestion, FileText, Network, Bot, Sparkles, Lock, Puzzle, ScanText, Trophy } from "lucide-react";
 
 interface AiTool {
   href: string;
@@ -50,6 +50,14 @@ const TOOLS: AiTool[] = [
     description: "نشاط ممتع جماعي أو تنافسي أو حركي، جاهز للتنفيذ فوراً داخل الفصل.",
     icon: Puzzle,
     color: "from-pink-700 to-rose-500",
+    ready: true,
+  },
+  {
+    href: "/ai-tools/competition-generator",
+    title: "مولّد المسابقات الصفية",
+    description: "مسابقة جاهزة بقواعدها ونظام نقاطها لإشعال حماس الصف.",
+    icon: Trophy,
+    color: "from-red-700 to-orange-500",
     ready: true,
   },
   {
