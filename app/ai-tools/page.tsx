@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ClipboardList, FileQuestion, FileText, Network, Bot, Sparkles, Lock } from "lucide-react";
+import { ClipboardList, FileQuestion, FileText, Network, Bot, Sparkles, Lock, Puzzle, ScanText } from "lucide-react";
 
 interface AiTool {
   href: string;
@@ -43,6 +43,22 @@ const TOOLS: AiTool[] = [
     icon: Network,
     color: "from-amber-600 to-orange-500",
     ready: true,
+  },
+  {
+    href: "/ai-tools/activity-generator",
+    title: "مولّد الأنشطة الصفية",
+    description: "نشاط ممتع جماعي أو تنافسي أو حركي، جاهز للتنفيذ فوراً داخل الفصل.",
+    icon: Puzzle,
+    color: "from-pink-700 to-rose-500",
+    ready: true,
+  },
+  {
+    href: "/ai-tools/paper-grading",
+    title: "تصحيح الأوراق بالذكاء الاصطناعي",
+    description: "ارفع صورة ورقة الطالب ويصححها الذكاء الاصطناعي تلقائياً.",
+    icon: ScanText,
+    color: "from-indigo-700 to-blue-500",
+    ready: false,
   },
   {
     href: "/ai-assistant",
