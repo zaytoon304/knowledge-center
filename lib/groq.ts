@@ -43,7 +43,11 @@ export async function callGroqText(messages: GroqMessage[], apiKey: string, maxT
       "Authorization": `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      // llama-3.3-70b-versatile أصبح مُهملاً عند Groq (تحقّقنا حياً 2026-09-03 عبر
+      // GET /openai/v1/models بمفتاح حقيقي) — qwen/qwen3.8-27b يرجّع JSON نظيفاً
+      // وسريعاً بدون توكنات "تفكير" مخفية تستهلك الحد الأقصى بلا داعٍ (بخلاف نماذج
+      // gpt-oss اللي جربناها وقطعت الرد قبل اكتماله بسبب ذلك).
+      model: "qwen/qwen3.8-27b",
       messages,
       max_tokens: maxTokens,
       temperature: 0.7,
