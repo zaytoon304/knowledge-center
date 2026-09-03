@@ -61,6 +61,36 @@ export async function callGroqText(messages: GroqMessage[], apiKey: string, maxT
   return data.choices?.[0]?.message?.content || "";
 }
 
+// لتصحيح الأوراق: يرسل صورة (data URL) + تعليمات نصية لنفس النموذج (qwen3.8-27b يدعم
+// الصور فعلياً — تحقّقنا حياً 2026-09-03 بمفتاح حقيقي، قرأ ورقة اختبار وصحّحها بدقة)
+export async function callGroqVision(prompt: string, imageDataUrl: string, apiKey: string, maxTokens = 1500): Promise<string> {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "qwen/qwen3.8-27b",
+      messages: [{
+        role: "user",
+        content: [
+          { type: "text", text: prompt },
+          { type: "image_url", image_url: { url: imageDataUrl } },
+        ],
+      }],
+      max_tokens: maxTokens,
+      temperature: 0.3,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `خطأ ${res.status}`);
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
 // يحاول يستخرج أول كتلة JSON صالحة من رد النموذج (أحياناً يضيف شرح أو ```json حولها)
 export function extractJson<T>(raw: string): T | null {
   const cleaned = raw.replace(/```json/gi, "```").trim();

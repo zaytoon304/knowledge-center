@@ -67,7 +67,7 @@ const TOOLS: AiTool[] = [
     description: "ارفع صورة ورقة الطالب ويصححها الذكاء الاصطناعي تلقائياً.",
     icon: ScanText,
     color: "from-indigo-700 to-blue-500",
-    ready: false,
+    ready: true,
   },
   {
     href: "/ai-assistant",
