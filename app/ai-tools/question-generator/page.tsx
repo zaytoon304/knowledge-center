@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { FileQuestion, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Eye, EyeOff, CheckCircle2, BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
@@ -66,6 +66,11 @@ export default function QuestionGeneratorPage() {
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const { ownerId } = useAiOwner();
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (set) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [set]);
 
   useEffect(() => {
     getGroqKey().then(setApiKey);
@@ -234,7 +239,7 @@ export default function QuestionGeneratorPage() {
 
       {/* Result */}
       {set && (
-        <div className="print-area card p-6 space-y-5">
+        <div ref={resultRef} className="print-area card p-6 space-y-5">
           <div className="flex items-center justify-between gap-3 flex-wrap no-print">
             <div className="flex gap-2">
               {ownerId && (

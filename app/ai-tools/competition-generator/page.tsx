@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Trophy, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Clock, Users, ListChecks, Award, Lightbulb, BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
@@ -57,6 +57,11 @@ export default function CompetitionGeneratorPage() {
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const { ownerId } = useAiOwner();
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (comp) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [comp]);
 
   useEffect(() => {
     getGroqKey().then(setApiKey);
@@ -208,7 +213,7 @@ export default function CompetitionGeneratorPage() {
 
       {/* Result */}
       {comp && (
-        <div className="print-area card p-6 space-y-5">
+        <div ref={resultRef} className="print-area card p-6 space-y-5">
           <div className="flex items-center justify-between gap-3 flex-wrap no-print">
             <div className="flex gap-2">
               {ownerId && (

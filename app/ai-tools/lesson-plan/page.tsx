@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ClipboardList, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Target, Boxes, ListChecks, HelpCircle, PenLine, BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
@@ -68,6 +68,11 @@ export default function LessonPlanPage() {
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const { ownerId } = useAiOwner();
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (plan) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [plan]);
 
   useEffect(() => {
     getGroqKey().then(setApiKey);
@@ -222,7 +227,7 @@ export default function LessonPlanPage() {
 
       {/* Result */}
       {plan && (
-        <div className="print-area card p-6 space-y-5">
+        <div ref={resultRef} className="print-area card p-6 space-y-5">
           <div className="flex items-center justify-between gap-3 flex-wrap no-print">
             <div className="flex gap-2">
               {ownerId && (

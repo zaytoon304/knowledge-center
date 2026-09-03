@@ -53,6 +53,11 @@ export default function PaperGradingPage() {
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { ownerId } = useAiOwner();
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (result) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [result]);
 
   useEffect(() => {
     getGroqKey().then(setApiKey);
@@ -209,7 +214,7 @@ export default function PaperGradingPage() {
 
       {/* Result */}
       {result && (
-        <div className="print-area card p-6 space-y-5">
+        <div ref={resultRef} className="print-area card p-6 space-y-5">
           <div className="flex items-center justify-between gap-3 flex-wrap no-print">
             <div className="flex gap-2">
               {ownerId && (
