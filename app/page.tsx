@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   BookOpen, Layers, FolderOpen, GraduationCap, BarChart3,
   Cpu, Bot, UserSquare, Trophy, Users, Archive, Settings,
-  Sparkles, CalendarDays, Eye, ChevronLeft, Briefcase, Gamepad2, Brain
+  Sparkles, CalendarDays, Eye, ChevronLeft, Briefcase, Gamepad2, Brain, Gavel, Flame
 } from "lucide-react";
 
 const sections = [
@@ -95,6 +95,38 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* Auction — بانر مستقل بارز، متاح لأي زائر بدون تسجيل دخول */}
+      <Link href="/auction" className="group block rounded-3xl p-6 md:p-8 text-white relative overflow-hidden shadow-lg hover:shadow-2xl transition-shadow"
+        style={{ background: "linear-gradient(120deg, #78350f 0%, #b45309 45%, #ea580c 100%)" }}>
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: "radial-gradient(circle at 15% 30%, white 1.5px, transparent 1.5px), radial-gradient(circle at 85% 70%, white 1.5px, transparent 1.5px)",
+          backgroundSize: "50px 50px"
+        }} />
+        <div className="absolute -left-6 -bottom-8 opacity-10 group-hover:opacity-20 transition-opacity">
+          <Gavel className="w-40 h-40 md:w-52 md:h-52" strokeWidth={1} />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-5">
+          <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-inner group-hover:scale-110 transition-transform">
+            <Gavel className="w-8 h-8 text-yellow-300" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="bg-yellow-400 text-amber-900 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <Flame className="w-3 h-3" /> جديد
+              </span>
+              <span className="text-amber-100 text-xs font-medium">مزاد علني — بدون أي دفع إلكتروني بالمنصة</span>
+            </div>
+            <h2 className="text-xl md:text-2xl font-bold mb-1.5">مزاد مشاريع الطلاب</h2>
+            <p className="text-amber-100 text-sm leading-relaxed max-w-xl">
+              مشاريع حقيقية من إبداع طلابنا معروضة للمزايدة العلنية — تصفّح المشاريع وارفع السعر لأي مشروع يعجبك، والتسليم يتم بالتنسيق المباشر مع المشرف.
+            </p>
+          </div>
+          <div className="bg-white text-amber-800 px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 group-hover:bg-yellow-300 transition-colors flex-shrink-0 self-start md:self-center">
+            تصفح المزاد الآن <ChevronLeft className="w-4 h-4" />
+          </div>
+        </div>
+      </Link>
 
       {/* Videos */}
       <div>
