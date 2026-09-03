@@ -4,7 +4,7 @@ import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
-  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart, Printer, X as XIcon
+  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart, Printer, X as XIcon, Gavel
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
@@ -38,6 +38,7 @@ interface HotsResult {
 const KnowledgeAdmin = dynamic(() => import("@/components/admin/KnowledgeAdmin"), { ssr: false });
 const CompetitionParticipation = dynamic(() => import("@/components/admin/CompetitionParticipation"), { ssr: false });
 const SectionCMS = dynamic(() => import("@/components/admin/SectionCMS"), { ssr: false });
+const AuctionAdmin = dynamic(() => import("@/components/admin/AuctionAdmin"), { ssr: false });
 
 const PROGRAMS_CONFIG = {
   storageKey: "kc_programs", title: "البرامج", icon: "🎯",
@@ -382,6 +383,7 @@ export default function AdminPage() {
     { id: "videos", label: "الفيديوهات", icon: Play },
     { id: "projects", label: "المشاريع", icon: Lightbulb },
     { id: "shop", label: "المتجر", icon: ShoppingBag },
+    { id: "auction", label: "مزاد المشاريع", icon: Gavel },
     { id: "achievements", label: "الإنجازات", icon: Star },
     { id: "codes", label: "رموز التسجيل", icon: Key },
     { id: "daily", label: "يوميات المركز", icon: CalendarDays, badge: dailyLog.length || undefined },
@@ -1625,6 +1627,9 @@ export default function AdminPage() {
           }
         </div>
       )}
+
+      {/* Project Auction */}
+      {tab === "auction" && <AuctionAdmin />}
 
       {/* Registration Codes */}
       {tab === "codes" && (
