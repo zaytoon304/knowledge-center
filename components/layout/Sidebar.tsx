@@ -6,7 +6,7 @@ import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
   Archive, Settings, X, LogOut, LogIn, Briefcase, CalendarDays,
-  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode, Radio, PenLine, Gamepad2, Brain, Sparkles, Images, Lightbulb, Heart, Wand2
+  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode, Radio, PenLine, Gamepad2, Brain, Sparkles, Images, Lightbulb, Heart, Wand2, Gavel
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth, CoordinatorProfile } from "@/contexts/AuthContext";
@@ -61,6 +61,8 @@ const adminNavItems = [
   { href: "/supervisor", label: "الملف الشخصي", icon: Contact },
   { href: "/platform-qr", label: "باركود المنصة", icon: QrCode },
   { href: "/survey-qr", label: "باركود استبانة الاهتمامات", icon: Heart },
+  { href: "/auction-qr", label: "باركود مزاد المشاريع", icon: Gavel },
+  { href: "/admin?tab=auction", label: "إدارة مزاد المشاريع", icon: Gavel },
   { href: "/admin", label: "لوحة الإدارة", icon: Settings },
 ];
 

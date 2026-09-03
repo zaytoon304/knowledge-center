@@ -214,6 +214,12 @@ export default function AdminPage() {
   // --- كل الـ hooks أولاً قبل أي return ---
   const [authed, setAuthed] = useState(false);
   const [tab, setTab] = useState("students");
+
+  // دخول مباشر لتبويب معيّن عبر رابط ?tab=xxx (تُستخدم من أيقونة "مزاد المشاريع" بالقائمة الجانبية)
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    if (requestedTab) setTab(requestedTab);
+  }, []);
   const [visitorRequests, setVisitorRequests] = useState<VisitorRequest[]>([]);
   const [students, setStudents] = useState<StudentProfile[]>([]);
   const [coordinators, setCoordinators] = useState<CoordinatorProfile[]>([]);
