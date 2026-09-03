@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Bot, Send, Sparkles, Copy, RotateCcw, Key } from "lucide-react";
 import Link from "next/link";
+import { getGroqKey, callGroqText } from "@/lib/groq";
 
 const SYSTEM_PROMPT = `أنت مساعد ذكي متخصص في مركز المعرفة والابتكار STEAM بمدارس الأرقم.
 تساعد الطلاب والمعلمين والمنسقين في:
@@ -37,29 +38,11 @@ interface Message {
 
 async function callGroq(history: Message[], apiKey: string): Promise<string> {
   const messages = [
-    { role: "system", content: SYSTEM_PROMPT },
+    { role: "system" as const, content: SYSTEM_PROMPT },
     ...history.map(m => ({ role: m.role, content: m.content })),
   ];
-
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      messages,
-      max_tokens: 1500,
-      temperature: 0.7,
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `خطأ ${res.status}`);
-  }
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || "لم أتلقَّ ردًّا، حاول مجدداً.";
+  const reply = await callGroqText(messages, apiKey, 1500);
+  return reply || "لم أتلقَّ ردًّا، حاول مجدداً.";
 }
 
 function formatContent(text: string) {
@@ -106,8 +89,7 @@ export default function AIAssistantPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const k = localStorage.getItem("kc_groq_key") || "";
-    setApiKey(k);
+    getGroqKey().then(setApiKey);
   }, []);
 
   useEffect(() => {

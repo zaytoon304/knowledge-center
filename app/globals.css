@@ -162,6 +162,15 @@ body {
   body.printing-survey .no-print { display: none !important; }
 }
 
+/* طباعة عامة لأي مخرج من أدوات الذكاء الاصطناعي (خطة درس، ورقة عمل...) — نفس نمط طباعة الاستبانة */
+@media print {
+  body.printing-only * { visibility: hidden; }
+  body.printing-only .print-area,
+  body.printing-only .print-area * { visibility: visible; }
+  body.printing-only .print-area { position: absolute; inset: 0; width: 100%; padding: 1.5rem; }
+  body.printing-only .no-print { display: none !important; }
+}
+
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(100%);

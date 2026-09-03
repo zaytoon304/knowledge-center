@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
+import { getGroqKey, saveGroqKey, deleteGroqKey } from "@/lib/groq";
 import { signInAsAdmin } from "@/lib/firebase";
 import { generateAccessCode } from "@/lib/deviceCode";
 import { InterestSurveyResponse, ALL_INTEREST_ITEMS, SurveyGroupKey, SURVEY_GROUPS, surveyGroupKey } from "@/lib/interestSurvey";
@@ -227,6 +228,8 @@ export default function AdminPage() {
   const [hotsResults, setHotsResults] = useState<HotsResult[]>([]);
   const [hotsForm, setHotsForm] = useState({ date: "", grade: GRADES[0] });
   const [accessCodeFor, setAccessCodeFor] = useState<string | null>(null); // id الطالب اللي يعرض رمز دخوله حالياً
+  const [groqKey, setGroqKey] = useState("");
+  const [groqKeySaved, setGroqKeySaved] = useState(false);
   const [accessCodeCopied, setAccessCodeCopied] = useState(false);
   const [sForm, setSForm] = useState({ name: "", description: "", price: "", image: "", imageName: "", category: "كتب", contact: "" });
   const [showSForm, setShowSForm] = useState(false);
@@ -352,6 +355,8 @@ export default function AdminPage() {
       cloudGet<InterestSurveyResponse[]>("kc_interest_survey").then(data => setInterestSurvey(Array.isArray(data) ? data : []));
     } else if (tab === "program_regs") {
       cloudGet<ProgramRegistration[]>("kc_program_registrations").then(data => setProgramRegistrations(Array.isArray(data) ? data : []));
+    } else if (tab === "codes") {
+      getGroqKey().then(setGroqKey);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed, tab]);
@@ -1631,7 +1636,7 @@ export default function AdminPage() {
             <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center text-xl">🤖</div>
             <div>
               <h2 className="font-bold text-gray-800">مفتاح المساعد الذكي (Groq)</h2>
-              <p className="text-xs text-gray-400">مجاني 100% — أسرع من Gemini — لا يحتاج بطاقة بنكية</p>
+              <p className="text-xs text-gray-400">مجاني 100% — أسرع من Gemini — لا يحتاج بطاقة بنكية — يشتغل لكل المعلمين من أي جهاز</p>
             </div>
           </div>
           <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-800 space-y-1">
@@ -1645,29 +1650,30 @@ export default function AdminPage() {
             <label className="text-xs font-semibold text-gray-600 mb-1 block">مفتاح Groq API</label>
             <input
               type="password"
-              id="groq-key-input"
-              defaultValue={typeof window !== "undefined" ? localStorage.getItem("kc_groq_key") || "" : ""}
-              onChange={e => { if (typeof window !== "undefined") localStorage.setItem("kc_groq_key", e.target.value.trim()); }}
+              value={groqKey}
+              onChange={e => { setGroqKey(e.target.value); setGroqKeySaved(false); }}
               placeholder="gsk_..."
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none focus:border-violet-500 font-mono"
             />
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => {
-              const key = typeof window !== "undefined" ? localStorage.getItem("kc_groq_key") : "";
-              if (!key) { alert("❌ الحقل فارغ — أدخل المفتاح أولاً"); return; }
-              alert("✅ المفتاح محفوظ بنجاح! يمكنك الآن استخدام المساعد الذكي");
+          <div className="flex gap-2 items-center">
+            <button onClick={async () => {
+              if (!groqKey.trim()) { alert("❌ الحقل فارغ — أدخل المفتاح أولاً"); return; }
+              await saveGroqKey(groqKey);
+              setGroqKeySaved(true);
+              alert("✅ المفتاح محفوظ بالسحابة! يشتغل الآن لكل معلم يفتح أدوات الذكاء الاصطناعي من أي جهاز");
             }} className="bg-violet-700 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-violet-600">
               حفظ
             </button>
-            <button onClick={() => {
-              if (typeof window !== "undefined") { localStorage.removeItem("kc_groq_key"); }
-              const input = document.getElementById("groq-key-input") as HTMLInputElement;
-              if (input) input.value = "";
-              alert("تم حذف المفتاح");
+            <button onClick={async () => {
+              await deleteGroqKey();
+              setGroqKey("");
+              setGroqKeySaved(false);
+              alert("تم حذف المفتاح من السحابة");
             }} className="bg-gray-100 text-gray-600 px-5 py-2 rounded-xl text-sm hover:bg-gray-200">
               حذف
             </button>
+            {groqKeySaved && <span className="text-xs text-green-600 font-semibold">✓ محفوظ</span>}
           </div>
         </div>
 
