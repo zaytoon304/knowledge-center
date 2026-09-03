@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Network, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight } from "lucide-react";
+import { Network, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
+import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
 
 interface Branch {
   title: string;
@@ -54,6 +55,8 @@ export default function MindMapPage() {
   const [error, setError] = useState("");
   const [map, setMap] = useState<MindMap | null>(null);
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const { ownerId } = useAiOwner();
 
   useEffect(() => {
     getGroqKey().then(setApiKey);
@@ -64,6 +67,7 @@ export default function MindMapPage() {
     setLoading(true);
     setError("");
     setMap(null);
+    setSaved(false);
     try {
       const raw = await callGroqText(
         [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), branchCount, notes.trim()) }],
@@ -82,16 +86,33 @@ export default function MindMapPage() {
     }
   };
 
-  const copyMap = () => {
-    if (!map) return;
-    const lines: string[] = [map.topic, ""];
-    map.branches.forEach(b => {
+  const buildTextExport = (m: MindMap): string => {
+    const lines: string[] = [m.topic, ""];
+    m.branches.forEach(b => {
       lines.push(`• ${b.title}`);
       b.points.forEach(p => lines.push(`   - ${p}`));
     });
-    navigator.clipboard.writeText(lines.join("\n"));
+    return lines.join("\n");
+  };
+
+  const copyMap = () => {
+    if (!map) return;
+    navigator.clipboard.writeText(buildTextExport(map));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const saveToHistory = async () => {
+    if (!map || !ownerId) return;
+    await saveAiHistoryItem(ownerId, {
+      tool: "mind-map",
+      toolLabel: "خريطة ذهنية",
+      title: map.topic,
+      subject,
+      grade,
+      textExport: buildTextExport(map),
+    });
+    setSaved(true);
   };
 
   const printMap = () => {
@@ -184,6 +205,11 @@ export default function MindMapPage() {
         <div className="print-area card p-6 space-y-6">
           <div className="flex items-center justify-between gap-3 flex-wrap no-print">
             <div className="flex gap-2">
+              {ownerId && (
+                <button onClick={saveToHistory} disabled={saved} className="flex items-center gap-1.5 text-xs bg-amber-100 text-amber-700 px-3 py-2 rounded-lg hover:bg-amber-200 disabled:opacity-60">
+                  {saved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />} {saved ? "محفوظة بسجلي" : "حفظ بسجلي"}
+                </button>
+              )}
               <button onClick={copyMap} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded-lg hover:bg-gray-200">
                 <Copy className="w-3.5 h-3.5" /> {copied ? "تم النسخ ✓" : "نسخ كنص"}
               </button>

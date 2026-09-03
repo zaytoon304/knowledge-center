@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Trophy, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Clock, Users, ListChecks, Award, Lightbulb } from "lucide-react";
+import { Trophy, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Clock, Users, ListChecks, Award, Lightbulb, BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
+import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
 
 interface Competition {
   title: string;
@@ -54,6 +55,8 @@ export default function CompetitionGeneratorPage() {
   const [error, setError] = useState("");
   const [comp, setComp] = useState<Competition | null>(null);
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const { ownerId } = useAiOwner();
 
   useEffect(() => {
     getGroqKey().then(setApiKey);
@@ -64,6 +67,7 @@ export default function CompetitionGeneratorPage() {
     setLoading(true);
     setError("");
     setComp(null);
+    setSaved(false);
     try {
       const raw = await callGroqText(
         [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), format, duration, notes.trim()) }],
@@ -80,20 +84,34 @@ export default function CompetitionGeneratorPage() {
     }
   };
 
+  const buildTextExport = (c: Competition): string => [
+    c.title, "",
+    `الهدف: ${c.goal}`,
+    `المدة: ${c.duration} | الفرق: ${c.teams}`,
+    "", `الأدوات: ${c.materials.join("، ")}`, "",
+    "قواعد المسابقة:", ...c.rules.map((r, i) => `${i + 1}. ${r}`),
+    "", `احتساب النقاط: ${c.scoring}`,
+    "", `فكرة للتعديل: ${c.variation}`,
+  ].join("\n");
+
   const copyComp = () => {
     if (!comp) return;
-    const lines = [
-      comp.title, "",
-      `الهدف: ${comp.goal}`,
-      `المدة: ${comp.duration} | الفرق: ${comp.teams}`,
-      "", `الأدوات: ${comp.materials.join("، ")}`, "",
-      "قواعد المسابقة:", ...comp.rules.map((r, i) => `${i + 1}. ${r}`),
-      "", `احتساب النقاط: ${comp.scoring}`,
-      "", `فكرة للتعديل: ${comp.variation}`,
-    ];
-    navigator.clipboard.writeText(lines.join("\n"));
+    navigator.clipboard.writeText(buildTextExport(comp));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const saveToHistory = async () => {
+    if (!comp || !ownerId) return;
+    await saveAiHistoryItem(ownerId, {
+      tool: "competition-generator",
+      toolLabel: "مسابقة صفية",
+      title: comp.title,
+      subject,
+      grade,
+      textExport: buildTextExport(comp),
+    });
+    setSaved(true);
   };
 
   const printComp = () => {
@@ -193,6 +211,11 @@ export default function CompetitionGeneratorPage() {
         <div className="print-area card p-6 space-y-5">
           <div className="flex items-center justify-between gap-3 flex-wrap no-print">
             <div className="flex gap-2">
+              {ownerId && (
+                <button onClick={saveToHistory} disabled={saved} className="flex items-center gap-1.5 text-xs bg-red-100 text-red-700 px-3 py-2 rounded-lg hover:bg-red-200 disabled:opacity-60">
+                  {saved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />} {saved ? "محفوظة بسجلي" : "حفظ بسجلي"}
+                </button>
+              )}
               <button onClick={copyComp} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded-lg hover:bg-gray-200">
                 <Copy className="w-3.5 h-3.5" /> {copied ? "تم النسخ ✓" : "نسخ المسابقة"}
               </button>

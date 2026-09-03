@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Puzzle, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Clock, Users, Boxes, ListChecks, Lightbulb } from "lucide-react";
+import { Puzzle, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Clock, Users, Boxes, ListChecks, Lightbulb, BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
+import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
 
 interface Activity {
   title: string;
@@ -52,6 +53,8 @@ export default function ActivityGeneratorPage() {
   const [error, setError] = useState("");
   const [activity, setActivity] = useState<Activity | null>(null);
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const { ownerId } = useAiOwner();
 
   useEffect(() => {
     getGroqKey().then(setApiKey);
@@ -62,6 +65,7 @@ export default function ActivityGeneratorPage() {
     setLoading(true);
     setError("");
     setActivity(null);
+    setSaved(false);
     try {
       const raw = await callGroqText(
         [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), style, duration, notes.trim()) }],
@@ -78,19 +82,33 @@ export default function ActivityGeneratorPage() {
     }
   };
 
+  const buildTextExport = (a: Activity): string => [
+    a.title, "",
+    `الهدف: ${a.goal}`,
+    `المدة: ${a.duration} | حجم المجموعة: ${a.groupSize}`,
+    "", `الأدوات: ${a.materials.join("، ")}`, "",
+    "خطوات التنفيذ:", ...a.steps.map((s, i) => `${i + 1}. ${s}`),
+    "", `فكرة للتعديل: ${a.variation}`,
+  ].join("\n");
+
   const copyActivity = () => {
     if (!activity) return;
-    const lines = [
-      activity.title, "",
-      `الهدف: ${activity.goal}`,
-      `المدة: ${activity.duration} | حجم المجموعة: ${activity.groupSize}`,
-      "", `الأدوات: ${activity.materials.join("، ")}`, "",
-      "خطوات التنفيذ:", ...activity.steps.map((s, i) => `${i + 1}. ${s}`),
-      "", `فكرة للتعديل: ${activity.variation}`,
-    ];
-    navigator.clipboard.writeText(lines.join("\n"));
+    navigator.clipboard.writeText(buildTextExport(activity));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const saveToHistory = async () => {
+    if (!activity || !ownerId) return;
+    await saveAiHistoryItem(ownerId, {
+      tool: "activity-generator",
+      toolLabel: "نشاط صفي",
+      title: activity.title,
+      subject,
+      grade,
+      textExport: buildTextExport(activity),
+    });
+    setSaved(true);
   };
 
   const printActivity = () => {
@@ -190,6 +208,11 @@ export default function ActivityGeneratorPage() {
         <div className="print-area card p-6 space-y-5">
           <div className="flex items-center justify-between gap-3 flex-wrap no-print">
             <div className="flex gap-2">
+              {ownerId && (
+                <button onClick={saveToHistory} disabled={saved} className="flex items-center gap-1.5 text-xs bg-pink-100 text-pink-700 px-3 py-2 rounded-lg hover:bg-pink-200 disabled:opacity-60">
+                  {saved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />} {saved ? "محفوظ بسجلي" : "حفظ بسجلي"}
+                </button>
+              )}
               <button onClick={copyActivity} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded-lg hover:bg-gray-200">
                 <Copy className="w-3.5 h-3.5" /> {copied ? "تم النسخ ✓" : "نسخ النشاط"}
               </button>

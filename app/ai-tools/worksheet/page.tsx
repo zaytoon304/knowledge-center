@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FileText, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { FileText, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Eye, EyeOff, CheckCircle2, BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
+import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
 
 interface Exercise {
   text: string;
@@ -56,6 +57,8 @@ export default function WorksheetPage() {
   const [sheet, setSheet] = useState<Worksheet | null>(null);
   const [showAnswers, setShowAnswers] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const { ownerId } = useAiOwner();
 
   useEffect(() => {
     getGroqKey().then(setApiKey);
@@ -66,6 +69,7 @@ export default function WorksheetPage() {
     setLoading(true);
     setError("");
     setSheet(null);
+    setSaved(false);
     try {
       const raw = await callGroqText(
         [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), count, difficulty, notes.trim()) }],
@@ -85,16 +89,33 @@ export default function WorksheetPage() {
     }
   };
 
+  const buildTextExport = (s: Worksheet, withAnswers: boolean): string => {
+    const lines: string[] = [s.title, `${s.subject} | ${s.grade}`, "", s.instructions, ""];
+    s.exercises.forEach((ex, i) => {
+      lines.push(`${i + 1}. ${ex.text}`);
+      if (withAnswers) lines.push(`   ✓ الإجابة: ${ex.answer}`);
+    });
+    return lines.join("\n");
+  };
+
   const copySheet = () => {
     if (!sheet) return;
-    const lines: string[] = [sheet.title, `${sheet.subject} | ${sheet.grade}`, "", sheet.instructions, ""];
-    sheet.exercises.forEach((ex, i) => {
-      lines.push(`${i + 1}. ${ex.text}`);
-      if (showAnswers) lines.push(`   ✓ الإجابة: ${ex.answer}`);
-    });
-    navigator.clipboard.writeText(lines.join("\n"));
+    navigator.clipboard.writeText(buildTextExport(sheet, showAnswers));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const saveToHistory = async () => {
+    if (!sheet || !ownerId) return;
+    await saveAiHistoryItem(ownerId, {
+      tool: "worksheet",
+      toolLabel: "ورقة عمل",
+      title: sheet.title,
+      subject: sheet.subject,
+      grade: sheet.grade,
+      textExport: buildTextExport(sheet, true),
+    });
+    setSaved(true);
   };
 
   const printSheet = () => {
@@ -194,6 +215,11 @@ export default function WorksheetPage() {
         <div className="print-area card p-6 space-y-5">
           <div className="flex items-center justify-between gap-3 flex-wrap no-print">
             <div className="flex gap-2">
+              {ownerId && (
+                <button onClick={saveToHistory} disabled={saved} className="flex items-center gap-1.5 text-xs bg-emerald-100 text-emerald-700 px-3 py-2 rounded-lg hover:bg-emerald-200 disabled:opacity-60">
+                  {saved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />} {saved ? "محفوظة بسجلي" : "حفظ بسجلي"}
+                </button>
+              )}
               <button onClick={() => setShowAnswers(s => !s)} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded-lg hover:bg-gray-200">
                 {showAnswers ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />} {showAnswers ? "إخفاء مفتاح الإجابة" : "إظهار مفتاح الإجابة"}
               </button>

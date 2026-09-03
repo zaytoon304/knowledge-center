@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ClipboardList, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Target, Boxes, ListChecks, HelpCircle, PenLine } from "lucide-react";
+import { ClipboardList, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Target, Boxes, ListChecks, HelpCircle, PenLine, BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
+import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
 
 interface LessonPlanStep {
   phase: string;
@@ -65,6 +66,8 @@ export default function LessonPlanPage() {
   const [error, setError] = useState("");
   const [plan, setPlan] = useState<LessonPlan | null>(null);
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const { ownerId } = useAiOwner();
 
   useEffect(() => {
     getGroqKey().then(setApiKey);
@@ -75,6 +78,7 @@ export default function LessonPlanPage() {
     setLoading(true);
     setError("");
     setPlan(null);
+    setSaved(false);
     try {
       const raw = await callGroqText(
         [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), duration, notes.trim()) }],
@@ -91,30 +95,44 @@ export default function LessonPlanPage() {
     }
   };
 
+  const buildTextExport = (p: LessonPlan): string => [
+    `خطة درس: ${p.title}`,
+    `المادة: ${p.subject} | الصف: ${p.grade} | المدة: ${p.duration}`,
+    ``,
+    `الأهداف التعليمية:`,
+    ...p.objectives.map(o => `- ${o}`),
+    ``,
+    `الوسائل التعليمية: ${p.materials.join("، ")}`,
+    ``,
+    `التمهيد: ${p.previousKnowledge}`,
+    ``,
+    `خطوات الدرس:`,
+    ...p.steps.map(s => `- ${s.phase} (${s.time}): ${s.activity}`),
+    ``,
+    `أسئلة التقويم:`,
+    ...p.evaluationQuestions.map(q => `- ${q}`),
+    ``,
+    `الواجب المنزلي: ${p.homework}`,
+  ].join("\n");
+
   const copyPlan = () => {
     if (!plan) return;
-    const text = [
-      `خطة درس: ${plan.title}`,
-      `المادة: ${plan.subject} | الصف: ${plan.grade} | المدة: ${plan.duration}`,
-      ``,
-      `الأهداف التعليمية:`,
-      ...plan.objectives.map(o => `- ${o}`),
-      ``,
-      `الوسائل التعليمية: ${plan.materials.join("، ")}`,
-      ``,
-      `التمهيد: ${plan.previousKnowledge}`,
-      ``,
-      `خطوات الدرس:`,
-      ...plan.steps.map(s => `- ${s.phase} (${s.time}): ${s.activity}`),
-      ``,
-      `أسئلة التقويم:`,
-      ...plan.evaluationQuestions.map(q => `- ${q}`),
-      ``,
-      `الواجب المنزلي: ${plan.homework}`,
-    ].join("\n");
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(buildTextExport(plan));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const saveToHistory = async () => {
+    if (!plan || !ownerId) return;
+    await saveAiHistoryItem(ownerId, {
+      tool: "lesson-plan",
+      toolLabel: "خطة درس",
+      title: plan.title,
+      subject: plan.subject,
+      grade: plan.grade,
+      textExport: buildTextExport(plan),
+    });
+    setSaved(true);
   };
 
   const printPlan = () => {
@@ -207,6 +225,11 @@ export default function LessonPlanPage() {
         <div className="print-area card p-6 space-y-5">
           <div className="flex items-center justify-between gap-3 flex-wrap no-print">
             <div className="flex gap-2">
+              {ownerId && (
+                <button onClick={saveToHistory} disabled={saved} className="flex items-center gap-1.5 text-xs bg-violet-100 text-violet-700 px-3 py-2 rounded-lg hover:bg-violet-200 disabled:opacity-60">
+                  {saved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />} {saved ? "محفوظة بسجلي" : "حفظ بسجلي"}
+                </button>
+              )}
               <button onClick={copyPlan} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded-lg hover:bg-gray-200">
                 <Copy className="w-3.5 h-3.5" /> {copied ? "تم النسخ ✓" : "نسخ الخطة"}
               </button>

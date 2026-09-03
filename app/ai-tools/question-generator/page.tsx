@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FileQuestion, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { FileQuestion, Sparkles, Printer, Copy, RotateCcw, Key, ChevronRight, Eye, EyeOff, CheckCircle2, BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { getGroqKey, callGroqText, extractJson } from "@/lib/groq";
 import { SUBJECTS } from "@/lib/subjects";
 import { GRADES } from "@/lib/grades";
+import { useAiOwner, saveAiHistoryItem } from "@/lib/aiHistory";
 
 type QType = "mcq" | "tf" | "essay";
 
@@ -63,6 +64,8 @@ export default function QuestionGeneratorPage() {
   const [set, setSet] = useState<QuestionSet | null>(null);
   const [showAnswers, setShowAnswers] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const { ownerId } = useAiOwner();
 
   useEffect(() => {
     getGroqKey().then(setApiKey);
@@ -74,6 +77,7 @@ export default function QuestionGeneratorPage() {
     setLoading(true);
     setError("");
     setSet(null);
+    setSaved(false);
     try {
       const raw = await callGroqText(
         [{ role: "user", content: buildPrompt(subject, grade, topic.trim(), mcqCount, tfCount, essayCount, difficulty, notes.trim()) }],
@@ -93,18 +97,35 @@ export default function QuestionGeneratorPage() {
     }
   };
 
-  const copySet = () => {
-    if (!set) return;
-    const lines: string[] = [`${set.title}`, `${set.subject} | ${set.grade}`, ""];
-    set.questions.forEach((q, i) => {
+  const buildTextExport = (s: QuestionSet, withAnswers: boolean): string => {
+    const lines: string[] = [`${s.title}`, `${s.subject} | ${s.grade}`, ""];
+    s.questions.forEach((q, i) => {
       lines.push(`${i + 1}. (${TYPE_LABEL[q.type]}) ${q.text}`);
       if (q.type === "mcq" && q.options) q.options.forEach((o, j) => lines.push(`   ${"أبجد"[j] || j + 1}) ${o}`));
-      if (showAnswers) lines.push(`   ✓ الإجابة: ${q.answer}`);
+      if (withAnswers) lines.push(`   ✓ الإجابة: ${q.answer}`);
       lines.push("");
     });
-    navigator.clipboard.writeText(lines.join("\n"));
+    return lines.join("\n");
+  };
+
+  const copySet = () => {
+    if (!set) return;
+    navigator.clipboard.writeText(buildTextExport(set, showAnswers));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const saveToHistory = async () => {
+    if (!set || !ownerId) return;
+    await saveAiHistoryItem(ownerId, {
+      tool: "question-generator",
+      toolLabel: "بنك أسئلة",
+      title: set.title,
+      subject: set.subject,
+      grade: set.grade,
+      textExport: buildTextExport(set, true),
+    });
+    setSaved(true);
   };
 
   const printSet = () => {
@@ -216,6 +237,11 @@ export default function QuestionGeneratorPage() {
         <div className="print-area card p-6 space-y-5">
           <div className="flex items-center justify-between gap-3 flex-wrap no-print">
             <div className="flex gap-2">
+              {ownerId && (
+                <button onClick={saveToHistory} disabled={saved} className="flex items-center gap-1.5 text-xs bg-blue-100 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-200 disabled:opacity-60">
+                  {saved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />} {saved ? "محفوظ بسجلي" : "حفظ بسجلي"}
+                </button>
+              )}
               <button onClick={() => setShowAnswers(s => !s)} className="flex items-center gap-1.5 text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded-lg hover:bg-gray-200">
                 {showAnswers ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />} {showAnswers ? "إخفاء الإجابات" : "إظهار الإجابات"}
               </button>

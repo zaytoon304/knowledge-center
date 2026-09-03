@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { ClipboardList, FileQuestion, FileText, Network, Bot, Sparkles, Lock, Puzzle, ScanText, Trophy } from "lucide-react";
+import { ClipboardList, FileQuestion, FileText, Network, Bot, Sparkles, Lock, Puzzle, ScanText, Trophy, History } from "lucide-react";
+import { useAiOwner } from "@/lib/aiHistory";
 
 interface AiTool {
   href: string;
@@ -79,17 +80,25 @@ const TOOLS: AiTool[] = [
 ];
 
 export default function AiToolsHubPage() {
+  const { ownerId } = useAiOwner();
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="card p-6 bg-gradient-to-l from-violet-800 via-purple-700 to-fuchsia-700 text-white">
-        <div className="flex items-center gap-3">
-          <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
-            <Sparkles className="w-8 h-8" />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
+              <Sparkles className="w-8 h-8" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">أدوات الذكاء الاصطناعي</h1>
+              <p className="text-white/90 text-sm mt-1">كل الأدوات التي تحتاجها لإعداد حصتك وإثراء صفك — مدعومة بالذكاء الاصطناعي مجاناً</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">أدوات الذكاء الاصطناعي</h1>
-            <p className="text-white/90 text-sm mt-1">كل الأدوات التي تحتاجها لإعداد حصتك وإثراء صفك — مدعومة بالذكاء الاصطناعي مجاناً</p>
-          </div>
+          {ownerId && (
+            <Link href="/ai-tools/history" className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 transition-colors px-3 py-2 rounded-xl text-xs font-semibold flex-shrink-0">
+              <History className="w-4 h-4" /> سجل أعمالي
+            </Link>
+          )}
         </div>
       </div>
 
