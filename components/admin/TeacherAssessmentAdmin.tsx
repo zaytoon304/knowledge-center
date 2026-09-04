@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { Dices, Save, Printer, Trash2, TrendingUp, CalendarDays, ClipboardCheck } from "lucide-react";
+import { Dices, Save, Printer, Trash2, TrendingUp, CalendarDays, ClipboardCheck, UserPlus } from "lucide-react";
 import { DEPARTMENTS, DEPARTMENT_COORDINATOR } from "@/contexts/AuthContext";
 import {
   ROBOTICS_TRACK_ID, ROBOTICS_TRAINING_WEEKS, ASSESSMENT_CRITERIA, CRITERION_MAX,
   getRoster, getSessions, saveSession, deleteSession, pickRandomStudents,
+  addRosterName, removeRosterName,
   sessionPercentage, cumulativePercentage, suggestedCurrentWeek,
   type RosterEntry, type AssessmentSession, type StudentScore,
 } from "@/lib/teacherAssessment";
@@ -30,6 +31,8 @@ export default function TeacherAssessmentAdmin() {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [saving, setSaving] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [newRosterName, setNewRosterName] = useState("");
+  const [rosterSaving, setRosterSaving] = useState(false);
 
   const refresh = () => {
     getRoster().then(setRoster);
@@ -79,6 +82,20 @@ export default function TeacherAssessmentAdmin() {
     refresh();
   };
 
+  const addName = async () => {
+    if (!newRosterName.trim() || rosterSaving) return;
+    setRosterSaving(true);
+    await addRosterName(ROBOTICS_TRACK_ID, department, newRosterName, "لوحة الإدارة");
+    setNewRosterName("");
+    setRosterSaving(false);
+    refresh();
+  };
+
+  const removeName = async (id: string) => {
+    await removeRosterName(id);
+    refresh();
+  };
+
   const comparison = DEPARTMENTS.map(d => {
     const s = sessions.filter(x => x.trackId === ROBOTICS_TRACK_ID && x.department === d);
     return { department: d, coordinator: DEPARTMENT_COORDINATOR[d], sessionsCount: s.length, pct: cumulativePercentage(s) };
@@ -123,7 +140,29 @@ export default function TeacherAssessmentAdmin() {
             </button>
           ))}
         </div>
-        <p className="text-xs text-gray-400">قائمة {department}: {deptRoster.length} طالب مسجَّل بواسطة المنسّق.</p>
+        <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-gray-600">قائمة طلاب {department} ({deptRoster.length} / 30)</p>
+          </div>
+          <div className="flex gap-2">
+            <input value={newRosterName} onChange={e => setNewRosterName(e.target.value)} onKeyDown={e => e.key === "Enter" && addName()}
+              placeholder="اسم طالب جديد" className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-violet-400" />
+            <button disabled={!newRosterName.trim() || rosterSaving} onClick={addName}
+              className="flex items-center gap-1.5 bg-violet-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-violet-500 disabled:opacity-40">
+              <UserPlus className="w-3.5 h-3.5" /> إضافة
+            </button>
+          </div>
+          {deptRoster.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto">
+              {deptRoster.map((r, i) => (
+                <div key={r.id} className="flex items-center justify-between bg-white rounded-lg px-2.5 py-1.5 text-xs border border-gray-100">
+                  <span className="text-gray-600">{i + 1}. {r.studentName}</span>
+                  <button onClick={() => removeName(r.id)} className="text-red-400 hover:text-red-600"><Trash2 className="w-3 h-3" /></button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <label className="text-xs font-semibold text-gray-500 flex items-center gap-1"><CalendarDays className="w-3.5 h-3.5" /> الأسبوع:</label>
@@ -145,7 +184,7 @@ export default function TeacherAssessmentAdmin() {
           className="flex items-center gap-2 bg-violet-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-violet-500 disabled:opacity-40">
           <Dices className="w-4 h-4" /> اختر ٥ طلاب عشوائياً
         </button>
-        {deptRoster.length === 0 && <p className="text-xs text-red-400">لازم المنسّق يضيف أسماء الطلاب أولاً من بوابته (تبويب "قياس المعلّم").</p>}
+        {deptRoster.length === 0 && <p className="text-xs text-red-400">أضف أسماء الطلاب فوق أولاً (أو يضيفها المنسّق بنفسه من بوابته).</p>}
       </div>
 
       {/* استمارة التقييم */}
