@@ -4,7 +4,7 @@ import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
-  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart, Printer, X as XIcon, Gavel
+  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart, Printer, X as XIcon, Gavel, Target
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
@@ -15,6 +15,7 @@ import { InterestSurveyResponse, ALL_INTEREST_ITEMS, SurveyGroupKey, SURVEY_GROU
 import type { ProgramRegistration } from "@/app/programs/register/page";
 import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
+import { ROBOTICS_SKILLS, reviewSkillMastery, type SkillMastery } from "@/lib/skillMap";
 
 // جوال الطالب/ولي الأمر/رقم الهوية الوطنية لم تعد داخل "kc_students" العامة (حماية أمنية) — تُقرأ من
 // عقدة منفصلة "kc_students_contact" مقروءة للأدمن فقط بقواعد Firebase، ونُدمجها هنا محلياً بجهاز
@@ -264,6 +265,7 @@ export default function AdminPage() {
   const [dailyLog, setDailyLog] = useState<DailyLogEntry[]>([]);
   const [interestSurvey, setInterestSurvey] = useState<InterestSurveyResponse[]>([]);
   const [programRegistrations, setProgramRegistrations] = useState<ProgramRegistration[]>([]);
+  const [skillMasteries, setSkillMasteries] = useState<SkillMastery[]>([]);
   const [printGroup, setPrintGroup] = useState<SurveyGroupKey | null>(null);
   const [showDForm, setShowDForm] = useState(false);
   const [dImagesUploading, setDImagesUploading] = useState(0);
@@ -365,6 +367,8 @@ export default function AdminPage() {
       cloudGet<InterestSurveyResponse[]>("kc_interest_survey").then(data => setInterestSurvey(Array.isArray(data) ? data : []));
     } else if (tab === "program_regs") {
       cloudGet<ProgramRegistration[]>("kc_program_registrations").then(data => setProgramRegistrations(Array.isArray(data) ? data : []));
+    } else if (tab === "skill_mastery") {
+      cloudGet<SkillMastery[]>("kc_skill_mastery").then(data => setSkillMasteries(Array.isArray(data) ? data : []));
     } else if (tab === "codes") {
       getGroqKey().then(setGroqKey);
     }
@@ -399,6 +403,7 @@ export default function AdminPage() {
     { id: "knowledge", label: "مركز المعرفة", icon: BookOpen },
     { id: "programs_cms", label: "البرامج", icon: Layers },
     { id: "program_regs", label: "تسجيلات البرامج", icon: UserSquare2, badge: programRegistrations.length || undefined },
+    { id: "skill_mastery", label: "إتقان المهارات", icon: Target, badge: skillMasteries.filter(m => m.status === "pending").length || undefined },
     { id: "competitions_cms", label: "المسابقات", icon: Trophy },
     { id: "project_bank_cms", label: "بنك المشاريع", icon: Archive },
     { id: "emerging_tech_cms", label: "التقنيات الناشئة", icon: Cpu },
@@ -2346,6 +2351,68 @@ export default function AdminPage() {
                   ))}
                 </div>
               ))
+            )}
+          </div>
+        );
+      })()}
+
+      {tab === "skill_mastery" && (() => {
+        const pendingMasteries = skillMasteries.filter(m => m.status === "pending").sort((a, b) => a.requestedAt.localeCompare(b.requestedAt));
+        const reviewedMasteries = skillMasteries.filter(m => m.status !== "pending").sort((a, b) => (b.reviewedAt || "").localeCompare(a.reviewedAt || "")).slice(0, 15);
+        const skillTitle = (id: string) => ROBOTICS_SKILLS.find(s => s.id === id)?.title || id;
+        const act = async (id: string, approve: boolean, note?: string) => {
+          await reviewSkillMastery(id, approve, note);
+          cloudGet<SkillMastery[]>("kc_skill_mastery").then(data => setSkillMasteries(Array.isArray(data) ? data : []));
+        };
+        return (
+          <div className="space-y-5">
+            <h2 className="font-bold text-gray-800 flex items-center gap-2">
+              <Target className="w-5 h-5 text-violet-600" /> إتقان المهارات — بانتظار المراجعة ({pendingMasteries.length})
+            </h2>
+            <p className="text-xs text-gray-400 -mt-3">المنسّق يطلب اعتماد مهارة روبوتات لطالب بقسمه مع سبب/دليل — راجعه قبل ما يظهر للطالب وولي أمره.</p>
+            {pendingMasteries.length === 0 ? (
+              <div className="card p-10 text-center text-gray-400">
+                <Target className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>ما فيه طلبات إتقان مهارة بانتظار المراجعة حالياً</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {pendingMasteries.map(m => (
+                  <div key={m.id} className="card p-4">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <p className="font-bold text-gray-800 text-sm">{m.studentName} — {skillTitle(m.skillId)}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">طلب المنسّق: {m.coordinatorName} • {new Date(m.requestedAt).toLocaleDateString("ar-SA")}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => act(m.id, true)}
+                          className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-500">
+                          <CheckCircle className="w-3.5 h-3.5" /> اعتماد
+                        </button>
+                        <button onClick={() => { const note = prompt("سبب الرفض (اختياري، يظهر للمنسّق):") || ""; act(m.id, false, note); }}
+                          className="flex items-center gap-1.5 bg-red-50 text-red-500 border border-red-200 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-100">
+                          <XCircle className="w-3.5 h-3.5" /> رفض
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2 bg-violet-50 rounded-lg px-3 py-2">"{m.reason}"</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {reviewedMasteries.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-bold text-gray-600">آخر المراجعات</h3>
+                {reviewedMasteries.map(m => (
+                  <div key={m.id} className="flex items-center justify-between text-xs bg-gray-50 rounded-lg px-3 py-2">
+                    <span className="text-gray-600">{m.studentName} — {skillTitle(m.skillId)}</span>
+                    <span className={m.status === "approved" ? "text-emerald-600 font-semibold" : "text-red-500 font-semibold"}>
+                      {m.status === "approved" ? "✅ معتمدة" : "❌ مرفوضة"}
+                    </span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         );

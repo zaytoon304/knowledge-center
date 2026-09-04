@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { UserCheck, UserX, Users, GraduationCap, School, Phone } from "lucide-react";
+import { UserCheck, UserX, Users, GraduationCap, School, Phone, Trophy, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth, StudentProfile, CoordinatorProfile } from "@/contexts/AuthContext";
 import { cloudListen } from "@/lib/cloud";
+import SkillMasteryPanel from "./SkillMasteryPanel";
+import type { SkillMastery } from "@/lib/skillMap";
 
 const STATUS_LABEL: Record<string, string> = { pending: "بانتظار الموافقة", approved: "مقبول", rejected: "مرفوض" };
 const STATUS_COLOR: Record<string, string> = {
@@ -24,10 +26,19 @@ export default function MyDepartmentStudents() {
   const coord = user as CoordinatorProfile;
   const [students, setStudents] = useState<StudentProfile[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [masteries, setMasteries] = useState<SkillMastery[]>([]);
+  const [skillsOpenFor, setSkillsOpenFor] = useState<string | null>(null);
 
   useEffect(() => {
     const unsub = cloudListen<StudentProfile[]>("kc_students", data => {
       setStudents(Array.isArray(data) ? data : []);
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    const unsub = cloudListen<SkillMastery[]>("kc_skill_mastery", data => {
+      setMasteries(Array.isArray(data) ? data : []);
     });
     return unsub;
   }, []);
@@ -64,31 +75,47 @@ export default function MyDepartmentStudents() {
       ) : (
         <div className="space-y-3">
           {mine.map(s => (
-            <div key={s.id} className="card p-4 flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl overflow-hidden bg-violet-100 flex-shrink-0 flex items-center justify-center text-violet-700 font-bold">
-                {s.photo ? <img src={s.photo} alt="" className="w-full h-full object-cover" /> : s.name[0]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-gray-800">{s.name}</p>
-                  <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${STATUS_COLOR[s.status]}`}>{STATUS_LABEL[s.status]}</span>
+            <div key={s.id} className="card p-4">
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-xl overflow-hidden bg-violet-100 flex-shrink-0 flex items-center justify-center text-violet-700 font-bold">
+                  {s.photo ? <img src={s.photo} alt="" className="w-full h-full object-cover" /> : s.name[0]}
                 </div>
-                <div className="flex flex-wrap gap-3 text-xs text-gray-400 mt-1">
-                  <span className="flex items-center gap-1"><GraduationCap className="w-3.5 h-3.5" /> {s.grade}</span>
-                  <span className="flex items-center gap-1"><School className="w-3.5 h-3.5" /> {s.school}</span>
-                  {s.phone && <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {s.phone}</span>}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-gray-800">{s.name}</p>
+                    <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${STATUS_COLOR[s.status]}`}>{STATUS_LABEL[s.status]}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-xs text-gray-400 mt-1">
+                    <span className="flex items-center gap-1"><GraduationCap className="w-3.5 h-3.5" /> {s.grade}</span>
+                    <span className="flex items-center gap-1"><School className="w-3.5 h-3.5" /> {s.school}</span>
+                    {s.phone && <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {s.phone}</span>}
+                  </div>
                 </div>
+                {s.status === "pending" && (
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button disabled={busyId === s.id} onClick={() => act(approveStudent, s.id)}
+                      className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-500 disabled:opacity-40">
+                      <UserCheck className="w-4 h-4" /> قبول
+                    </button>
+                    <button disabled={busyId === s.id} onClick={() => act(rejectStudent, s.id)}
+                      className="flex items-center gap-1.5 bg-red-50 text-red-500 border border-red-200 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-100 disabled:opacity-40">
+                      <UserX className="w-4 h-4" /> رفض
+                    </button>
+                  </div>
+                )}
+                {s.status === "approved" && (
+                  <button
+                    onClick={() => setSkillsOpenFor(skillsOpenFor === s.id ? null : s.id)}
+                    className="flex items-center gap-1.5 bg-violet-50 text-violet-700 border border-violet-200 px-3 py-2 rounded-xl text-sm font-semibold hover:bg-violet-100 flex-shrink-0"
+                  >
+                    <Trophy className="w-4 h-4" /> مهارات الروبوتات
+                    {skillsOpenFor === s.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+                )}
               </div>
-              {s.status === "pending" && (
-                <div className="flex gap-2 flex-shrink-0">
-                  <button disabled={busyId === s.id} onClick={() => act(approveStudent, s.id)}
-                    className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-500 disabled:opacity-40">
-                    <UserCheck className="w-4 h-4" /> قبول
-                  </button>
-                  <button disabled={busyId === s.id} onClick={() => act(rejectStudent, s.id)}
-                    className="flex items-center gap-1.5 bg-red-50 text-red-500 border border-red-200 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-100 disabled:opacity-40">
-                    <UserX className="w-4 h-4" /> رفض
-                  </button>
+              {skillsOpenFor === s.id && (
+                <div className="mt-3">
+                  <SkillMasteryPanel student={s} coordinator={coord} masteries={masteries} />
                 </div>
               )}
             </div>

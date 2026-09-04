@@ -4,15 +4,18 @@ import { useAuth, StudentProfile } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import {
   Users, BookOpen, Play, Lightbulb, Radio, CreditCard,
-  MessageSquare, LogIn, Clock, XCircle, ExternalLink, ChevronDown, ChevronUp, Code, ClipboardList
+  MessageSquare, LogIn, Clock, XCircle, ExternalLink, ChevronDown, ChevronUp, Code, ClipboardList, Trophy
 } from "lucide-react";
 import GroupsSection from "@/components/student/GroupsSection";
 import { getDeviceId } from "@/lib/deviceCode";
 import { whatsappLink } from "@/lib/whatsapp";
 import { cloudListen } from "@/lib/cloud";
+import SkillTree from "@/components/shared/SkillTree";
+import type { SkillMastery } from "@/lib/skillMap";
 
 const tabs = [
   { id: "dashboard", label: "رئيسيتي", icon: Users },
+  { id: "skills", label: "مهاراتي", icon: Trophy },
   { id: "groups", label: "الجروبات", icon: MessageSquare },
   { id: "courses", label: "الدورات", icon: BookOpen },
   { id: "videos", label: "الفيديوهات", icon: Play },
@@ -38,6 +41,15 @@ export default function StudentPortalPage() {
   const [showCard, setShowCard] = useState(false);
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [tasks, setTasks] = useState<string[]>([]);
+  const [skillMasteries, setSkillMasteries] = useState<SkillMastery[]>([]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !isApproved || !user) return;
+    const unsub = cloudListen<SkillMastery[]>("kc_skill_mastery", data => {
+      setSkillMasteries(Array.isArray(data) ? data : []);
+    });
+    return unsub;
+  }, [isLoggedIn, isApproved, user]);
 
   useEffect(() => {
     if (!isLoggedIn || !isApproved || !user) return;
@@ -187,6 +199,15 @@ export default function StudentPortalPage() {
               })}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Skills */}
+      {activeTab === "skills" && (
+        <div className="card p-5">
+          <SkillTree
+            approvedSkillIds={skillMasteries.filter(m => m.studentId === student.id && m.status === "approved").map(m => m.skillId)}
+          />
         </div>
       )}
 

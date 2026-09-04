@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Baby, Search, User, Award, Star, Kanban, BookOpen, Shield } from "lucide-react";
 import { cloudGet } from "@/lib/cloud";
 import { sha256Hex } from "@/lib/hash";
+import SkillTree from "@/components/shared/SkillTree";
+import type { SkillMastery } from "@/lib/skillMap";
 
 interface StudentProfile {
   id: string; name: string; nationalId: string; school: string; grade: string;
@@ -35,6 +37,7 @@ export default function ParentPortalPage() {
   const [points, setPoints] = useState(0);
   const [badges, setBadges] = useState<string[]>([]);
   const [projects, setProjects] = useState<KanbanRecord[]>([]);
+  const [skills, setSkills] = useState<string[]>([]);
 
   const handleSearch = async () => {
     if (!nationalId.trim() || loading) return;
@@ -47,19 +50,21 @@ export default function ParentPortalPage() {
     const found = studentId ? students.find(s => s.id === studentId && s.status === "approved") : undefined;
     if (found) {
       setStudent(found); setError("");
-      const [allCerts, allPoints, allBadges, allProjects] = await Promise.all([
+      const [allCerts, allPoints, allBadges, allProjects, allSkillMasteries] = await Promise.all([
         fetchFresh<CertRecord[]>("kc_certificates", []),
         fetchFresh<PointRecord[]>("kc_points", []),
         fetchFresh<Record<string, string[]>>("kc_badges", {}),
         fetchFresh<KanbanRecord[]>("kc_kanban", []),
+        fetchFresh<SkillMastery[]>("kc_skill_mastery", []),
       ]);
       setCerts(allCerts.filter(c => c.studentId === found.id));
       setPoints(allPoints.filter(p => p.studentId === found.id).reduce((s, p) => s + p.points, 0));
       setBadges(allBadges[found.id] || []);
       setProjects(allProjects.filter(p => p.studentId === found.id));
+      setSkills(allSkillMasteries.filter(m => m.studentId === found.id && m.status === "approved").map(m => m.skillId));
     } else {
       setStudent(null); setError("لم يُعثر على طالب معتمد بهذا الرقم. تأكد من رقم الهوية أو تواصل مع إدارة المركز.");
-      setCerts([]); setPoints(0); setBadges([]); setProjects([]);
+      setCerts([]); setPoints(0); setBadges([]); setProjects([]); setSkills([]);
     }
     setSearched(true);
     setLoading(false);
@@ -145,6 +150,11 @@ export default function ParentPortalPage() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Skill Tree */}
+          <div className="card p-4">
+            <SkillTree approvedSkillIds={skills} />
           </div>
 
           {/* Badges */}
