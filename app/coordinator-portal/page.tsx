@@ -4,7 +4,7 @@ import { useAuth, CoordinatorProfile, StudentProfile } from "@/contexts/AuthCont
 import { useRouter } from "next/navigation";
 import {
   Briefcase, Calendar, Layers, Trophy, Star, Archive, GraduationCap,
-  LogIn, Clock, XCircle, Download, FileText, Camera, Users, UserCheck, Bell
+  LogIn, Clock, XCircle, Download, FileText, Camera, Users, UserCheck, Bell, ClipboardCheck
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { whatsappLink } from "@/lib/whatsapp";
@@ -19,10 +19,12 @@ const ProfDevSection = dynamic(() => import("@/components/coordinator/ProfDevSec
 const StudentsSection = dynamic(() => import("@/components/coordinator/StudentsSection"), { ssr: false });
 const PendingStudentsSection = dynamic(() => import("@/components/coordinator/PendingStudentsSection"), { ssr: false });
 const MyDepartmentStudents = dynamic(() => import("@/components/coordinator/MyDepartmentStudents"), { ssr: false });
+const AssessmentRoster = dynamic(() => import("@/components/coordinator/AssessmentRoster"), { ssr: false });
 
 const tabs = [
   { id: "dashboard", label: "رئيسيتي", icon: Briefcase },
   { id: "mydept", label: "طلاب قسمي", icon: Users },
+  { id: "assessment", label: "قياس المعلّم", icon: ClipboardCheck },
   { id: "pending", label: "طلاب بانتظار الموافقة", icon: UserCheck },
   { id: "students", label: "فرقي بالمسابقات", icon: Users },
   { id: "plans", label: "الخطط", icon: Calendar },
@@ -230,6 +232,7 @@ export default function CoordinatorPortalPage() {
       )}
 
       {tab === "mydept" && <MyDepartmentStudents />}
+      {tab === "assessment" && <AssessmentRoster />}
       {tab === "pending" && <PendingStudentsSection />}
       {tab === "students" && <StudentsSection />}
       {tab === "plans" && <PlansSection />}

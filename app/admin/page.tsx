@@ -4,7 +4,7 @@ import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
-  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart, Printer, X as XIcon, Gavel, Target
+  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart, Printer, X as XIcon, Gavel, Target, ClipboardCheck
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
@@ -17,6 +17,7 @@ import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
 import { getSkillDefs, reviewSkillMastery, type Skill, type SkillMastery } from "@/lib/skillMap";
 import SkillDefsManager from "@/components/admin/SkillDefsManager";
+import TeacherAssessmentAdmin from "@/components/admin/TeacherAssessmentAdmin";
 
 // جوال الطالب/ولي الأمر/رقم الهوية الوطنية لم تعد داخل "kc_students" العامة (حماية أمنية) — تُقرأ من
 // عقدة منفصلة "kc_students_contact" مقروءة للأدمن فقط بقواعد Firebase، ونُدمجها هنا محلياً بجهاز
@@ -407,6 +408,7 @@ export default function AdminPage() {
     { id: "programs_cms", label: "البرامج", icon: Layers },
     { id: "program_regs", label: "تسجيلات البرامج", icon: UserSquare2, badge: programRegistrations.length || undefined },
     { id: "skill_mastery", label: "إتقان المهارات", icon: Target, badge: skillMasteries.filter(m => m.status === "pending").length || undefined },
+    { id: "teacher_assessment", label: "قياس المعلمين", icon: ClipboardCheck },
     { id: "competitions_cms", label: "المسابقات", icon: Trophy },
     { id: "project_bank_cms", label: "بنك المشاريع", icon: Archive },
     { id: "emerging_tech_cms", label: "التقنيات الناشئة", icon: Cpu },
@@ -2422,6 +2424,8 @@ export default function AdminPage() {
           </div>
         );
       })()}
+
+      {tab === "teacher_assessment" && <TeacherAssessmentAdmin />}
 
       {/* تقرير الاستبانة القابل للطباعة — يظهر فوق كل شيء ويُعزل عند الطباعة الفعلية */}
       {printGroup && (() => {
