@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { cloudGet, cloudSet, cloudPush, cloudTransact } from "@/lib/cloud";
 import { getDeviceId, validateAccessCode, grantAccess, hasAccess as hasDeviceAccess, revokeAccess } from "@/lib/deviceCode";
 import { hashPassword, verifyPassword, isHashed } from "@/lib/password";
+import { sha256Hex } from "@/lib/hash";
 
 export interface StudentProfile {
   id: string; name: string; nationalId: string; school: string; grade: string;
@@ -186,13 +187,28 @@ function save(key: string, val: unknown) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 }
 
-// جوال الطالب وجوال ولي الأمر لا يُخزّنان بعد الآن داخل "kc_students" (يقدر أي زائر يقرأها) —
-// يُحفظان بعقدة منفصلة "kc_students_contact/{id}" مقروءة من الأدمن فقط بقواعد أمان Firebase،
-// بينما القراءة العامة لباقي بيانات الطالب (الاسم، الفريق...) تبقى كما هي (تحتاجها ميزات شغالة
-// زي بحث ولي الأمر ولوحة الصدارة). الكتابة تبقى مفتوحة (الطالب نفسه يسجّل جواله عند التسجيل).
-function splitStudentContact(s: StudentProfile): { pub: StudentProfile; contact: { phone: string; parentPhone: string } } {
-  const contact = { phone: s.phone || "", parentPhone: s.parentPhone || "" };
-  return { pub: { ...s, phone: "", parentPhone: "" }, contact };
+// جوال الطالب/جوال ولي الأمر/رقم الهوية الوطنية لا تُخزّن بعد الآن داخل "kc_students" (يقدر أي
+// زائر يقرأها بحساب مجهول تلقائي) — تُحفظ بعقدة منفصلة "kc_students_contact/{id}" مقروءة من
+// الأدمن فقط بقواعد أمان Firebase، بينما القراءة العامة لباقي بيانات الطالب (الاسم، الفريق...)
+// تبقى كما هي (تحتاجها ميزات شغالة زي لوحة الصدارة). الكتابة تبقى مفتوحة (الطالب نفسه يسجّل
+// بياناته عند التسجيل). رقم الهوية لا يزال قابلاً للبحث عبر فهرس هاش عام "kc_nid_index"
+// (راجع nidIndexEntry) — يكشف فقط تطابق قيمة معروفة مسبقاً لدى الباحث، لا كشف القائمة كاملة.
+function splitStudentContact(s: StudentProfile): { pub: StudentProfile; contact: { phone: string; parentPhone: string; nationalId: string } } {
+  const contact = { phone: s.phone || "", parentPhone: s.parentPhone || "", nationalId: s.nationalId || "" };
+  return { pub: { ...s, phone: "", parentPhone: "", nationalId: "" }, contact };
+}
+
+// يكتب مدخل فهرس بحث عام (هاش رقم الهوية → معرّف الطالب) — يسمح بإيجاد طالب برقم هويته
+// (تسجيل دخول قديم، بوابة ولي الأمر، فحص تكرار عند التسجيل) بدون قراءة قائمة الطلاب كاملة.
+async function nidIndexEntry(nationalId: string, studentId: string): Promise<void> {
+  if (!nationalId) return;
+  const hash = await sha256Hex(nationalId);
+  cloudSet(`kc_nid_index/${hash}`, studentId);
+}
+async function findStudentIdByNationalId(nationalId: string): Promise<string | null> {
+  if (!nationalId) return null;
+  const hash = await sha256Hex(nationalId);
+  return cloudGet<string>(`kc_nid_index/${hash}`);
 }
 
 // نفس منطق حماية جوال الطالب، لكن للمنسّق — البريد يبقى بالمصفوفة العامة لأن دخول
@@ -276,6 +292,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const sf = fresh as StudentProfile, ss = stored as StudentProfile;
           if (!sf.phone && ss.phone) fresh = { ...sf, phone: ss.phone };
           if (!(fresh as StudentProfile).parentPhone && ss.parentPhone) fresh = { ...(fresh as StudentProfile), parentPhone: ss.parentPhone };
+          if (!(fresh as StudentProfile).nationalId && ss.nationalId) fresh = { ...(fresh as StudentProfile), nationalId: ss.nationalId };
         } else if (fresh.role === "coordinator") {
           const cf = fresh as CoordinatorProfile, cs = stored as CoordinatorProfile;
           if (!cf.phone && cs.phone) fresh = { ...cf, phone: cs.phone };
@@ -305,16 +322,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (identifier: string, pw: string) => {
     const all = await freshStudents();
-    const candidate = all.find(s => s.nationalId === identifier);
+    // رقم الهوية لم يعد داخل النسخة العامة (حماية أمنية) — نجد المعرّف عبر فهرس الهاش أولاً
+    const idFromIndex = await findStudentIdByNationalId(identifier);
+    const candidate = idFromIndex ? all.find(s => s.id === idFromIndex) : undefined;
     const ok = candidate ? await verifyPassword(pw, candidate.password) : false;
     if (candidate && ok) {
-      let s = candidate;
+      // نُعيد رقم الهوية لكائن الجلسة نفسه (المستخدم كتبه للتو ونجح التحقق منه — لا كشف بيانات جديد)
+      let s: StudentProfile = { ...candidate, nationalId: identifier };
       // ترقية تلقائية: حساب قديم بكلمة مرور نص عادي يتشفّر بأول دخول ناجح له
       if (!isHashed(candidate.password)) {
-        s = { ...candidate, password: await hashPassword(pw) };
+        s = { ...s, password: await hashPassword(pw) };
         cloudTransact<StudentProfile[]>("kc_students", current => {
           const list = Array.isArray(current) && current.length > 0 ? current : all;
-          return list.map(x => x.id === s.id ? s : x);
+          return list.map(x => x.id === s.id ? { ...s, nationalId: "" } : x);
         });
       }
       setUser(s); save(KEYS.currentUser, s);
@@ -372,7 +392,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // تحقق من السحابة الحقيقية مباشرة — مو من نسخة الجهاز المحلية اللي ممكن تكون قديمة أو فيها بقايا محاولة سابقة فشلت
     const cloudStudents = await cloudGet<StudentProfile[]>("kc_students");
     const all = Array.isArray(cloudStudents) ? cloudStudents : getAllStudents();
-    const existing = all.find(s => s.nationalId === data.nationalId);
+    // رقم الهوية لم يعد داخل النسخة العامة — نتحقق من التكرار عبر فهرس الهاش لا مسح القائمة كاملة
+    const existingId = await findStudentIdByNationalId(data.nationalId);
+    const existing = existingId ? all.find(s => s.id === existingId) : undefined;
     if (existing) {
       // نفس رقم الهوية مسجل مسبقاً — نتعامل معه كطلب "رمز جهاز جديد" بدل رفضه، لأن هذا أغلب سبب
       // تكرار التسجيل فعلياً (جهاز جديد/مسح المتصفح، أو حساب قديم بكلمة مرور من قبل نظام رمز الجهاز
@@ -385,6 +407,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       if (!ok) return { success: false, message: "تعذّر الاتصال بالإنترنت — تأكد من الشبكة/الواي فاي وحاول مرة أخرى" };
       cloudSet(`${KEYS.studentsContact}/${existing.id}`, contact);
+      nidIndexEntry(data.nationalId, existing.id);
       save(KEYS.students, all.map(s => s.id === existing.id ? pub : s));
       setUser(updated); save(KEYS.currentUser, updated);
       return { success: true, message: "relinked" };
@@ -396,6 +419,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const ok = await cloudPush("kc_students", pub);
     if (!ok) return { success: false, message: "تعذّر الاتصال بالإنترنت — تأكد من الشبكة/الواي فاي وحاول التسجيل مرة أخرى" };
     cloudSet(`${KEYS.studentsContact}/${student.id}`, contact);
+    nidIndexEntry(student.nationalId, student.id);
     save(KEYS.students, [...all, pub]);
     setUser(student); save(KEYS.currentUser, student);
     return { success: true, message: "pending" };
@@ -454,12 +478,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       cloudSet(`${KEYS.coordinatorsContact}/${user.id}`, contact);
     } else {
-      const all = getAllStudents().map(s => s.id === user.id ? updated as StudentProfile : s);
+      const { pub: updatedPub, contact } = splitStudentContact(updated as StudentProfile);
+      const all = getAllStudents().map(s => s.id === user.id ? updatedPub : s);
       save(KEYS.students, all);
       cloudTransact<StudentProfile[]>(KEYS.students, current => {
         const list = Array.isArray(current) && current.length > 0 ? current : all;
-        return list.map(s => s.id === user.id ? updated as StudentProfile : s);
+        return list.map(s => s.id === user.id ? updatedPub : s);
       });
+      cloudSet(`${KEYS.studentsContact}/${user.id}`, contact);
+      nidIndexEntry(contact.nationalId, user.id);
     }
   };
 

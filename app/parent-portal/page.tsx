@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Baby, Search, User, Award, Star, Kanban, BookOpen, Shield } from "lucide-react";
 import { cloudGet } from "@/lib/cloud";
+import { sha256Hex } from "@/lib/hash";
 
 interface StudentProfile {
   id: string; name: string; nationalId: string; school: string; grade: string;
@@ -38,8 +39,12 @@ export default function ParentPortalPage() {
   const handleSearch = async () => {
     if (!nationalId.trim() || loading) return;
     setLoading(true);
+    // رقم الهوية لم يعد داخل النسخة العامة من "kc_students" (حماية أمنية) — نجد معرّف الطالب
+    // عبر فهرس هاش عام "kc_nid_index" (يكشف فقط تطابق قيمة كتبها ولي الأمر بنفسه، لا القائمة كاملة)
+    const hash = await sha256Hex(nationalId.trim());
+    const studentId = await cloudGet<string>(`kc_nid_index/${hash}`);
     const students = await fetchFresh<StudentProfile[]>("kc_students", []);
-    const found = students.find(s => s.nationalId === nationalId.trim() && s.status === "approved");
+    const found = studentId ? students.find(s => s.id === studentId && s.status === "approved") : undefined;
     if (found) {
       setStudent(found); setError("");
       const [allCerts, allPoints, allBadges, allProjects] = await Promise.all([

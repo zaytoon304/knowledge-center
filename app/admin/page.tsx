@@ -16,12 +16,15 @@ import type { ProgramRegistration } from "@/app/programs/register/page";
 import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
 
-// جوال الطالب/ولي الأمر لم يعودا داخل "kc_students" العامة (حماية أمنية) — يُقرآن من عقدة
-// منفصلة "kc_students_contact" مقروءة للأدمن فقط بقواعد Firebase، ونُدمجهما هنا محلياً بجهاز الأدمن
-async function mergeStudentContacts<T extends { id: string; phone?: string; parentPhone?: string }>(students: T[]): Promise<T[]> {
-  const contacts = await cloudGet<Record<string, { phone: string; parentPhone: string }>>("kc_students_contact");
+// جوال الطالب/ولي الأمر/رقم الهوية الوطنية لم تعد داخل "kc_students" العامة (حماية أمنية) — تُقرأ من
+// عقدة منفصلة "kc_students_contact" مقروءة للأدمن فقط بقواعد Firebase، ونُدمجها هنا محلياً بجهاز
+// الأدمن فقط للعرض — تنبيه مهم: هذه النسخة المدمجة تُحفظ محلياً بـlocalStorage لعرض لوحة الإدارة،
+// ويجب ألا تُكتب أبداً للسحابة (كل كتابة سحابية لـkc_students تمر عبر cloudTransact بقيمة "current"
+// الحقيقية من قاعدة البيانات، لا هذه النسخة المحلية المدمجة — تحقق من هذا قبل أي تعديل مستقبلي).
+async function mergeStudentContacts<T extends { id: string; phone?: string; parentPhone?: string; nationalId?: string }>(students: T[]): Promise<T[]> {
+  const contacts = await cloudGet<Record<string, { phone: string; parentPhone: string; nationalId: string }>>("kc_students_contact");
   if (!contacts) return students;
-  return students.map(s => contacts[s.id] ? { ...s, phone: contacts[s.id].phone, parentPhone: contacts[s.id].parentPhone } : s);
+  return students.map(s => contacts[s.id] ? { ...s, phone: contacts[s.id].phone, parentPhone: contacts[s.id].parentPhone, nationalId: contacts[s.id].nationalId } : s);
 }
 // نفس الشي لجوال المنسّق — عقدة منفصلة "kc_coordinators_contact" مقروءة للأدمن فقط
 async function mergeCoordinatorContacts<T extends { id: string; phone?: string }>(coords: T[]): Promise<T[]> {

@@ -38,10 +38,10 @@ export default function StudentProfilePage() {
 
       if (!found) { router.push("/admin"); return; }
 
-      // جوال الطالب/ولي الأمر لم يعودا داخل "kc_students" العامة (حماية أمنية) — نجيبهما
-      // من عقدة "kc_students_contact" المقروءة للأدمن فقط، وندمجهما بهذه الصفحة فقط
-      const contact = await cloudGet<{ phone: string; parentPhone: string }>(`kc_students_contact/${id}`);
-      if (contact) found = { ...found, phone: contact.phone, parentPhone: contact.parentPhone };
+      // جوال الطالب/ولي الأمر/رقم الهوية لم تعد داخل "kc_students" العامة (حماية أمنية) — نجيبها
+      // من عقدة "kc_students_contact" المقروءة للأدمن فقط، وندمجها بهذه الصفحة فقط
+      const contact = await cloudGet<{ phone: string; parentPhone: string; nationalId: string }>(`kc_students_contact/${id}`);
+      if (contact) found = { ...found, phone: contact.phone, parentPhone: contact.parentPhone, nationalId: contact.nationalId };
       setStudent(found);
 
       const allProjects = load<ProjectItem[]>("kc_projects", []);
