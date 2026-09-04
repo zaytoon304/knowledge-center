@@ -4,7 +4,7 @@ import { Award, Star, Gavel, CalendarDays, Sparkles, TrendingUp, Target } from "
 import { cloudGet, cloudListen } from "@/lib/cloud";
 import { DailyLogEntry, PlatformAchievement } from "@/contexts/AuthContext";
 import { AuctionItem, AuctionState } from "@/lib/auction";
-import { getSkill, type SkillMastery } from "@/lib/skillMap";
+import { DEFAULT_ROBOTICS_SKILLS, findSkill, type Skill, type SkillMastery } from "@/lib/skillMap";
 import CenterLogo from "@/components/icons/CenterLogo";
 
 interface Certificate {
@@ -40,6 +40,7 @@ export default function WallOfFamePage() {
   const [auctions, setAuctions] = useState<AuctionItem[]>([]);
   const [dailyLog, setDailyLog] = useState<DailyLogEntry[]>([]);
   const [skillMasteries, setSkillMasteries] = useState<SkillMastery[]>([]);
+  const [robotSkills, setRobotSkills] = useState<Skill[]>(DEFAULT_ROBOTICS_SKILLS);
   const [featuredAuctionState, setFeaturedAuctionState] = useState<AuctionState | null>(null);
   const [index, setIndex] = useState(0);
   const [now, setNow] = useState(new Date());
@@ -50,6 +51,7 @@ export default function WallOfFamePage() {
     cloudGet<AuctionItem[]>("kc_auctions").then(d => setAuctions(Array.isArray(d) ? d : []));
     cloudGet<DailyLogEntry[]>("kc_daily_log").then(d => setDailyLog(Array.isArray(d) ? d : []));
     cloudGet<SkillMastery[]>("kc_skill_mastery").then(d => setSkillMasteries(Array.isArray(d) ? d : []));
+    cloudGet<Skill[]>("kc_robotics_skills").then(d => { if (Array.isArray(d) && d.length > 0) setRobotSkills(d); });
   };
 
   useEffect(() => {
@@ -195,14 +197,14 @@ export default function WallOfFamePage() {
         ) : slide.kind === "skillMastery" ? (
           <div key={index} className="animate-fade-in flex items-center gap-14 max-w-5xl w-full">
             <div className="w-64 h-64 rounded-[2.5rem] bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-[100px] shadow-2xl flex-shrink-0">
-              {getSkill(slide.data.skillId)?.emoji || "🤖"}
+              {findSkill(robotSkills, slide.data.skillId)?.emoji || "🤖"}
             </div>
             <div className="flex-1">
               <p className="text-emerald-400 font-bold text-lg mb-2 flex items-center gap-2">
                 <Target className="w-5 h-5" /> إتقان مهارة جديدة
               </p>
               <h1 className="text-5xl font-bold mb-4 leading-tight">{slide.data.studentName}</h1>
-              <p className="text-2xl text-slate-300 mb-3">أتقن مهارة: {getSkill(slide.data.skillId)?.title || slide.data.skillId}</p>
+              <p className="text-2xl text-slate-300 mb-3">أتقن مهارة: {findSkill(robotSkills, slide.data.skillId)?.title || slide.data.skillId}</p>
               <p className="text-slate-500">اعتمدها المشرف بتاريخ {slide.data.reviewedAt ? new Date(slide.data.reviewedAt).toLocaleDateString("ar-SA") : ""}</p>
             </div>
           </div>

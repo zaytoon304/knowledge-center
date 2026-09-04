@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Lock, Clock, CheckCircle2, XCircle, Send } from "lucide-react";
 import { StudentProfile, CoordinatorProfile } from "@/contexts/AuthContext";
-import { ROBOTICS_SKILLS, prerequisitesMet, requestSkillMastery, type SkillMastery, getSkill } from "@/lib/skillMap";
+import { cloudListen } from "@/lib/cloud";
+import { DEFAULT_ROBOTICS_SKILLS, prerequisitesMet, requestSkillMastery, findSkill, type SkillMastery, type Skill } from "@/lib/skillMap";
 
 // آخر طلب فعلي لكل مهارة (لو أُعيد الطلب بعد رفض، الأحدث هو المعتمد بالعرض — القديم يبقى بالسجل التاريخي بس)
 function latestFor(masteries: SkillMastery[], studentId: string, skillId: string): SkillMastery | undefined {
@@ -18,6 +19,14 @@ export default function SkillMasteryPanel({
 }) {
   const [reasonDrafts, setReasonDrafts] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [skills, setSkills] = useState<Skill[]>(DEFAULT_ROBOTICS_SKILLS);
+
+  useEffect(() => {
+    const unsub = cloudListen<Skill[]>("kc_robotics_skills", data => {
+      if (Array.isArray(data) && data.length > 0) setSkills(data);
+    });
+    return unsub;
+  }, []);
 
   const approvedIds = new Set(
     masteries.filter(m => m.studentId === student.id && m.status === "approved").map(m => m.skillId)
@@ -37,7 +46,7 @@ export default function SkillMasteryPanel({
 
   return (
     <div className="space-y-2.5 bg-violet-50/50 rounded-xl p-3 border border-violet-100">
-      {ROBOTICS_SKILLS.map(skill => {
+      {skills.map(skill => {
         const approved = approvedIds.has(skill.id);
         const latest = latestFor(masteries, student.id, skill.id);
         const unlocked = approved || prerequisitesMet(skill, approvedIds);
@@ -82,7 +91,7 @@ export default function SkillMasteryPanel({
 
             {!approved && !isPending && !unlocked && (
               <p className="text-[11px] text-gray-400 mt-1">
-                يحتاج إتقان: {skill.prerequisites.map(id => getSkill(id)?.title).join(" و ")}
+                يحتاج إتقان: {skill.prerequisites.map(id => findSkill(skills, id)?.title).join(" و ")}
               </p>
             )}
           </div>

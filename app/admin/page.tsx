@@ -15,7 +15,8 @@ import { InterestSurveyResponse, ALL_INTEREST_ITEMS, SurveyGroupKey, SURVEY_GROU
 import type { ProgramRegistration } from "@/app/programs/register/page";
 import { GRADES } from "@/lib/grades";
 import { getNotes, addNote } from "@/lib/notes";
-import { ROBOTICS_SKILLS, reviewSkillMastery, type SkillMastery } from "@/lib/skillMap";
+import { getSkillDefs, reviewSkillMastery, type Skill, type SkillMastery } from "@/lib/skillMap";
+import SkillDefsManager from "@/components/admin/SkillDefsManager";
 
 // جوال الطالب/ولي الأمر/رقم الهوية الوطنية لم تعد داخل "kc_students" العامة (حماية أمنية) — تُقرأ من
 // عقدة منفصلة "kc_students_contact" مقروءة للأدمن فقط بقواعد Firebase، ونُدمجها هنا محلياً بجهاز
@@ -266,6 +267,7 @@ export default function AdminPage() {
   const [interestSurvey, setInterestSurvey] = useState<InterestSurveyResponse[]>([]);
   const [programRegistrations, setProgramRegistrations] = useState<ProgramRegistration[]>([]);
   const [skillMasteries, setSkillMasteries] = useState<SkillMastery[]>([]);
+  const [robotSkillDefs, setRobotSkillDefs] = useState<Skill[]>([]);
   const [printGroup, setPrintGroup] = useState<SurveyGroupKey | null>(null);
   const [showDForm, setShowDForm] = useState(false);
   const [dImagesUploading, setDImagesUploading] = useState(0);
@@ -369,6 +371,7 @@ export default function AdminPage() {
       cloudGet<ProgramRegistration[]>("kc_program_registrations").then(data => setProgramRegistrations(Array.isArray(data) ? data : []));
     } else if (tab === "skill_mastery") {
       cloudGet<SkillMastery[]>("kc_skill_mastery").then(data => setSkillMasteries(Array.isArray(data) ? data : []));
+      getSkillDefs().then(setRobotSkillDefs);
     } else if (tab === "codes") {
       getGroqKey().then(setGroqKey);
     }
@@ -2359,7 +2362,7 @@ export default function AdminPage() {
       {tab === "skill_mastery" && (() => {
         const pendingMasteries = skillMasteries.filter(m => m.status === "pending").sort((a, b) => a.requestedAt.localeCompare(b.requestedAt));
         const reviewedMasteries = skillMasteries.filter(m => m.status !== "pending").sort((a, b) => (b.reviewedAt || "").localeCompare(a.reviewedAt || "")).slice(0, 15);
-        const skillTitle = (id: string) => ROBOTICS_SKILLS.find(s => s.id === id)?.title || id;
+        const skillTitle = (id: string) => robotSkillDefs.find(s => s.id === id)?.title || id;
         const act = async (id: string, approve: boolean, note?: string) => {
           await reviewSkillMastery(id, approve, note);
           cloudGet<SkillMastery[]>("kc_skill_mastery").then(data => setSkillMasteries(Array.isArray(data) ? data : []));
@@ -2414,6 +2417,8 @@ export default function AdminPage() {
                 ))}
               </div>
             )}
+
+            <SkillDefsManager />
           </div>
         );
       })()}

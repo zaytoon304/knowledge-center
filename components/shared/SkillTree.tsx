@@ -1,16 +1,13 @@
 "use client";
+import { useState, useEffect } from "react";
 import { Lock, CheckCircle2, Circle } from "lucide-react";
-import { ROBOTICS_SKILLS, prerequisitesMet, type Skill } from "@/lib/skillMap";
+import { cloudListen } from "@/lib/cloud";
+import { DEFAULT_ROBOTICS_SKILLS, prerequisitesMet, skillTiers, type Skill } from "@/lib/skillMap";
 
 // شجرة المهارات مرسومة كمستويات (tiers) بدل شجرة حقيقية متفرعة بصرياً — أبسط وأثبت بالطباعة
 // والجوال (نفس فلسفة الخريطة الذهنية بأدوات الذكاء الاصطناعي: بطاقات لا رسم شجري حقيقي).
-const TIERS: string[][] = [
-  ["basics"],
-  ["sensors", "motors", "logic"],
-  ["integration"],
-  ["advanced"],
-];
-
+// المستويات تُحسب ديناميكياً (skillTiers) من قائمة المهارات الفعلية المخزّنة بالسحابة —
+// تتكيّف تلقائياً لو الأدمن أضاف/عدّل/حذف مهارة من لوحة الإدارة.
 function SkillNode({ skill, approved, unlocked }: { skill: Skill; approved: boolean; unlocked: boolean }) {
   return (
     <div
@@ -41,25 +38,34 @@ function SkillNode({ skill, approved, unlocked }: { skill: Skill; approved: bool
 }
 
 export default function SkillTree({ approvedSkillIds }: { approvedSkillIds: string[] }) {
+  const [skills, setSkills] = useState<Skill[]>(DEFAULT_ROBOTICS_SKILLS);
+
+  useEffect(() => {
+    const unsub = cloudListen<Skill[]>("kc_robotics_skills", data => {
+      if (Array.isArray(data) && data.length > 0) setSkills(data);
+    });
+    return unsub;
+  }, []);
+
   const approvedSet = new Set(approvedSkillIds);
-  const masteredCount = ROBOTICS_SKILLS.filter(s => approvedSet.has(s.id)).length;
+  const masteredCount = skills.filter(s => approvedSet.has(s.id)).length;
+  const tiers = skillTiers(skills);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-gray-800">🤖 شجرة مهارات الروبوتات</h3>
         <span className="text-xs font-semibold bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full">
-          {masteredCount} / {ROBOTICS_SKILLS.length} مهارة
+          {masteredCount} / {skills.length} مهارة
         </span>
       </div>
       <div className="space-y-3">
-        {TIERS.map((tierIds, tierIdx) => (
-          <div key={tierIdx} className={`grid gap-3 ${tierIds.length === 1 ? "grid-cols-1 max-w-xs mx-auto" : "grid-cols-1 sm:grid-cols-3"}`}>
-            {tierIds.map(id => {
-              const skill = ROBOTICS_SKILLS.find(s => s.id === id)!;
-              const approved = approvedSet.has(id);
+        {tiers.map((tierSkills, tierIdx) => (
+          <div key={tierIdx} className={`grid gap-3 ${tierSkills.length === 1 ? "grid-cols-1 max-w-xs mx-auto" : "grid-cols-1 sm:grid-cols-3"}`}>
+            {tierSkills.map(skill => {
+              const approved = approvedSet.has(skill.id);
               const unlocked = approved || prerequisitesMet(skill, approvedSet);
-              return <SkillNode key={id} skill={skill} approved={approved} unlocked={unlocked} />;
+              return <SkillNode key={skill.id} skill={skill} approved={approved} unlocked={unlocked} />;
             })}
           </div>
         ))}
