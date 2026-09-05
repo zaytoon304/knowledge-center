@@ -6,7 +6,7 @@ import {
   Home, BookOpen, Layers, FolderOpen, GraduationCap,
   BarChart3, Cpu, Bot, UserSquare, Trophy, Users,
   Archive, Settings, X, LogOut, LogIn, Briefcase, CalendarDays,
-  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode, Radio, PenLine, Gamepad2, Brain, Sparkles, Images, Lightbulb, Heart, Wand2, Gavel, MonitorPlay
+  MessageSquare, Video, ChevronLeft, Eye, Award, Medal, Kanban, Baby, Contact, QrCode, Radio, PenLine, Gamepad2, Brain, Sparkles, Images, Lightbulb, Heart, Wand2, Gavel, MonitorPlay, Zap
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth, CoordinatorProfile } from "@/contexts/AuthContext";
@@ -46,6 +46,7 @@ const adminNavItems = [
   { href: "/emerging-tech", label: "التقنيات الناشئة", icon: Cpu },
   { href: "/ai-assistant", label: "المساعد الذكي", icon: Bot },
   { href: "/ai-tools", label: "أدوات الذكاء الاصطناعي", icon: Wand2 },
+  { href: "/live-quiz", label: "مسابقة صفية حية", icon: Zap },
   { href: "/portfolio", label: "الملف المهني", icon: UserSquare },
   { href: "/competitions", label: "المسابقات والجوائز", icon: Trophy },
   { href: "/student-portal", label: "بوابة الطلاب", icon: Users },
@@ -77,6 +78,7 @@ const studentNavItems = [
 const coordinatorNavItems = [
   { href: "/coordinator-portal", label: "بوابتي", icon: Briefcase },
   { href: "/ai-tools", label: "أدوات الذكاء الاصطناعي", icon: Wand2 },
+  { href: "/live-quiz", label: "مسابقة صفية حية", icon: Zap },
   { href: "/ai-assistant", label: "المساعد الذكي", icon: Bot },
 ];
 
