@@ -1,10 +1,17 @@
 import { ref, get, set, push as dbPush, onValue, off, runTransaction, type DataSnapshot } from "firebase/database";
 import { db, ensureSignedIn } from "./firebase";
 
+// اتصال Firebase أحياناً يعلق بلا نهاية على بعض المتصفحات/الشبكات (لاحظنا هذا فعلياً بسفاري) —
+// بدون هذا الحد الزمني، أي زر "تحديث" ينتظر السحابة يبقى عالقاً للأبد بلا أي رسالة خطأ للمستخدم.
+const CLOUD_GET_TIMEOUT_MS = 12000;
+
 export async function cloudGet<T>(key: string): Promise<T | null> {
   try {
     await ensureSignedIn();
-    const snap = await get(ref(db, key));
+    const snap = await Promise.race([
+      get(ref(db, key)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("cloudGet timeout")), CLOUD_GET_TIMEOUT_MS)),
+    ]);
     return snap.exists() ? (snap.val() as T) : null;
   } catch (e) {
     console.error(`cloudGet failed for "${key}":`, e);
