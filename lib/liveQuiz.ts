@@ -69,21 +69,24 @@ export async function joinSession(id: string, playerId: string, name: string): P
 }
 
 export async function startQuestion(sessionId: string, index: number): Promise<void> {
+  // current ما لازم يكون فاضي أبداً هنا (الجلسة أصلاً موجودة قبل ما المعلم يبدأ سؤال) — لو صار
+  // (تعطّل مؤقت بالقراءة مثلاً)، نُلغي المعاملة بأمان (undefined) بدل ما نكتب null فوق الجلسة
+  // الحقيقية ونمسحها بالغلط.
   await cloudTransact<QuizSession>(sessionKey(sessionId), current =>
-    current ? { ...current, status: "question", currentIndex: index, questionStartedAt: new Date().toISOString() } : current as QuizSession
+    current ? { ...current, status: "question", currentIndex: index, questionStartedAt: new Date().toISOString() } : undefined
   );
 }
 
 export async function revealAnswer(sessionId: string): Promise<void> {
-  await cloudTransact<QuizSession>(sessionKey(sessionId), current => current ? { ...current, status: "reveal" } : current as QuizSession);
+  await cloudTransact<QuizSession>(sessionKey(sessionId), current => current ? { ...current, status: "reveal" } : undefined);
 }
 
 export async function showLeaderboard(sessionId: string): Promise<void> {
-  await cloudTransact<QuizSession>(sessionKey(sessionId), current => current ? { ...current, status: "leaderboard" } : current as QuizSession);
+  await cloudTransact<QuizSession>(sessionKey(sessionId), current => current ? { ...current, status: "leaderboard" } : undefined);
 }
 
 export async function endQuiz(sessionId: string): Promise<void> {
-  await cloudTransact<QuizSession>(sessionKey(sessionId), current => current ? { ...current, status: "ended" } : current as QuizSession);
+  await cloudTransact<QuizSession>(sessionKey(sessionId), current => current ? { ...current, status: "ended" } : undefined);
 }
 
 // النقاط: 500 ثابتة لأي إجابة صحيحة + حتى 500 إضافية حسب سرعة الإجابة (أسرع = أعلى)، صفر للخطأ.
@@ -98,7 +101,10 @@ export async function submitAnswer(
   const speedRatio = Math.max(0, Math.min(1, 1 - elapsedMs / timeLimitMs));
   const points = correct ? Math.round(500 + 500 * speedRatio) : 0;
   await cloudTransact<QuizPlayer>(`${playersKey(sessionId)}/${playerId}`, current => {
-    if (!current || current.lastAnsweredIndex >= questionIndex) return current as QuizPlayer;
+    // لو اللاعب مو موجود أصلاً أو جاوب هالسؤال من قبل، نُلغي المعاملة (undefined) — إرجاع current
+    // نفسه هنا كان يكتب null فوق نقاط اللاعب الحقيقية لو current صار null بالغلط لحظياً (تعطّل
+    // مؤقت بالقراءة)، وهذا يمسح تقدّمه فعلياً وسط مسابقة حية.
+    if (!current || current.lastAnsweredIndex >= questionIndex) return undefined;
     return { ...current, score: current.score + points, lastAnsweredIndex: questionIndex };
   });
 }

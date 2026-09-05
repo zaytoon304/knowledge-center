@@ -59,7 +59,10 @@ export async function cloudPush<T>(key: string, item: T): Promise<boolean> {
 
 // يعدّل قيمة موجودة في Firebase بأمان عبر دالة تحويل، مع إعادة محاولة تلقائية لو تغيّرت البيانات
 // أثناء الكتابة (مفيد لتعديلات متزامنة من عدة أجهزة بنفس اللحظة، مثل إضافة مداخلة نقاش باجتماع).
-export async function cloudTransact<T>(key: string, updateFn: (current: T | null) => T): Promise<boolean> {
+// إرجاع "undefined" من updateFn يُلغي المعاملة بأمان بدون أي كتابة (بدل الاضطرار لتلفيق قيمة
+// وهمية) — استخدمه لو current كان null ولا فيه شي منطقي تكتبه؛ لا تُرجع null أبداً هنا، لأن
+// فايربيز يتعامل مع null كأمر "احذف هذا المسار" فعلياً، لا "لا تفعل شيء".
+export async function cloudTransact<T>(key: string, updateFn: (current: T | null) => T | undefined): Promise<boolean> {
   try {
     await withTimeout(ensureSignedIn(), CLOUD_WRITE_TIMEOUT_MS, "cloudTransact sign-in");
     const result = await withTimeout(
