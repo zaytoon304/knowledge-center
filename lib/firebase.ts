@@ -18,17 +18,29 @@ export const db = getDatabase(firebaseApp);
 
 let signInPromise: Promise<void> | null = null;
 
+// المدة القصوى المسموحة لتسجيل الدخول المجهول — على سفاري تحديداً (ITP/حاجب إعلانات/شبكات
+// مدرسية) لاحظنا `signInAnonymously` أحياناً لا يرجع أي نتيجة إطلاقاً (لا نجاح ولا خطأ)، ويبقى
+// معلّقاً للأبد لأن fetch() الداخلي بلا أي مهلة افتراضية بالمتصفح. بدون هذا الحد الزمني، كل نداء
+// مستقبلي لـensureSignedIn() (ومنه كل عمليات cloud.ts) يتعلّق للأبد بصمت تام بلا أي خطأ ظاهر —
+// هذا هو السبب الجذري الحقيقي وراء "المنصة ما تفتح" على سفاري تحديداً.
+const SIGN_IN_TIMEOUT_MS = 10000;
+
 // يضمن وجود مستخدم مجهول مسجّل دخول قبل أي عملية قراءة/كتابة على قاعدة
 // البيانات — قواعد الأمان تتطلب auth != null، بدون هذا كل الطلبات تُرفض
 export function ensureSignedIn(): Promise<void> {
   if (auth.currentUser) return Promise.resolve();
   if (signInPromise) return signInPromise;
-  signInPromise = signInAnonymously(auth)
-    .then(() => undefined)
-    .catch((e) => {
-      signInPromise = null;
-      throw e;
-    });
+  signInPromise = Promise.race([
+    signInAnonymously(auth).then(() => undefined),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Anonymous sign-in timeout")), SIGN_IN_TIMEOUT_MS)
+    ),
+  ]).catch((e) => {
+    // نصفّر الوعد المخزَّن عند أي فشل (بما فيه التايم آوت) — بدون هذا، أي محاولة تعليق واحدة
+    // تُسمّم كل محاولة مستقبلية للأبد لأن نفس الوعد المعلّق يُعاد استخدامه دايماً
+    signInPromise = null;
+    throw e;
+  });
   return signInPromise;
 }
 
