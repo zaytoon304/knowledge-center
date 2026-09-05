@@ -4,7 +4,7 @@ import { useAuth, StudentProfile } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import {
   Users, BookOpen, Play, Lightbulb, Radio, CreditCard,
-  MessageSquare, LogIn, Clock, XCircle, ExternalLink, ChevronDown, ChevronUp, Code, ClipboardList, Trophy
+  MessageSquare, LogIn, Clock, XCircle, ExternalLink, ChevronDown, ChevronUp, Code, ClipboardList, Trophy, Compass, Video as VideoIcon
 } from "lucide-react";
 import GroupsSection from "@/components/student/GroupsSection";
 import { getDeviceId } from "@/lib/deviceCode";
@@ -12,10 +12,14 @@ import { whatsappLink } from "@/lib/whatsapp";
 import { cloudListen } from "@/lib/cloud";
 import SkillTree from "@/components/shared/SkillTree";
 import type { SkillMastery } from "@/lib/skillMap";
+import StudentPortfolio from "@/components/shared/StudentPortfolio";
+import VideoResponseSection from "@/components/student/VideoResponseSection";
 
 const tabs = [
   { id: "dashboard", label: "رئيسيتي", icon: Users },
+  { id: "portfolio", label: "رحلتي", icon: Compass },
   { id: "skills", label: "مهاراتي", icon: Trophy },
+  { id: "video_response", label: "اشرح بفيديو", icon: VideoIcon },
   { id: "groups", label: "الجروبات", icon: MessageSquare },
   { id: "courses", label: "الدورات", icon: BookOpen },
   { id: "videos", label: "الفيديوهات", icon: Play },
@@ -202,6 +206,13 @@ export default function StudentPortalPage() {
         </div>
       )}
 
+      {/* Portfolio */}
+      {activeTab === "portfolio" && (
+        <div className="card p-5">
+          <StudentPortfolio studentId={student.id} studentName={student.name} />
+        </div>
+      )}
+
       {/* Skills */}
       {activeTab === "skills" && (
         <div className="card p-5">
@@ -210,6 +221,9 @@ export default function StudentPortalPage() {
           />
         </div>
       )}
+
+      {/* Video Response */}
+      {activeTab === "video_response" && <VideoResponseSection student={student} />}
 
       {/* Groups */}
       {activeTab === "groups" && (

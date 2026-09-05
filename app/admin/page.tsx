@@ -4,12 +4,12 @@ import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
-  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart, Printer, X as XIcon, Gavel, Target, ClipboardCheck
+  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart, Printer, X as XIcon, Gavel, Target, ClipboardCheck, Film
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
 import { getGroqKey, saveGroqKey, deleteGroqKey } from "@/lib/groq";
-import { signInAsAdmin } from "@/lib/firebase";
+import { signInAsAdmin, signOutAdmin } from "@/lib/firebase";
 import { generateAccessCode } from "@/lib/deviceCode";
 import { InterestSurveyResponse, ALL_INTEREST_ITEMS, SurveyGroupKey, SURVEY_GROUPS, surveyGroupKey } from "@/lib/interestSurvey";
 import type { ProgramRegistration } from "@/app/programs/register/page";
@@ -18,6 +18,7 @@ import { getNotes, addNote } from "@/lib/notes";
 import { getSkillDefs, reviewSkillMastery, type Skill, type SkillMastery } from "@/lib/skillMap";
 import SkillDefsManager from "@/components/admin/SkillDefsManager";
 import TeacherAssessmentAdmin from "@/components/admin/TeacherAssessmentAdmin";
+import VideoResponseAdmin from "@/components/admin/VideoResponseAdmin";
 
 // جوال الطالب/ولي الأمر/رقم الهوية الوطنية لم تعد داخل "kc_students" العامة (حماية أمنية) — تُقرأ من
 // عقدة منفصلة "kc_students_contact" مقروءة للأدمن فقط بقواعد Firebase، ونُدمجها هنا محلياً بجهاز
@@ -382,6 +383,13 @@ export default function AdminPage() {
   // --- الآن نتحقق من تسجيل الدخول ---
   if (!authed) return <AdminLogin onSuccess={() => setAuthed(true)} />;
 
+  const logout = async () => {
+    if (!confirm("تسجيل الخروج من لوحة الإدارة؟")) return;
+    await signOutAdmin();
+    localStorage.removeItem("kc_admin_auth");
+    setAuthed(false);
+  };
+
   const pending = students.filter(s => s.status === "pending");
   const approved = students.filter(s => s.status === "approved");
 
@@ -409,6 +417,7 @@ export default function AdminPage() {
     { id: "program_regs", label: "تسجيلات البرامج", icon: UserSquare2, badge: programRegistrations.length || undefined },
     { id: "skill_mastery", label: "إتقان المهارات", icon: Target, badge: skillMasteries.filter(m => m.status === "pending").length || undefined },
     { id: "teacher_assessment", label: "قياس المعلمين", icon: ClipboardCheck },
+    { id: "video_responses", label: "فيديو الطلاب", icon: Film },
     { id: "competitions_cms", label: "المسابقات", icon: Trophy },
     { id: "project_bank_cms", label: "بنك المشاريع", icon: Archive },
     { id: "emerging_tech_cms", label: "التقنيات الناشئة", icon: Cpu },
@@ -426,12 +435,17 @@ export default function AdminPage() {
     <div className="space-y-5 animate-fade-in">
       {/* Header */}
       <div className="card p-6 bg-gradient-to-l from-red-800 to-rose-700 text-white">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><Settings className="w-7 h-7" /></div>
-          <div>
-            <h1 className="text-2xl font-bold">لوحة الإدارة</h1>
-            <p className="text-white font-semibold text-base">إدارة الطلاب والجروبات والمحتوى</p>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><Settings className="w-7 h-7" /></div>
+            <div>
+              <h1 className="text-2xl font-bold">لوحة الإدارة</h1>
+              <p className="text-white font-semibold text-base">إدارة الطلاب والجروبات والمحتوى</p>
+            </div>
           </div>
+          <button onClick={logout} className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl text-sm font-semibold">
+            <LogOut className="w-4 h-4" /> تسجيل الخروج
+          </button>
         </div>
       </div>
 
@@ -2426,6 +2440,8 @@ export default function AdminPage() {
       })()}
 
       {tab === "teacher_assessment" && <TeacherAssessmentAdmin />}
+
+      {tab === "video_responses" && <VideoResponseAdmin />}
 
       {/* تقرير الاستبانة القابل للطباعة — يظهر فوق كل شيء ويُعزل عند الطباعة الفعلية */}
       {printGroup && (() => {

@@ -5,6 +5,7 @@ import { cloudGet } from "@/lib/cloud";
 import { sha256Hex } from "@/lib/hash";
 import SkillTree from "@/components/shared/SkillTree";
 import type { SkillMastery } from "@/lib/skillMap";
+import StudentPortfolio from "@/components/shared/StudentPortfolio";
 
 interface StudentProfile {
   id: string; name: string; nationalId: string; school: string; grade: string;
@@ -150,6 +151,11 @@ export default function ParentPortalPage() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Portfolio */}
+          <div className="card p-4">
+            <StudentPortfolio studentId={student.id} studentName={student.name} />
           </div>
 
           {/* Skill Tree */}
