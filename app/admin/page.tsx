@@ -452,6 +452,16 @@ export default function AdminPage() {
     { id: "permissions", label: "الصلاحيات", icon: Shield },
   ];
 
+  // تجميع منطقي للتبويبات (33 تبويب بصف واحد كانوا يخفون بعض الميزات عن محمد نفسه — راجع
+  // PLAN.md 2026-09-03) — تجميع بصري بس، بدون أي تغيير بمعرّفات التبويبات أو منطق العرض تحتها.
+  const NAV_GROUPS: { label: string; ids: string[] }[] = [
+    { label: "الطلاب والمنسقون", ids: ["students", "coordinators", "approved", "student_tracking", "student_tasks", "coord_tracking", "visitors", "permissions"] },
+    { label: "التقييم والتقدم", ids: ["skill_mastery", "teacher_assessment", "video_responses", "interest_survey", "monthly_report", "indicators_cms"] },
+    { label: "المحتوى التعليمي", ids: ["courses", "videos", "projects", "knowledge", "programs_cms", "program_regs", "project_bank_cms", "emerging_tech_cms", "competitions_cms"] },
+    { label: "الأنشطة الحية", ids: ["groups", "live", "meetings_admin", "whiteboard_admin", "auction"] },
+    { label: "عام", ids: ["shop", "achievements", "codes", "daily", "supervisor_profile"] },
+  ];
+
   return (
     <div className="space-y-5 animate-fade-in">
       {/* Header */}
@@ -521,18 +531,27 @@ export default function AdminPage() {
         })}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {navTabs.map(t => {
-          const Icon = t.icon;
-          return (
-            <button key={t.id} onClick={() => { setTab(t.id); refresh(); }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all relative ${tab === t.id ? "bg-red-700 text-white shadow-md" : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"}`}>
-              <Icon className="w-4 h-4" /> {t.label}
-              {t.badge ? <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 text-gray-800 text-xs rounded-full flex items-center justify-center font-bold">{t.badge}</span> : null}
-            </button>
-          );
-        })}
+      {/* Tabs — مجمّعة حسب الفئة بدل صف واحد طويل (راجع NAV_GROUPS فوق) */}
+      <div className="space-y-3">
+        {NAV_GROUPS.map(g => (
+          <div key={g.label}>
+            <p className="text-xs font-bold text-gray-400 mb-1.5 px-1">{g.label}</p>
+            <div className="flex gap-2 flex-wrap">
+              {g.ids.map(id => {
+                const t = navTabs.find(x => x.id === id);
+                if (!t) return null;
+                const Icon = t.icon;
+                return (
+                  <button key={t.id} onClick={() => { setTab(t.id); refresh(); }}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all relative ${tab === t.id ? "bg-red-700 text-white shadow-md" : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"}`}>
+                    <Icon className="w-4 h-4" /> {t.label}
+                    {t.badge ? <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 text-gray-800 text-xs rounded-full flex items-center justify-center font-bold">{t.badge}</span> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Pending Students */}
