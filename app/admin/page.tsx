@@ -221,6 +221,8 @@ export default function AdminPage() {
   // --- كل الـ hooks أولاً قبل أي return ---
   const [authed, setAuthed] = useState(false);
   const [refreshingCloud, setRefreshingCloud] = useState(false);
+  const [cloudSyncError, setCloudSyncError] = useState(false);
+  const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
   const [tab, setTab] = useState("students");
 
   // دخول مباشر لتبويب معيّن عبر رابط ?tab=xxx (تُستخدم من أيقونة "مزاد المشاريع" بالقائمة الجانبية)
@@ -315,6 +317,12 @@ export default function AdminPage() {
       cloudGet<Record<string, HotsResult>>("kc_hots_results"),
       cloudGet<InterestSurveyResponse[]>("kc_interest_survey"),
     ]);
+    // لو رجعت المصفوفات الحرجة null (لا حتى مصفوفة فاضية)، هذا دليل قاطع إن الاتصال بالسحابة
+    // فشل فعلياً (مو إن البيانات فاضية فعلاً) — نُظهر تحذيراً صريحاً بدل ما نعرض بصمت بيانات
+    // محلية قديمة قد تكون قبل أيام، وهذا بالضبط اللي كان يلخبط محمد سابقاً.
+    const cloudFetchFailed = cloudStudents === null || cloudCoords === null;
+    setCloudSyncError(cloudFetchFailed);
+    if (!cloudFetchFailed) setLastSyncAt(new Date());
     if (Array.isArray(cloudStudents) && cloudStudents.length > 0)
       localStorage.setItem("kc_students", JSON.stringify(await mergeStudentContacts(cloudStudents)));
     if (Array.isArray(cloudCoords) && cloudCoords.length > 0)
@@ -467,6 +475,19 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* حالة الاتصال بالسحابة — يظهر صراحة لو فشل آخر تحديث بدل ما يعرض بيانات قديمة بصمت */}
+      {cloudSyncError ? (
+        <div className="card p-4 bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+          <XCircle className="w-5 h-5 flex-shrink-0" />
+          <div>
+            <p className="font-bold">تعذّر الاتصال بالسحابة — البيانات المعروضة الآن قد تكون قديمة.</p>
+            <p className="text-xs mt-0.5">تأكد من اتصال الإنترنت واضغط "تحديث البيانات" فوق. لو استمر الخطأ، جرّب متصفحاً آخر (كروم بدل سفاري مثلاً).</p>
+          </div>
+        </div>
+      ) : lastSyncAt ? (
+        <p className="text-xs text-gray-400 text-left -mt-2">✓ آخر تحديث ناجح من السحابة: {lastSyncAt.toLocaleTimeString("ar-SA")}</p>
+      ) : null}
 
       {/* اختصارات سريعة — بضغطة واحدة توديك لأكثر الأقسام استخداماً */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
