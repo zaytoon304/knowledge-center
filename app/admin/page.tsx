@@ -4,7 +4,7 @@ import {
   Settings, Users, Shield, Plus, Trash2, CheckCircle,
   Clock, XCircle, MessageSquare, Radio, BookOpen, Play, Lightbulb, Lock,
   Briefcase, ShoppingBag, Star, Key, CalendarDays, ChevronDown, ChevronUp, Code, Image as ImageIcon,
-  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart, Printer, X as XIcon, Gavel, Target, ClipboardCheck, Film
+  Layers, Trophy, Archive, Cpu, BarChart3, Video, Globe, UserSquare2, GraduationCap, Award as AwardIcon, ExternalLink, ClipboardList, LogOut, Heart, Printer, X as XIcon, Gavel, Target, ClipboardCheck, Film, RefreshCw
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cloudGet, cloudSet } from "@/lib/cloud";
@@ -220,6 +220,7 @@ export default function AdminPage() {
 
   // --- كل الـ hooks أولاً قبل أي return ---
   const [authed, setAuthed] = useState(false);
+  const [refreshingCloud, setRefreshingCloud] = useState(false);
   const [tab, setTab] = useState("students");
 
   // دخول مباشر لتبويب معيّن عبر رابط ?tab=xxx (تُستخدم من أيقونة "مزاد المشاريع" بالقائمة الجانبية)
@@ -355,7 +356,11 @@ export default function AdminPage() {
     if (!authed) return;
     refreshFromCloud();
     const interval = setInterval(refreshFromCloud, 30000); // تحديث تلقائي كل 30 ثانية
-    return () => clearInterval(interval);
+    // متصفحات زي سفاري تجمّد مؤقتات setInterval بتبويب خامل/بالخلفية لفترة طويلة — لو رجع
+    // المستخدم للتبويب بعد غياب، نجبر تحديثاً فورياً بدل انتظار الدورة التالية (قد تتأخر لدقائق)
+    const onVisible = () => { if (document.visibilityState === "visible") refreshFromCloud(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearInterval(interval); document.removeEventListener("visibilitychange", onVisible); };
   }, [authed]);
 
   // نجلب ملاحظات المتابعة (منسّقين/طلاب) من Firebase عند فتح التبويب المعني
@@ -388,6 +393,14 @@ export default function AdminPage() {
     await signOutAdmin();
     localStorage.removeItem("kc_admin_auth");
     setAuthed(false);
+  };
+
+  // تحديث يدوي فوري من السحابة — يتجاوز أي بيانات قديمة محفوظة بالمتصفح (localStorage) قد
+  // تعلق أحياناً بمتصفحات معيّنة (زي سفاري) لو التبويب ظل مفتوحاً وقتاً طويلاً بدون تحديث تلقائي ناجح
+  const manualRefresh = async () => {
+    setRefreshingCloud(true);
+    await refreshFromCloud();
+    setRefreshingCloud(false);
   };
 
   const pending = students.filter(s => s.status === "pending");
@@ -443,9 +456,15 @@ export default function AdminPage() {
               <p className="text-white font-semibold text-base">إدارة الطلاب والجروبات والمحتوى</p>
             </div>
           </div>
-          <button onClick={logout} className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl text-sm font-semibold">
-            <LogOut className="w-4 h-4" /> تسجيل الخروج
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={manualRefresh} disabled={refreshingCloud}
+              className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl text-sm font-semibold disabled:opacity-50">
+              <RefreshCw className={`w-4 h-4 ${refreshingCloud ? "animate-spin" : ""}`} /> {refreshingCloud ? "جارٍ التحديث..." : "تحديث البيانات"}
+            </button>
+            <button onClick={logout} className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl text-sm font-semibold">
+              <LogOut className="w-4 h-4" /> تسجيل الخروج
+            </button>
+          </div>
         </div>
       </div>
 
