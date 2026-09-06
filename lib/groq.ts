@@ -64,61 +64,68 @@ export const ROBOTICS_EXPERT_SYSTEM_PROMPT = `أنت خبير عالمي في ت
 5. ممنوع أي عبارة عامة (مثل "وصّل الحساس بشكل صحيح" بدون تحديد أي منفذ بالضبط).
 6. أخرج فقط بصيغة JSON المطلوبة بالضبط كما هي، بدون أي نص أو markdown خارج الـJSON.`;
 
-// نموذج نصي عام لكل الأدوات (خطة الدرس، الأسئلة، ورقة العمل، الخريطة الذهنية...)
-export async function callGroqText(messages: GroqMessage[], apiKey: string, maxTokens = 2500, temperature = 0.7): Promise<string> {
+// مفتاح Groq المجاني (كل المنصة تشترك بمفتاح واحد) عنده سقف صارم لعدد الكلمات
+// بالرد بالدقيقة الواحدة لنموذج qwen3.8-27b تحديداً (اكتُشف فعلياً 2026-09-06: طلب برد
+// أطول من ~1000 كلمة يُرفض أحياناً بخطأ "429 OTPM" حتى لو أول محاولة بالدقيقة، حسب
+// تقدير جوجل الداخلي لحجم الرد المتوقع) — بدون هذا، المعلم/الطالب يشوف رسالة إنجليزية
+// تقنية مخيفة (فيها رابط فوترة Groq) بدل رد عادي.
+function isGroqBusyError(status: number, message: string): boolean {
+  return status === 429 && /output tokens per minute|OTPM|rate.?limit/i.test(message);
+}
+const GROQ_BUSY_MESSAGE = "الخادم مزدحم لحظياً بسبب كثرة الاستخدام بنفس الوقت — انتظر بضع ثوانٍ وحاول مرة أخرى.";
+
+async function groqChatRequest(body: Record<string, unknown>, apiKey: string): Promise<{ ok: true; content: string } | { ok: false; status: number; message: string }> {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      // llama-3.3-70b-versatile أصبح مُهملاً عند Groq (تحقّقنا حياً 2026-09-03 عبر
-      // GET /openai/v1/models بمفتاح حقيقي) — qwen/qwen3.8-27b يرجّع JSON نظيفاً
-      // وسريعاً بدون توكنات "تفكير" مخفية تستهلك الحد الأقصى بلا داعٍ (بخلاف نماذج
-      // gpt-oss اللي جربناها وقطعت الرد قبل اكتماله بسبب ذلك).
-      model: "qwen/qwen3.8-27b",
-      messages,
-      max_tokens: maxTokens,
-      temperature,
-    }),
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `خطأ ${res.status}`);
+    return { ok: false, status: res.status, message: err?.error?.message || `خطأ ${res.status}` };
   }
   const data = await res.json();
-  return data.choices?.[0]?.message?.content || "";
+  return { ok: true, content: data.choices?.[0]?.message?.content || "" };
+}
+
+// نموذج نصي عام لكل الأدوات (خطة الدرس، الأسئلة، ورقة العمل، الخريطة الذهنية...)
+export async function callGroqText(messages: GroqMessage[], apiKey: string, maxTokens = 2500, temperature = 0.7): Promise<string> {
+  // llama-3.3-70b-versatile أصبح مُهملاً عند Groq (تحقّقنا حياً 2026-09-03 عبر
+  // GET /openai/v1/models بمفتاح حقيقي) — qwen/qwen3.8-27b يرجّع JSON نظيفاً
+  // وسريعاً بدون توكنات "تفكير" مخفية تستهلك الحد الأقصى بلا داعٍ (بخلاف نماذج
+  // gpt-oss اللي جربناها وقطعت الرد قبل اكتماله بسبب ذلك).
+  const build = (tokens: number) => ({ model: "qwen/qwen3.8-27b", messages, max_tokens: tokens, temperature });
+  let result = await groqChatRequest(build(maxTokens), apiKey);
+  // إعادة محاولة تلقائية واحدة بسقف أقل (900، مؤكَّد إنه يمر بأمان) لو رُفضت الأولى
+  // بسبب الازدحام — تحل أغلب الحالات بصمت بدل ما يشوف المستخدم خطأ إطلاقاً.
+  if (!result.ok && isGroqBusyError(result.status, result.message) && maxTokens > 900) {
+    result = await groqChatRequest(build(900), apiKey);
+  }
+  if (!result.ok) throw new Error(isGroqBusyError(result.status, result.message) ? GROQ_BUSY_MESSAGE : result.message);
+  return result.content;
 }
 
 // لتصحيح الأوراق: يرسل صورة (data URL) + تعليمات نصية لنفس النموذج (qwen3.8-27b يدعم
 // الصور فعلياً — تحقّقنا حياً 2026-09-03 بمفتاح حقيقي، قرأ ورقة اختبار وصحّحها بدقة)
 export async function callGroqVision(prompt: string, imageDataUrl: string, apiKey: string, maxTokens = 1500): Promise<string> {
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "qwen/qwen3.8-27b",
-      messages: [{
-        role: "user",
-        content: [
-          { type: "text", text: prompt },
-          { type: "image_url", image_url: { url: imageDataUrl } },
-        ],
-      }],
-      max_tokens: maxTokens,
-      temperature: 0.3,
-    }),
+  const build = (tokens: number) => ({
+    model: "qwen/qwen3.8-27b",
+    messages: [{
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: imageDataUrl } },
+      ],
+    }],
+    max_tokens: tokens,
+    temperature: 0.3,
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `خطأ ${res.status}`);
+  let result = await groqChatRequest(build(maxTokens), apiKey);
+  if (!result.ok && isGroqBusyError(result.status, result.message) && maxTokens > 900) {
+    result = await groqChatRequest(build(900), apiKey);
   }
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || "";
+  if (!result.ok) throw new Error(isGroqBusyError(result.status, result.message) ? GROQ_BUSY_MESSAGE : result.message);
+  return result.content;
 }
 
 // يحاول يستخرج أول كتلة JSON صالحة من رد النموذج (أحياناً يضيف شرح أو ```json حولها)
