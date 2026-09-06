@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { cloudGet } from "@/lib/cloud";
 import {
   BookOpen, Layers, FolderOpen, GraduationCap, BarChart3,
   Cpu, Bot, UserSquare, Trophy, Users, Archive, Settings,
@@ -34,18 +35,41 @@ export default function HomePage() {
   const [stats, setStats] = useState({ students: 0, coordinators: 0, projects: 0, courses: 0, videos: 0, logEntries: 0 });
 
   useEffect(() => {
+    // عرض فوري من النسخة المحلية (قد تكون قديمة) بينما نجيب الأرقام الحقيقية من السحابة —
+    // كان هذا الاعتماد الوحيد على localStorage بدون أي محاولة تحديث حقيقية، فأي متصفح لم
+    // يفتح صفحة أخرى تُحدّث هذا التخزين مؤخراً (زي سفاري بجهاز لم يُستخدم لفترة) يفضل عالقاً
+    // على رقم قديم للأبد بغض النظر عن عدد مرات إعادة التحميل أو مسح الـcache العادي.
     const allStudents = (() => {
       try { const d = localStorage.getItem("kc_students"); return d ? JSON.parse(d) : []; } catch { return []; }
     })();
+    const allCoords = (() => {
+      try { const d = localStorage.getItem("kc_coordinators"); return d ? JSON.parse(d) : []; } catch { return []; }
+    })();
     setStats({
       students: allStudents.filter((s: { status: string }) => s.status === "approved").length,
-      coordinators: (() => {
-        try { const d = localStorage.getItem("kc_coordinators"); return d ? JSON.parse(d).filter((c: { status: string }) => c.status === "approved").length : 0; } catch { return 0; }
-      })(),
+      coordinators: allCoords.filter((c: { status: string }) => c.status === "approved").length,
       projects: loadCount("kc_projects"),
       courses: loadCount("kc_courses"),
       videos: loadCount("kc_videos"),
       logEntries: loadCount("kc_daily_log"),
+    });
+
+    Promise.all([
+      cloudGet<{ status: string }[]>("kc_students"),
+      cloudGet<{ status: string }[]>("kc_coordinators"),
+      cloudGet<unknown[]>("kc_projects"),
+      cloudGet<unknown[]>("kc_courses"),
+      cloudGet<unknown[]>("kc_videos"),
+      cloudGet<unknown[]>("kc_daily_log"),
+    ]).then(([students, coordinators, projects, courses, videos, logEntries]) => {
+      setStats({
+        students: Array.isArray(students) ? students.filter(s => s.status === "approved").length : 0,
+        coordinators: Array.isArray(coordinators) ? coordinators.filter(c => c.status === "approved").length : 0,
+        projects: Array.isArray(projects) ? projects.length : 0,
+        courses: Array.isArray(courses) ? courses.length : 0,
+        videos: Array.isArray(videos) ? videos.length : 0,
+        logEntries: Array.isArray(logEntries) ? logEntries.length : 0,
+      });
     });
   }, []);
 
