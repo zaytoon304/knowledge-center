@@ -367,7 +367,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginCoordinator = async (email: string, pw: string) => {
     const all = await freshCoordinators();
-    const candidate = all.find(c => c.email === email);
+    // مقارنة غير حساسة لحالة الأحرف — كثير من كيبوردات الجوال تحوّل أول حرف أو الإيميل كامل
+    // لأحرف كبيرة تلقائياً (auto-capitalize)، فكان "KH100088@..." يُرفض رغم صحته الكاملة.
+    const normalized = email.trim().toLowerCase();
+    const candidate = all.find(c => c.email.trim().toLowerCase() === normalized);
     const ok = candidate ? await verifyPassword(pw, candidate.password) : false;
     if (candidate && ok) {
       let c = candidate;
@@ -433,10 +436,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // تحقق من السحابة الحقيقية مباشرة — مو من نسخة الجهاز المحلية اللي ممكن تكون قديمة أو فيها بقايا محاولة سابقة فشلت
     const cloudCoords = await cloudGet<CoordinatorProfile[]>("kc_coordinators");
     const all = Array.isArray(cloudCoords) ? cloudCoords : getAllCoordinators();
-    if (all.find(c => c.email === data.email))
+    const normalizedEmail = data.email.trim().toLowerCase();
+    if (all.find(c => c.email.trim().toLowerCase() === normalizedEmail))
       return { success: false, message: "البريد الإلكتروني مسجل مسبقاً" };
     const baseId = Date.now().toString();
     const hashedPw = await hashPassword(data.password);
+    // نخزّن الإيميل بأحرف صغيرة دائماً من هنا فصاعداً — يمنع تكرار نفس مشكلة عدم تطابق حالة
+    // الأحرف (auto-capitalize بكيبورد الجوال) مستقبلاً لأي منسّق جديد.
+    data = { ...data, email: normalizedEmail };
     // نسخة خفيفة بدون ملفات ثقيلة (تُحفظ في قائمة المنسقين لتجنب تجاوز حد localStorage)
     const coord: CoordinatorProfile = {
       ...data,

@@ -282,7 +282,8 @@ export default function LoginPage() {
                 <>
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1">البريد الإلكتروني</label>
-                    <input value={loginData.identifier} onChange={e => setLoginData(p => ({ ...p, identifier: e.target.value }))}
+                    <input type="email" autoCapitalize="none" autoCorrect="off" spellCheck={false}
+                      value={loginData.identifier} onChange={e => setLoginData(p => ({ ...p, identifier: e.target.value }))}
                       placeholder="البريد الإلكتروني"
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50 outline-none focus:border-blue-500" required />
                   </div>
@@ -434,7 +435,7 @@ export default function LoginPage() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-0.5 block">الاسم الكامل *</label><input value={coordData.name} onChange={e => setCoordData(p => ({ ...p, name: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
-                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-0.5 block">البريد الإلكتروني *</label><input type="email" value={coordData.email} onChange={e => setCoordData(p => ({ ...p, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
+                <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-0.5 block">البريد الإلكتروني *</label><input type="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={coordData.email} onChange={e => setCoordData(p => ({ ...p, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">الجوال *</label><input value={coordData.phone} onChange={e => setCoordData(p => ({ ...p, phone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
                 <div><label className="text-xs font-semibold text-gray-600 mb-0.5 block">المدرسة *</label><input value={coordData.school} onChange={e => setCoordData(p => ({ ...p, school: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
                 <div className="col-span-2"><label className="text-xs font-semibold text-gray-600 mb-0.5 block">التخصص / المادة *</label><input value={coordData.subject} onChange={e => setCoordData(p => ({ ...p, subject: e.target.value }))} placeholder="مثال: علوم الحاسب، روبوتيك" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none" required /></div>
