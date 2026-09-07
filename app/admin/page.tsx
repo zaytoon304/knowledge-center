@@ -209,7 +209,7 @@ const EMOJIS = ["🤖", "🏆", "🧠", "🔬", "💡", "🚀", "⭐", "📚", "
 
 export default function AdminPage() {
   const { getAllStudents, approveStudent, rejectStudent, deleteStudent,
-    getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor, endCoordinatorSession,
+    getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor, endCoordinatorSession, resetCoordinatorPassword,
     getGroups, createGroup, deleteGroup,
     getLiveStream, updateLiveStream, getCourses, addCourse, deleteCourse,
     getVideos, addVideo, deleteVideo, getProjects, addProject, deleteProject,
@@ -285,6 +285,9 @@ export default function AdminPage() {
   const [coordSearch, setCoordSearch] = useState("");
   const [studentNoteInputs, setStudentNoteInputs] = useState<Record<string, string>>({});
   const [coordNoteInputs, setCoordNoteInputs] = useState<Record<string, string>>({});
+  const [coordPwInputs, setCoordPwInputs] = useState<Record<string, string>>({});
+  const [coordPwSaving, setCoordPwSaving] = useState<string | null>(null);
+  const [coordPwDone, setCoordPwDone] = useState<string | null>(null);
   const [notesMap, setNotesMap] = useState<Record<string, string[]>>({});
   const [dForm, setDForm] = useState({
     title: "", date: "", description: "", category: "نشاط",
@@ -832,6 +835,25 @@ export default function AdminPage() {
                     <button onClick={() => { const txt = (coordNoteInputs[c.id] || "").trim(); if (!txt) return; setCoordNoteInputs(p => ({ ...p, [c.id]: "" })); addNote("kc_cnotes_" + c.id, txt).then(ns => { if (ns) setNotesMap(p => ({ ...p, [c.id]: ns })); }); }}
                       className="bg-yellow-500 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-400">إضافة</button>
                   </div>
+                  <div className="flex gap-2 items-center">
+                    <input value={coordPwInputs[c.id] || ""} onChange={e => { setCoordPwInputs(p => ({ ...p, [c.id]: e.target.value })); setCoordPwDone(null); }}
+                      placeholder="كلمة مرور جديدة لو نسي كلمته" className="input flex-1 text-sm" />
+                    <button
+                      disabled={coordPwSaving === c.id || !(coordPwInputs[c.id] || "").trim()}
+                      onClick={async () => {
+                        const pw = (coordPwInputs[c.id] || "").trim();
+                        if (!pw || !confirm(`متأكد تبي تغيّر كلمة مرور ${c.name}؟`)) return;
+                        setCoordPwSaving(c.id); setCoordPwDone(null);
+                        const ok = await resetCoordinatorPassword(c.id, pw);
+                        setCoordPwSaving(null);
+                        if (ok) { setCoordPwDone(c.id); setCoordPwInputs(p => ({ ...p, [c.id]: "" })); }
+                        else alert("تعذّر الحفظ — تأكد من الاتصال بالإنترنت وحاول مرة أخرى");
+                      }}
+                      className="text-xs px-3 py-2 rounded-lg font-semibold bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-40 whitespace-nowrap">
+                      {coordPwSaving === c.id ? "جارٍ الحفظ..." : "🔑 تغيير كلمة المرور"}
+                    </button>
+                  </div>
+                  {coordPwDone === c.id && <p className="text-xs text-green-600 font-semibold">✓ تغيّرت كلمة المرور — أبلغ {c.name} بالكلمة الجديدة</p>}
                 </div>
               );
             })

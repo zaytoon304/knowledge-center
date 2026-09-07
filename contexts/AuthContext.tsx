@@ -140,6 +140,7 @@ interface AuthContextType {
   deleteCoordinator: (id: string) => void;
   toggleSupervisor: (id: string) => void;
   endCoordinatorSession: (id: string) => void;
+  resetCoordinatorPassword: (id: string, newPassword: string) => Promise<boolean>;
   getGroups: () => ChatGroup[];
   createGroup: (g: Omit<ChatGroup, "id" | "createdAt">) => void;
   deleteGroup: (id: string) => void;
@@ -567,6 +568,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  // يصفّر كلمة مرور منسّق نسيها لكلمة جديدة يختارها الأدمن — يُشفّرها بنفس آلية التسجيل
+  // العادية (hashPassword) قبل الحفظ، ما تُخزَّن نصاً صريحاً أبداً بأي وقت.
+  const resetCoordinatorPassword = async (id: string, newPassword: string): Promise<boolean> => {
+    const hashed = await hashPassword(newPassword);
+    const all = getAllCoordinators().map(c => c.id === id ? { ...c, password: hashed } : c);
+    save(KEYS.coordinators, all);
+    return cloudTransact<CoordinatorProfile[]>("kc_coordinators", current => {
+      const list = Array.isArray(current) && current.length > 0 ? current : all;
+      return list.map(c => c.id === id ? { ...c, password: hashed } : c);
+    });
+  };
+
   const getGroups = () => load<ChatGroup[]>(KEYS.groups, []);
   const createGroup = (g: Omit<ChatGroup, "id" | "createdAt">) => {
     const all = [...getGroups(), { ...g, id: Date.now().toString(), createdAt: new Date().toISOString() }];
@@ -661,7 +674,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login, loginWithAccessCode, loginCoordinator, register, registerCoordinator,
       logout, updateProfile,
       getAllStudents, approveStudent, rejectStudent, deleteStudent,
-      getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor, endCoordinatorSession,
+      getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor, endCoordinatorSession, resetCoordinatorPassword,
       getGroups, createGroup, deleteGroup,
       getLiveStream, updateLiveStream,
       getCourses, addCourse, deleteCourse,
