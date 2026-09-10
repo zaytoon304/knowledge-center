@@ -37,6 +37,8 @@ export interface CoordinatorProfile {
   // يضبطها الأدمن لإنهاء جلسة المنسق فوراً — أي دخول محفوظ محلياً قبل هذا التاريخ
   // يُرفض تلقائياً بأول فتح للتطبيق، ويضطر يدخل بالإيميل وكلمة المرور من جديد
   sessionRevokedAt?: string;
+  // يقفل وصول هذا المنسّق تحديداً عن المساعد الذكي وكل أدوات /ai-tools — الباقي غير متأثرين
+  aiDisabled?: boolean;
 }
 
 export type AnyUser = StudentProfile | CoordinatorProfile;
@@ -139,6 +141,7 @@ interface AuthContextType {
   rejectCoordinator: (id: string) => void;
   deleteCoordinator: (id: string) => void;
   toggleSupervisor: (id: string) => void;
+  toggleAiAccess: (id: string) => void;
   endCoordinatorSession: (id: string) => void;
   resetCoordinatorPassword: (id: string, newPassword: string) => Promise<boolean>;
   getGroups: () => ChatGroup[];
@@ -564,6 +567,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user?.id === id) { const u = { ...user, isSupervisor: !(user as CoordinatorProfile).isSupervisor }; setUser(u); save(KEYS.currentUser, u); }
   };
 
+  // يقفل/يفتح وصول منسّق واحد تحديداً عن أدوات الذكاء الاصطناعي (المساعد + /ai-tools) —
+  // باقي المنسقين غير متأثرين إطلاقاً
+  const toggleAiAccess = (id: string) => {
+    const all = getAllCoordinators().map(c => c.id === id ? { ...c, aiDisabled: !c.aiDisabled } : c);
+    save(KEYS.coordinators, all);
+    cloudTransact<CoordinatorProfile[]>("kc_coordinators", current => {
+      const list = Array.isArray(current) && current.length > 0 ? current : all;
+      return list.map(c => c.id === id ? { ...c, aiDisabled: !c.aiDisabled } : c);
+    });
+    if (user?.id === id) { const u = { ...user, aiDisabled: !(user as CoordinatorProfile).aiDisabled }; setUser(u); save(KEYS.currentUser, u); }
+  };
+
   // ينهي جلسة منسّق فوراً — تُتحقق بأول فتح تطبيق قادم (راجع useEffect بالأعلى)، تجبره يدخل من جديد
   const endCoordinatorSession = (id: string) => {
     const revokedAt = new Date().toISOString();
@@ -681,7 +696,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login, loginWithAccessCode, loginCoordinator, register, registerCoordinator,
       logout, updateProfile,
       getAllStudents, approveStudent, rejectStudent, deleteStudent,
-      getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor, endCoordinatorSession, resetCoordinatorPassword,
+      getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor, toggleAiAccess, endCoordinatorSession, resetCoordinatorPassword,
       getGroups, createGroup, deleteGroup,
       getLiveStream, updateLiveStream,
       getCourses, addCourse, deleteCourse,

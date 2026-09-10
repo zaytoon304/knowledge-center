@@ -51,6 +51,9 @@ export function useAiOwner(): { ownerId: string | null; ownerLabel: string } {
 
   if (isCoordinator && user) {
     const c = user as CoordinatorProfile;
+    // منسّق موقوف عن أدوات الذكاء الاصطناعي تحديداً (توقيف فردي من الأدمن) — يُعامَل
+    // كأنه غير مسجّل دخول بهذي الصفحات بس، تظهر له نفس شاشة "القفل" العادية
+    if (c.aiDisabled) return { ownerId: null, ownerLabel: "" };
     return { ownerId: `coordinator_${c.id}`, ownerLabel: c.name || "معلمي" };
   }
   if (admin) return { ownerId: "admin", ownerLabel: "الأدمن" };

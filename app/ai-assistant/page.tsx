@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Bot, Send, Sparkles, Copy, RotateCcw, Key } from "lucide-react";
+import { Bot, Send, Sparkles, Copy, RotateCcw, Key, Lock } from "lucide-react";
 import Link from "next/link";
 import { getGroqKey, callGroqText } from "@/lib/groq";
+import { useAuth, type CoordinatorProfile } from "@/contexts/AuthContext";
 
 const SYSTEM_PROMPT = `أنت مساعد ذكي متخصص في مركز المعرفة والابتكار STEAM بمدارس الأرقم.
 تساعد الطلاب والمعلمين والمنسقين في:
@@ -81,6 +82,7 @@ const WELCOME: Message = {
 };
 
 export default function AIAssistantPage() {
+  const { user, isCoordinator } = useAuth();
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -124,6 +126,18 @@ export default function AIAssistantPage() {
   };
 
   const reset = () => { setMessages([WELCOME]); setError(""); };
+
+  // منسّق أوقف الأدمن وصوله لأدوات الذكاء الاصطناعي تحديداً — الصفحة تبقى مفتوحة لأي
+  // زائر/طالب/منسّق آخر تماماً كالمعتاد (هذي الأداة مقصودة أصلاً للاستخدام بلا تسجيل دخول)
+  if (isCoordinator && (user as CoordinatorProfile)?.aiDisabled) {
+    return (
+      <div className="max-w-md mx-auto mt-16 card p-8 text-center text-gray-400">
+        <Lock className="w-12 h-12 mx-auto mb-3 opacity-30" />
+        <p className="font-semibold text-gray-600">تم إيقاف وصولك للمساعد الذكي من الإدارة</p>
+        <p className="text-sm mt-1">تواصل مع الإدارة لمزيد من التفاصيل</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 animate-fade-in">

@@ -209,7 +209,7 @@ const EMOJIS = ["🤖", "🏆", "🧠", "🔬", "💡", "🚀", "⭐", "📚", "
 
 export default function AdminPage() {
   const { getAllStudents, approveStudent, rejectStudent, deleteStudent,
-    getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor, endCoordinatorSession, resetCoordinatorPassword,
+    getAllCoordinators, approveCoordinator, rejectCoordinator, deleteCoordinator, toggleSupervisor, toggleAiAccess, endCoordinatorSession, resetCoordinatorPassword,
     getGroups, createGroup, deleteGroup,
     getLiveStream, updateLiveStream, getCourses, addCourse, deleteCourse,
     getVideos, addVideo, deleteVideo, getProjects, addProject, deleteProject,
@@ -818,6 +818,11 @@ export default function AdminPage() {
                         title="إنهاء الجلسة الحالية فوراً — يحتاج يدخل بالإيميل وكلمة المرور من جديد بأول فتح قادم للتطبيق"
                         className="text-xs px-2 py-1 rounded-lg font-semibold flex items-center gap-1 bg-red-50 text-red-600 hover:bg-red-100">
                         <LogOut className="w-3 h-3" /> إنهاء الجلسة
+                      </button>
+                      <button onClick={() => { if (confirm(`متأكد تبي ${c.aiDisabled ? "تفعّل" : "توقف"} وصول ${c.name} لأدوات الذكاء الاصطناعي؟`)) toggleAiAccess(c.id); }}
+                        title="يمنع هذا المنسّق تحديداً من استخدام المساعد الذكي وكل أدوات /ai-tools — الباقون غير متأثرين"
+                        className={`text-xs px-2 py-1 rounded-lg font-semibold flex items-center gap-1 ${c.aiDisabled ? "bg-red-600 text-white hover:bg-red-500" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+                        <Lock className="w-3 h-3" /> {c.aiDisabled ? "أدوات AI موقوفة 🚫" : "إيقاف أدوات AI"}
                       </button>
                     </div>
                   </div>
