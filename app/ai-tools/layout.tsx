@@ -13,8 +13,8 @@ export default function AiToolsLayout({ children }: { children: React.ReactNode 
     return (
       <div className="max-w-md mx-auto mt-16 card p-8 text-center text-gray-400">
         <Lock className="w-12 h-12 mx-auto mb-3 opacity-30" />
-        <p className="font-semibold text-gray-600">تم إيقاف وصولك لأدوات الذكاء الاصطناعي من الإدارة</p>
-        <p className="text-sm mt-1">تواصل مع الإدارة لمزيد من التفاصيل</p>
+        <p className="font-semibold text-gray-600">🛠️ هذي الأداة قيد الصيانة حالياً</p>
+        <p className="text-sm mt-1">جرّب مرة أخرى لاحقاً</p>
       </div>
     );
   }
