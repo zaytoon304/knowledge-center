@@ -252,7 +252,7 @@ export default function AdminPage() {
   const [showSForm, setShowSForm] = useState(false);
   const [aForm, setAForm] = useState({ title: "", description: "", date: "", image: "", imageName: "" });
   const [showAForm, setShowAForm] = useState(false);
-  const [gForm, setGForm] = useState({ name: "", description: "", emoji: "🤖", color: GROUP_COLORS[0].value, type: "team" as "general" | "team" });
+  const [gForm, setGForm] = useState({ name: "", description: "", emoji: "🤖", color: GROUP_COLORS[0].value, type: "team" as "general" | "team", audience: "boys" as "boys" | "girls" });
   const [showGForm, setShowGForm] = useState(false);
   const [cForm, setCForm] = useState({ title: "", description: "", emoji: "📚", instructor: "", duration: "" });
   const [showCForm, setShowCForm] = useState(false);
@@ -890,10 +890,19 @@ export default function AdminPage() {
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">النوع</label>
                   <select value={gForm.type} onChange={e => setGForm(p => ({ ...p, type: e.target.value as "general" | "team" }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none">
-                    <option value="general">جروب عام (للجميع)</option>
+                    <option value="general">جروب عام (بنين أو بنات)</option>
                     <option value="team">جروب فريق</option>
                   </select>
                 </div>
+                {gForm.type === "general" && (
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1 block">لمن هذا الجروب؟</label>
+                    <select value={gForm.audience} onChange={e => setGForm(p => ({ ...p, audience: e.target.value as "boys" | "girls" }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none">
+                      <option value="boys">قسم البنين فقط</option>
+                      <option value="girls">قسم البنات فقط</option>
+                    </select>
+                  </div>
+                )}
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">الإيموجي</label>
                   <select value={gForm.emoji} onChange={e => setGForm(p => ({ ...p, emoji: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 outline-none">
@@ -911,7 +920,7 @@ export default function AdminPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { if (!gForm.name.trim()) return; createGroup(gForm); setShowGForm(false); setGForm({ name: "", description: "", emoji: "🤖", color: GROUP_COLORS[0].value, type: "team" }); refresh(); }}
+                <button onClick={() => { if (!gForm.name.trim()) return; createGroup(gForm.type === "general" ? gForm : { ...gForm, audience: undefined }); setShowGForm(false); setGForm({ name: "", description: "", emoji: "🤖", color: GROUP_COLORS[0].value, type: "team", audience: "boys" }); refresh(); }}
                   className="bg-blue-800 text-white px-6 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700">إنشاء</button>
                 <button onClick={() => setShowGForm(false)} className="bg-gray-100 text-gray-600 px-6 py-2 rounded-xl text-sm">إلغاء</button>
               </div>
@@ -929,7 +938,12 @@ export default function AdminPage() {
                       </div>
                       <button onClick={() => { deleteGroup(g.id); refresh(); }} className="p-2 bg-white/20 hover:bg-white/30 rounded-xl"><Trash2 className="w-4 h-4" /></button>
                     </div>
-                    <div className="mt-2"><span className="bg-white/20 text-white/90 text-xs px-2 py-0.5 rounded-full">{g.type === "general" ? "عام" : "فريق"}</span></div>
+                    <div className="mt-2 flex gap-1.5">
+                      <span className="bg-white/20 text-white/90 text-xs px-2 py-0.5 rounded-full">{g.type === "general" ? "عام" : "فريق"}</span>
+                      {g.type === "general" && (
+                        <span className="bg-white/20 text-white/90 text-xs px-2 py-0.5 rounded-full">{(g.audience || "boys") === "girls" ? "👧 بنات" : "👦 بنين"}</span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

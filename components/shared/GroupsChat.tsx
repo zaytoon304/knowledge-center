@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { MessageSquare, Send, Users, ArrowRight, Hash, Paperclip, Video, FileText, X, Image as ImageIcon, Mic, Square, Upload, Play } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, StudentProfile, CoordinatorProfile, getCoordinatorDepartment } from "@/contexts/AuthContext";
 import { cloudListen, cloudTransact, cloudSet } from "@/lib/cloud";
 import { extractYouTubeId, youtubeThumbUrl } from "@/lib/youtube";
 import { noDownloadProps } from "@/lib/imageProtect";
@@ -35,6 +35,7 @@ interface GroupWithMembers {
   id: string; name: string; type: "general" | "team";
   emoji: string; color: string; description: string; createdAt: string;
   members?: string[];
+  audience?: "boys" | "girls";
 }
 
 const ADMIN_ID = "__admin__";
@@ -122,10 +123,21 @@ export default function GroupsChat() {
   const currentId = adminCheck ? ADMIN_ID : (user?.id || "");
   const currentName = adminCheck ? ADMIN_NAME : (user?.name || "زائر");
 
+  // قسم المستخدم الحالي (بنين/بنات) — يحدد أي جروبات "عامة" يشوفها، لمنع أي دردشة مختلطة
+  const viewerAudience: "boys" | "girls" = (() => {
+    if (!user) return "boys";
+    if (user.role === "student") return (user as StudentProfile).department === "بنات" ? "girls" : "boys";
+    return getCoordinatorDepartment((user as CoordinatorProfile).name) === "بنات" ? "girls" : "boys";
+  })();
+
   /* فلتر الجروبات التي يرى فيها المستخدم */
   const visibleGroups = groups.filter(g => {
     if (adminCheck) return true;
-    if (g.type === "general") return true;
+    if (g.type === "general") {
+      // جروبات عامة قديمة بلا "audience" محفوظة أصلاً من زمن كانت المنصة للبنين فقط — تُعامَل كجروب بنين
+      const groupAudience = g.audience || "boys";
+      return groupAudience === viewerAudience;
+    }
     if (!currentId) return false;
     return g.members?.includes(currentId);
   });
@@ -266,6 +278,11 @@ export default function GroupsChat() {
                   <span className={`text-xs px-1.5 py-0.5 rounded-full ${g.type === "general" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
                     {g.type === "general" ? "عام" : "فريق"}
                   </span>
+                  {g.type === "general" && adminCheck && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${(g.audience || "boys") === "girls" ? "bg-pink-100 text-pink-700" : "bg-sky-100 text-sky-700"}`}>
+                      {(g.audience || "boys") === "girls" ? "بنات" : "بنين"}
+                    </span>
+                  )}
                   {(g.members?.length ?? 0) > 0 && (
                     <span className="text-xs text-gray-400 flex items-center gap-0.5">
                       <Users className="w-3 h-3" />{g.members?.length}

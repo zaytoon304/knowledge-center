@@ -17,13 +17,24 @@ export interface StudentProfile {
 }
 
 // كل قسم مرتبط بمنسّق مسؤول عنه — تُستخدم لتحديد "المنسق التابع له" تلقائياً وقت تسجيل الطالب
-export const DEPARTMENTS = ["ابتدائي عام", "ابتدائي تحفيظ", "متوسط", "ثانوي"] as const;
+// "بنات" قسم مستقل يغطي كل المراحل (يُحدَّد بمنسّقة واحدة) — الصف الفعلي للطالبة يبقى بحقل "grade" المنفصل
+export const DEPARTMENTS = ["ابتدائي عام", "ابتدائي تحفيظ", "متوسط", "ثانوي", "بنات"] as const;
 export const DEPARTMENT_COORDINATOR: Record<string, string> = {
   "ابتدائي عام": "سمير علي أنور علي عوض",
   "ابتدائي تحفيظ": "محمد ضيف عبد الغني سعيد",
   "متوسط": "فتحي محفوظ عبد الله",
   "ثانوي": "خالد علي محمد شعبان",
+  // اسم منسّقة قسم البنات يُضاف هنا فور تسجيلها واعتماد محمد لحسابها —
+  // لحد ذلك القيمة فاضية عمداً (بدل اسم شخص لسه ما سجّل) فما فيه أي طالبة "تتربط" بحساب غلط
+  "بنات": "",
 };
+
+// يشتق قسم أي منسّق من اسمه (نفس نمط المطابقة المستخدم بلوحات تقييم المنسقين) —
+// يُستخدم لمعرفة هل المنسّق تابع لقسم "بنات" أو لا، بدون إضافة حقل جديد لبيانات المنسّق
+export function getCoordinatorDepartment(coordinatorName: string): string | undefined {
+  const entry = Object.entries(DEPARTMENT_COORDINATOR).find(([, name]) => !!name.trim() && name.trim() === coordinatorName.trim());
+  return entry?.[0];
+}
 
 export interface CoordinatorProfile {
   id: string; name: string; email: string; phone: string;
@@ -47,6 +58,9 @@ export interface ChatGroup {
   id: string; name: string; type: "general" | "team";
   emoji: string; color: string; description: string; createdAt: string;
   members?: string[];
+  // لجروبات النوع "عام" فقط — يحدد هل يظهر لقسم البنين أو قسم البنات (ممنوع دردشة مختلطة بينهما).
+  // جروبات النوع "فريق" لا تحتاجه لأن عضويتها محدّدة يدوياً أصلاً بـmembers
+  audience?: "boys" | "girls";
 }
 
 export interface LiveStreamSettings {
